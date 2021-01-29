@@ -41,7 +41,7 @@ module.exports = {
         filename: '[name].js',
         path: path.resolve(__dirname, 'dist'),
         libraryTarget: 'umd',
-        library: "cui-light",
+        library: "cui-light-app",
         umdNamedDefine: true
     },
     plugins: [

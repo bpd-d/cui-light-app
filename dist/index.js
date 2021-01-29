@@ -2,11 +2,11 @@
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
 	else if(typeof define === 'function' && define.amd)
-		define("cui-light", [], factory);
+		define("cui-light-app", [], factory);
 	else if(typeof exports === 'object')
-		exports["cui-light"] = factory();
+		exports["cui-light-app"] = factory();
 	else
-		root["cui-light"] = factory();
+		root["cui-light-app"] = factory();
 })(window, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache

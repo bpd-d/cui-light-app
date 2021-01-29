@@ -16,7 +16,7 @@ module.exports = merge(common, {
         filename: '[name].min.js',
         path: path.resolve(__dirname, 'dist'),
         libraryTarget: 'umd',
-        library: "cui-light",
+        library: "cui-light-app",
         umdNamedDefine: true
     },
 });

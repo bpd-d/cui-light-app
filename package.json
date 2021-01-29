@@ -1,5 +1,5 @@
 {
-  "name": "cui-light",
+  "name": "cui-light-app",
   "version": "0.3.0",
   "description": "cUI light framework for the web",
   "main": "./dist/index.js",

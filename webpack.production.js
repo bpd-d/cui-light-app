@@ -7,7 +7,7 @@ DtsBundlePlugin.prototype.apply = function (compiler) {
     compiler.plugin('done', function () {
         var dts = require('dts-bundle');
         dts.bundle({
-            name: 'cui-light',
+            name: 'cui-light-app',
             main: 'dist/typings/index.d.ts',
             out: '../index.d.ts',
             removeSource: true,
