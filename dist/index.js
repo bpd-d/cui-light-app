@@ -4828,6 +4828,758 @@ class base_CuiMutableHandler extends base_CuiHandlerBase {
 }
 _mutionHandler = new WeakMap();
 
+// CONCATENATED MODULE: ./src/components/accordion/accordion.ts
+var accordion_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var accordion_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var accordion_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _defTitleSelector, _defItemsSelector, _defTimeout, accordion_prefix, accordion_items, _targets, _switchEventId;
+
+
+
+const ACCORDION_TITLE_CLS = '> * > .{prefix}-accordion-title';
+const ACCORDION_ITEMS_CLS = '> *';
+class accordion_CuiAccordionArgs {
+    constructor(prefix, timeout) {
+        _defTitleSelector.set(this, void 0);
+        _defItemsSelector.set(this, void 0);
+        _defTimeout.set(this, void 0);
+        accordion_classPrivateFieldSet(this, _defTitleSelector, replacePrefix(ACCORDION_TITLE_CLS, prefix));
+        accordion_classPrivateFieldSet(this, _defItemsSelector, replacePrefix(ACCORDION_ITEMS_CLS, prefix));
+        this.animation = false;
+        accordion_classPrivateFieldSet(this, _defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
+        this.single = false;
+        this.selector = SCOPE_SELECTOR + accordion_classPrivateFieldGet(this, _defTitleSelector);
+        this.items = SCOPE_SELECTOR + accordion_classPrivateFieldGet(this, _defItemsSelector);
+        this.timeout = accordion_classPrivateFieldGet(this, _defTimeout);
+    }
+    parse(args) {
+        if (is(args)) {
+            this.single = isStringTrue(args.single);
+            this.selector = SCOPE_SELECTOR + getStringOrDefault(args.selector, accordion_classPrivateFieldGet(this, _defTitleSelector));
+            this.items = SCOPE_SELECTOR + getStringOrDefault(args.content, accordion_classPrivateFieldGet(this, _defItemsSelector));
+            this.timeout = getIntOrDefault(args.timeout, accordion_classPrivateFieldGet(this, _defTimeout));
+            this.animation = isStringTrue(args.animation);
+            return;
+        }
+    }
+    isValid() {
+        return true;
+    }
+}
+_defTitleSelector = new WeakMap(), _defItemsSelector = new WeakMap(), _defTimeout = new WeakMap();
+class CuiAccordionComponent {
+    constructor(prefix) {
+        accordion_prefix.set(this, void 0);
+        accordion_classPrivateFieldSet(this, accordion_prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${accordion_classPrivateFieldGet(this, accordion_prefix)}-accordion`;
+    }
+    getStyle() {
+        return null;
+    }
+    get(element, utils) {
+        return new accordion_CuiAccordionHandler(element, utils, this.attribute, accordion_classPrivateFieldGet(this, accordion_prefix));
+    }
+}
+accordion_prefix = new WeakMap();
+class accordion_CuiAccordionHandler extends base_CuiMutableHandler {
+    constructor(element, utils, attribute, prefix) {
+        super("CuiAccordionHandler", element, attribute, new accordion_CuiAccordionArgs(prefix, utils.setup.animationTime), utils);
+        accordion_items.set(this, void 0);
+        _targets.set(this, void 0);
+        _switchEventId.set(this, void 0);
+        accordion_classPrivateFieldSet(this, _switchEventId, null);
+        accordion_classPrivateFieldSet(this, accordion_items, []);
+        accordion_classPrivateFieldSet(this, _targets, []);
+        accordion_classPrivateFieldSet(this, _switchEventId, null);
+    }
+    onInit() {
+        if (this.args.isValid()) {
+            try {
+                this.initTargets();
+                accordion_classPrivateFieldSet(this, _switchEventId, this.onEvent(EVENTS.SWITCH, this.onSwitch.bind(this)));
+            }
+            catch (e) {
+                this._log.exception(e, 'handle');
+            }
+            this._log.debug("Initialized", "handle");
+        }
+    }
+    onUpdate() {
+        try {
+            this.initTargets();
+        }
+        catch (e) {
+            this._log.exception(e, 'handle');
+        }
+    }
+    onDestroy() {
+        this.detachEvent(EVENTS.SWITCH, accordion_classPrivateFieldGet(this, _switchEventId));
+    }
+    onMutation(mutations) {
+        if (mutations.added.length > 0 || mutations.removed.length > 0)
+            this.initTargets();
+    }
+    switch(index) {
+        return accordion_awaiter(this, void 0, void 0, function* () {
+            this._log.debug("Switch to: " + index);
+            if (index < 0 || this.isLocked || !this.isInitialized) {
+                return false;
+            }
+            accordion_classPrivateFieldSet(this, accordion_items, this.queryItems());
+            if (accordion_classPrivateFieldGet(this, accordion_items).length <= index) {
+                return false;
+            }
+            this.isLocked = true;
+            const current = accordion_classPrivateFieldGet(this, accordion_items)[index];
+            if (this.helper.hasClass(this.activeClassName, current)) {
+                this.helper.removeClassesAs(current, this.activeClassName);
+            }
+            else {
+                if (this.args.single) {
+                    this.closeAllExcept(index);
+                }
+                this.helper.setClassesAs(current, this.activeClassName);
+            }
+            this.emitEvent(EVENTS.SWITCHED, {
+                index: index,
+                currentTarget: current,
+                timestamp: Date.now()
+            });
+            this.isLocked = false;
+            return true;
+        });
+    }
+    onSwitch(index) {
+        this.switch(getIntOrDefault(index, -1)).then(() => {
+            this._log.debug("Switch from event to " + index);
+        });
+    }
+    initTargets() {
+        accordion_classPrivateFieldSet(this, accordion_items, this.queryItems());
+        const t = this.element.querySelectorAll(this.args.selector);
+        accordion_classPrivateFieldSet(this, _targets, []);
+        t.forEach((item, index) => {
+            let target = { element: item };
+            this.setListener(target, index);
+            accordion_classPrivateFieldGet(this, _targets).push(target);
+        });
+    }
+    closeAllExcept(current) {
+        this.mutate(() => {
+            accordion_classPrivateFieldGet(this, accordion_items).forEach((item, index) => {
+                if (current !== index && this.helper.hasClass(this.activeClassName, item)) {
+                    item.classList.remove(this.activeClassName);
+                }
+            });
+        });
+    }
+    setListener(target, index) {
+        target.listener = () => {
+            this.switch(index);
+        };
+        target.element.addEventListener('click', target.listener);
+    }
+    removeListener(target) {
+        if (target.listener) {
+            target.element.removeEventListener('click', target.listener);
+        }
+    }
+    queryItems() {
+        return [...this.element.querySelectorAll(this.args.items)];
+    }
+}
+accordion_items = new WeakMap(), _targets = new WeakMap(), _switchEventId = new WeakMap();
+
+// CONCATENATED MODULE: ./src/core/animation/animators.ts
+var animators_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var animators_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _unit;
+
+
+/**
+ * Changes the opacity of the element from 0 to 1
+ */
+class animators_OpacityAnimator {
+    constructor() {
+        this.length = this.to = this.from = -1;
+        this.rtl = false;
+    }
+    setProperty(prop) {
+        if (!prop || !is(prop.from) || !is(prop.to)) {
+            throw new AnimatorError("[OpacityAnimator] Property has incorrect format");
+        }
+        this.from = prop.from;
+        this.to = prop.to;
+        this.length = Math.abs(this.to - this.from);
+        this.rtl = this.from > this.to;
+    }
+    perform(element, progress, factor) {
+        if (this.to < 0) {
+            return;
+        }
+        let current = this.length * progress;
+        if (element["style"]) {
+            element.style.opacity = this.rtl ? Math.max(this.from - current, 0) : Math.min(this.from + current, 1);
+        }
+    }
+}
+/**
+ * Changes any style property of the element
+ */
+class animators_PropertyAnimator {
+    constructor(property) {
+        _unit.set(this, void 0);
+        if (!is(property)) {
+            throw new AnimatorError("[PropertyAnimator] Valid property is required");
+        }
+        this.property = property;
+        this.length = this.to = this.from = -1;
+        this.rtl = false;
+        animators_classPrivateFieldSet(this, _unit, "");
+    }
+    setProperty(prop) {
+        if (!prop || !is(prop.from) || !is(prop.to)) {
+            throw new AnimatorError("[PropertyAnimator] Property has incorrect format");
+        }
+        this.from = prop.from;
+        this.to = prop.to;
+        this.length = Math.abs(this.to - this.from);
+        this.rtl = this.from > this.to;
+        animators_classPrivateFieldSet(this, _unit, prop.unit);
+    }
+    perform(element, progress, factor) {
+        if (!this.property) {
+            return;
+        }
+        let current = this.length * progress;
+        if (element["style"]) {
+            element.style[this.property] = this.createValue(this.rtl ? this.from - current : this.from + current, animators_classPrivateFieldGet(this, _unit));
+        }
+    }
+    createValue(value, unit) {
+        return `${value}${unit !== null && unit !== void 0 ? unit : ""}`;
+    }
+}
+_unit = new WeakMap();
+/**
+ * Changes transform property of the element. Supports mulitple properties at the time
+ */
+class animators_TransformAnimator {
+    constructor() {
+        this.prop = undefined;
+    }
+    setProperty(prop) {
+        if (!prop) {
+            throw new AnimatorError("[TransformAnimator] Property has incorrect format");
+        }
+        this.prop = prop;
+    }
+    build(progress) {
+        let props = [];
+        for (let name in this.prop) {
+            let cur = this.prop[name];
+            let diff = Math.abs(cur.to - cur.from);
+            let rtl = cur.from > cur.to;
+            let val = rtl ? cur.from - (diff * progress) : cur.from + (diff * progress);
+            props.push(this.buildSingle(name, val, cur.unit));
+        }
+        return props.join(" ");
+    }
+    buildSingle(name, value, unit) {
+        return `${name}(${value}${unit})`;
+    }
+    perform(element, progress) {
+        if (!this.prop) {
+            return;
+        }
+        if (element["style"]) {
+            element.style.transform = this.build(progress);
+        }
+    }
+}
+
+// CONCATENATED MODULE: ./src/core/animation/engine.ts
+var engine_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var engine_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _engine, _timeout, _factory, _onError, _onFinishCallback, _animators, engine_lock, _animStartStamp, engine_element, _cleanOnFinish, _errorOccured, _factory_1, _onError_1, engine_element_1, _animators_1, _animationEngine, _factory_2, _onError_2;
+
+
+class engine_CuiAnimation {
+    constructor(element) {
+        _engine.set(this, void 0);
+        _timeout.set(this, void 0);
+        _factory.set(this, void 0);
+        _onError.set(this, void 0);
+        engine_classPrivateFieldSet(this, _engine, new engine_CuiAnimationEngine(true));
+        engine_classPrivateFieldSet(this, _onError, undefined);
+        engine_classPrivateFieldSet(this, _timeout, 0);
+        engine_classPrivateFieldSet(this, _factory, new engine_AnimatorFactory());
+        if (element) {
+            engine_classPrivateFieldGet(this, _engine).setElement(element);
+        }
+    }
+    setElement(element) {
+        engine_classPrivateFieldGet(this, _engine).setElement(element);
+    }
+    setTimeout(timeout) {
+        engine_classPrivateFieldSet(this, _timeout, timeout);
+    }
+    onError(callback) {
+        engine_classPrivateFieldSet(this, _onError, callback);
+        engine_classPrivateFieldGet(this, _engine).setOnError(callback);
+    }
+    onFinish(callback) {
+        engine_classPrivateFieldGet(this, _engine).onFinish(callback);
+    }
+    perform(props, timeout, factor) {
+        if (!is(props)) {
+            this.reportError(new Error("Animation property cannot be empty"));
+            return;
+        }
+        let animators = [];
+        try {
+            for (let prop in props) {
+                let animator = engine_classPrivateFieldGet(this, _factory).get(prop);
+                if (!animator)
+                    return;
+                animator.setProperty(props[prop]);
+                animators.push(animator);
+                engine_classPrivateFieldGet(this, _engine).setAnimators(animators);
+                engine_classPrivateFieldGet(this, _engine).animate(timeout !== null && timeout !== void 0 ? timeout : engine_classPrivateFieldGet(this, _timeout));
+            }
+        }
+        catch (e) {
+            this.reportError(e);
+            return;
+        }
+    }
+    reportError(e) {
+        if (engine_classPrivateFieldGet(this, _onError)) {
+            engine_classPrivateFieldGet(this, _onError).call(this, e);
+        }
+        else {
+            console.error(e);
+        }
+    }
+}
+_engine = new WeakMap(), _timeout = new WeakMap(), _factory = new WeakMap(), _onError = new WeakMap();
+class engine_AnimatorFactory {
+    get(id) {
+        if (!is(id)) {
+            return undefined;
+        }
+        switch (id) {
+            case "opacity":
+                return new animators_OpacityAnimator();
+            case "transform":
+                return new animators_TransformAnimator();
+            default:
+                return new animators_PropertyAnimator(id);
+        }
+    }
+}
+class engine_CuiAnimationEngine {
+    constructor(cleanOnFinish) {
+        _onFinishCallback.set(this, void 0);
+        _animators.set(this, void 0);
+        engine_lock.set(this, void 0);
+        // Needed in animation perform - set on first animation exec, cleaned on end
+        _animStartStamp.set(this, void 0);
+        engine_element.set(this, void 0);
+        _cleanOnFinish.set(this, void 0);
+        _errorOccured.set(this, void 0);
+        _factory_1.set(this, void 0);
+        _onError_1.set(this, void 0);
+        engine_classPrivateFieldSet(this, _animators, []);
+        engine_classPrivateFieldSet(this, engine_element, undefined);
+        engine_classPrivateFieldSet(this, _animStartStamp, undefined);
+        engine_classPrivateFieldSet(this, _cleanOnFinish, cleanOnFinish !== null && cleanOnFinish !== void 0 ? cleanOnFinish : false);
+        engine_classPrivateFieldSet(this, _factory_1, new engine_AnimatorFactory());
+        engine_classPrivateFieldSet(this, engine_lock, false);
+        engine_classPrivateFieldSet(this, _onFinishCallback, undefined);
+        engine_classPrivateFieldSet(this, _errorOccured, false);
+        engine_classPrivateFieldSet(this, _onError_1, undefined);
+    }
+    onFinish(callback) {
+        engine_classPrivateFieldSet(this, _onFinishCallback, callback);
+    }
+    setAnimators(animators) {
+        engine_classPrivateFieldSet(this, _animators, animators);
+    }
+    setProps(props) {
+        if (!is(props)) {
+            return;
+        }
+        engine_classPrivateFieldSet(this, _animators, []);
+        try {
+            for (let prop in props) {
+                let animator = engine_classPrivateFieldGet(this, _factory_1).get(prop);
+                if (!animator)
+                    return;
+                animator.setProperty(props[prop]);
+                engine_classPrivateFieldGet(this, _animators).push(animator);
+            }
+        }
+        catch (e) {
+            this.reportError(e);
+        }
+    }
+    setElement(element) {
+        engine_classPrivateFieldSet(this, engine_element, element);
+    }
+    setOnError(callback) {
+        engine_classPrivateFieldSet(this, _onError_1, callback);
+    }
+    animate(timeout, progress, revert) {
+        if (engine_classPrivateFieldGet(this, engine_lock)) {
+            return;
+        }
+        if (!engine_classPrivateFieldGet(this, engine_element) || engine_classPrivateFieldGet(this, _animators).length === 0) {
+            this.reportError(new Error("Animation cannot be performed: element or animators are not set"));
+            return;
+        }
+        let animationProgress = progress !== null && progress !== void 0 ? progress : 0;
+        let shouldCalcRevert = revert ? revert : false;
+        engine_classPrivateFieldSet(this, engine_lock, true);
+        requestAnimationFrame(this.animateAsync.bind(this, timeout, animationProgress, shouldCalcRevert));
+    }
+    isLocked() {
+        return engine_classPrivateFieldGet(this, engine_lock);
+    }
+    animateAsync(timeout, initialProgress, revert, timestamp) {
+        if (!engine_classPrivateFieldGet(this, _animStartStamp)) {
+            engine_classPrivateFieldSet(this, _animStartStamp, timestamp);
+        }
+        let pr = timestamp - engine_classPrivateFieldGet(this, _animStartStamp);
+        let animationProgress = pr / timeout;
+        let currProgress = 0;
+        if (initialProgress === 0) {
+            currProgress = animationProgress;
+        }
+        else {
+            currProgress = revert ? initialProgress - (animationProgress * initialProgress) : initialProgress + (animationProgress * initialProgress);
+        }
+        this.callUpdate(revert ? Math.max(currProgress, 0) : Math.min(currProgress, 1), 1);
+        if (pr < timeout && !engine_classPrivateFieldGet(this, _errorOccured)) {
+            requestAnimationFrame(this.animateAsync.bind(this, timeout, initialProgress, revert));
+        }
+        else {
+            this.endAnimation(revert);
+        }
+    }
+    endAnimation(reverted) {
+        if (engine_classPrivateFieldGet(this, _cleanOnFinish) && engine_classPrivateFieldGet(this, engine_element)) {
+            engine_classPrivateFieldGet(this, engine_element).removeAttribute("style");
+        }
+        if (engine_classPrivateFieldGet(this, _onFinishCallback)) {
+            engine_classPrivateFieldGet(this, _onFinishCallback).call(this, engine_classPrivateFieldGet(this, engine_element), reverted, engine_classPrivateFieldGet(this, _errorOccured));
+        }
+        engine_classPrivateFieldSet(this, _errorOccured, false);
+        engine_classPrivateFieldSet(this, _animStartStamp, undefined);
+        engine_classPrivateFieldSet(this, engine_lock, false);
+    }
+    callUpdate(progress, factor) {
+        try {
+            engine_classPrivateFieldGet(this, _animators).forEach(animator => animator.perform(engine_classPrivateFieldGet(this, engine_element), progress, factor));
+        }
+        catch (e) {
+            this.reportError(e);
+            engine_classPrivateFieldSet(this, _errorOccured, true);
+        }
+    }
+    reportError(e) {
+        if (engine_classPrivateFieldGet(this, _onError_1)) {
+            engine_classPrivateFieldGet(this, _onError_1).call(this, e);
+        }
+        else {
+            console.error("An error occured in CuiAnimtionEngine");
+            console.error(e);
+        }
+    }
+}
+_onFinishCallback = new WeakMap(), _animators = new WeakMap(), engine_lock = new WeakMap(), _animStartStamp = new WeakMap(), engine_element = new WeakMap(), _cleanOnFinish = new WeakMap(), _errorOccured = new WeakMap(), _factory_1 = new WeakMap(), _onError_1 = new WeakMap();
+class engine_CuiSwipeAnimationEngine {
+    constructor(shouldCleanOnFinish) {
+        engine_element_1.set(this, void 0);
+        _animators_1.set(this, void 0);
+        _animationEngine.set(this, void 0);
+        _factory_2.set(this, void 0);
+        _onError_2.set(this, void 0);
+        engine_classPrivateFieldSet(this, engine_element_1, undefined);
+        engine_classPrivateFieldSet(this, _animators_1, []);
+        engine_classPrivateFieldSet(this, _animationEngine, new engine_CuiAnimationEngine(shouldCleanOnFinish));
+        engine_classPrivateFieldSet(this, _factory_2, new engine_AnimatorFactory());
+        engine_classPrivateFieldSet(this, _onError_2, undefined);
+    }
+    setElement(element) {
+        engine_classPrivateFieldSet(this, engine_element_1, element);
+    }
+    setOnFinish(callback) {
+        engine_classPrivateFieldGet(this, _animationEngine).onFinish(callback);
+    }
+    setOnError(callback) {
+        engine_classPrivateFieldSet(this, _onError_2, callback);
+        engine_classPrivateFieldGet(this, _animationEngine).setOnError(callback);
+    }
+    setProps(props) {
+        if (!is(props)) {
+            return;
+        }
+        engine_classPrivateFieldSet(this, _animators_1, []);
+        try {
+            for (let prop in props) {
+                let animator = engine_classPrivateFieldGet(this, _factory_2).get(prop);
+                if (!animator)
+                    return;
+                animator.setProperty(props[prop]);
+                engine_classPrivateFieldGet(this, _animators_1).push(animator);
+            }
+        }
+        catch (e) {
+            this.reportError(e);
+        }
+    }
+    /**
+     * Perform single update on animators
+     * @param progress - progress value to be set to animators 0..1
+     */
+    update(progress) {
+        if (!engine_classPrivateFieldGet(this, engine_element_1) || engine_classPrivateFieldGet(this, _animators_1).length === 0) {
+            return;
+        }
+        engine_classPrivateFieldGet(this, _animators_1).forEach(animator => animator.perform(engine_classPrivateFieldGet(this, engine_element_1), Math.min(progress, 1), 1));
+    }
+    /**
+     * Perform single update on animators in RAF
+     * @param progress - progress value to be set to animators 0..1
+     */
+    updateAsync(progress) {
+        requestAnimationFrame(this.update.bind(this, progress));
+    }
+    /**
+     * Finish swipe animation using animation engine
+     * @param progress - initial progress value 0..1
+     * @param timeout - time for animation to perform
+     * @param revert - whether animation should return back to 0 or progress to the end
+     */
+    finish(progress, timeout, revert) {
+        if (engine_classPrivateFieldGet(this, engine_element_1))
+            engine_classPrivateFieldGet(this, _animationEngine).setElement(engine_classPrivateFieldGet(this, engine_element_1));
+        engine_classPrivateFieldGet(this, _animationEngine).setAnimators(engine_classPrivateFieldGet(this, _animators_1));
+        engine_classPrivateFieldGet(this, _animationEngine).animate(timeout, progress, revert);
+    }
+    reportError(e) {
+        if (engine_classPrivateFieldGet(this, _onError_2)) {
+            engine_classPrivateFieldGet(this, _onError_2).call(this, e);
+        }
+        else {
+            console.log(e);
+        }
+    }
+}
+engine_element_1 = new WeakMap(), _animators_1 = new WeakMap(), _animationEngine = new WeakMap(), _factory_2 = new WeakMap(), _onError_2 = new WeakMap();
+
+// CONCATENATED MODULE: ./src/components/banner/banner.ts
+var banner_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var banner_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var banner_defTimeout, banner_prefix, _prefix_1, _swipeEngine, _isTracking, _startX, _ratio, _swipeAnimation, _moveEventId;
+
+
+
+
+
+
+const BANNER_OPEN_ANIMATION = ".{prefix}-animation-fade-in";
+const BANNER_CLOSE_ANIMATION = ".{prefix}-animation-fade-out";
+class banner_CuiBannerArgs {
+    constructor(prefix, timeout) {
+        banner_defTimeout.set(this, void 0);
+        banner_prefix.set(this, void 0);
+        banner_classPrivateFieldSet(this, banner_defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
+        banner_classPrivateFieldSet(this, banner_prefix, prefix);
+        this.escClose = false;
+        this.keyClose = "";
+        this.timeout = banner_classPrivateFieldGet(this, banner_defTimeout);
+        this.swipe = false;
+        this.openAct = "";
+        this.closeAct = "";
+    }
+    parse(args) {
+        this.swipe = boolStringOrDefault(args.swipe, false);
+        this.escClose = false;
+        this.keyClose = "";
+        this.timeout = getIntOrDefault(args.timeout, banner_classPrivateFieldGet(this, banner_defTimeout));
+        this.openAct = getStringOrDefault(args.openAct, replacePrefix(BANNER_OPEN_ANIMATION, banner_classPrivateFieldGet(this, banner_prefix)));
+        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(BANNER_CLOSE_ANIMATION, banner_classPrivateFieldGet(this, banner_prefix)));
+    }
+}
+banner_defTimeout = new WeakMap(), banner_prefix = new WeakMap();
+class CuiBanerComponent {
+    constructor(prefix) {
+        _prefix_1.set(this, void 0);
+        banner_classPrivateFieldSet(this, _prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${banner_classPrivateFieldGet(this, _prefix_1)}-banner`;
+    }
+    getStyle() {
+        return null;
+    }
+    get(element, utils) {
+        return new banner_CuiBannerHandler(element, utils, this.attribute, banner_classPrivateFieldGet(this, _prefix_1));
+    }
+}
+_prefix_1 = new WeakMap();
+class banner_CuiBannerHandler extends base_CuiInteractableHandler {
+    constructor(element, utils, attribute, prefix) {
+        super("CuiBannerHandler", element, attribute, new banner_CuiBannerArgs(prefix, utils.setup.animationTime), utils);
+        _swipeEngine.set(this, void 0);
+        _isTracking.set(this, void 0);
+        _startX.set(this, void 0);
+        _ratio.set(this, void 0);
+        _swipeAnimation.set(this, void 0);
+        _moveEventId.set(this, void 0);
+        banner_classPrivateFieldSet(this, _swipeEngine, new engine_CuiSwipeAnimationEngine(true));
+        banner_classPrivateFieldGet(this, _swipeEngine).setOnFinish(this.onSwipeFinish.bind(this));
+        banner_classPrivateFieldGet(this, _swipeEngine).setElement(this.element);
+        banner_classPrivateFieldSet(this, _startX, -1);
+        banner_classPrivateFieldSet(this, _ratio, 0);
+        banner_classPrivateFieldSet(this, _swipeAnimation, SWIPE_ANIMATIONS_DEFINITIONS["fade"]);
+        banner_classPrivateFieldSet(this, _moveEventId, null);
+        banner_classPrivateFieldSet(this, _isTracking, false);
+    }
+    onInit() {
+        //   this.#moveEventId = this.onEvent(EVENTS.GLOBAL_MOVE, this.onMove.bind(this));
+        if (!this.isActive()) {
+            this.open();
+        }
+    }
+    onUpdate() {
+    }
+    onDestroy() {
+        this.detachEvent(EVENTS.GLOBAL_MOVE, banner_classPrivateFieldGet(this, _moveEventId));
+    }
+    onBeforeOpen() {
+        return true;
+    }
+    onAfterOpen() {
+        if (this.args.swipe) {
+            banner_classPrivateFieldSet(this, _moveEventId, this.onEvent(EVENTS.GLOBAL_MOVE, this.onMove.bind(this)));
+        }
+    }
+    onAfterClose() {
+        this.detachEvent(EVENTS.GLOBAL_MOVE, banner_classPrivateFieldGet(this, _moveEventId));
+    }
+    onBeforeClose() {
+        return true;
+    }
+    onMove(data) {
+        if (this.isLocked) {
+            return;
+        }
+        let current = this.element;
+        switch (data.type) {
+            case "down":
+                if (banner_classPrivateFieldGet(this, _isTracking) || !current.contains(data.target)) {
+                    return;
+                }
+                banner_classPrivateFieldSet(this, _isTracking, true);
+                banner_classPrivateFieldSet(this, _startX, data.x);
+                this.helper.setClassesAs(document.body, CLASSES.swipingOn);
+                data.event.preventDefault();
+                break;
+            case "up":
+                if (!banner_classPrivateFieldGet(this, _isTracking) && banner_classPrivateFieldGet(this, _ratio) == 0) {
+                    break;
+                }
+                let absRatio = Math.abs(banner_classPrivateFieldGet(this, _ratio));
+                let timeout = absRatio * this.args.timeout;
+                let back = absRatio <= 0.4;
+                // Lock component until animation is finished
+                this.isLocked = true;
+                banner_classPrivateFieldGet(this, _swipeEngine).finish(absRatio, timeout, back);
+                this.helper.removeClassesAs(document.body, CLASSES.swipingOn);
+                banner_classPrivateFieldSet(this, _isTracking, false);
+                break;
+            case "move":
+                if (banner_classPrivateFieldGet(this, _isTracking)) {
+                    let newRatio = (data.x - banner_classPrivateFieldGet(this, _startX)) / current.offsetWidth;
+                    if (banner_classPrivateFieldGet(this, _ratio) >= 0 && newRatio <= 0 || banner_classPrivateFieldGet(this, _ratio) <= 0 && newRatio > 0) {
+                        banner_classPrivateFieldGet(this, _swipeEngine).setProps(newRatio > 0 ? banner_classPrivateFieldGet(this, _swipeAnimation).current.right : banner_classPrivateFieldGet(this, _swipeAnimation).current.left);
+                    }
+                    banner_classPrivateFieldSet(this, _ratio, newRatio);
+                    this.mutate(() => {
+                        banner_classPrivateFieldGet(this, _swipeEngine).update(Math.abs(banner_classPrivateFieldGet(this, _ratio)));
+                    });
+                    data.event.preventDefault();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    onSwipeFinish(element, reverted, error) {
+        this.isLocked = false;
+        if (!reverted) {
+            this.helper.removeClass(this.activeClassName, this.element);
+            AriaAttributes.setAria(this.element, 'aria-expanded', 'false');
+        }
+        banner_classPrivateFieldSet(this, _ratio, 0);
+        banner_classPrivateFieldSet(this, _startX, 0);
+    }
+}
+_swipeEngine = new WeakMap(), _isTracking = new WeakMap(), _startX = new WeakMap(), _ratio = new WeakMap(), _swipeAnimation = new WeakMap(), _moveEventId = new WeakMap();
+
 // CONCATENATED MODULE: ./src/core/builders/icon.ts
 var icon_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
@@ -5006,38 +5758,38 @@ var close_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet)
     }
     return privateMap.get(receiver);
 };
-var _defTimeout, close_prefix, close_eventId;
+var close_defTimeout, close_prefix, close_eventId;
 
 
 
 
 class close_CuiCloseArgs {
     constructor(timeout) {
-        _defTimeout.set(this, void 0);
+        close_defTimeout.set(this, void 0);
         this.target = "";
         this.action = "";
         this.prevent = false;
         this.state = "";
-        close_classPrivateFieldSet(this, _defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
-        this.timeout = close_classPrivateFieldGet(this, _defTimeout);
+        close_classPrivateFieldSet(this, close_defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
+        this.timeout = close_classPrivateFieldGet(this, close_defTimeout);
     }
     parse(args) {
         if (is(args) && isString(args)) {
             this.target = args;
             this.action = "";
-            this.timeout = close_classPrivateFieldGet(this, _defTimeout);
+            this.timeout = close_classPrivateFieldGet(this, close_defTimeout);
             this.prevent = false;
             this.state = "";
             return;
         }
         this.target = getStringOrDefault(args.target, "");
         this.action = args.action;
-        this.timeout = getIntOrDefault(args.timeout, close_classPrivateFieldGet(this, _defTimeout));
+        this.timeout = getIntOrDefault(args.timeout, close_classPrivateFieldGet(this, close_defTimeout));
         this.prevent = args.prevent && isStringTrue(args.prevent);
         this.state = args.state;
     }
 }
-_defTimeout = new WeakMap();
+close_defTimeout = new WeakMap();
 class CuiCloseComponent {
     constructor(prefix) {
         close_prefix.set(this, void 0);
@@ -5146,6 +5898,105 @@ class close_CuiCloseHandler extends CuiHandler {
 }
 close_eventId = new WeakMap();
 
+// CONCATENATED MODULE: ./src/components/cover/cover.ts
+var cover_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var cover_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var cover_defTimeout, cover_prefix, cover_prefix_1, _bodyClass, _scrollY;
+
+
+
+const COVER_OPEN_ANIMATION_CLASS = '.{prefix}-dialog-default-in';
+const COVER_CLOSE_ANIMATION_CLASS = '.{prefix}-dialog-default-out';
+const bodyClass = '{prefix}-cover-open';
+class cover_CuiCoverArgs {
+    constructor(prefix, defTimeout) {
+        cover_defTimeout.set(this, void 0);
+        cover_prefix.set(this, void 0);
+        cover_classPrivateFieldSet(this, cover_defTimeout, defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300);
+        cover_classPrivateFieldSet(this, cover_prefix, prefix);
+        this.escClose = false;
+        this.timeout = cover_classPrivateFieldGet(this, cover_defTimeout);
+        this.openAct = "";
+        this.closeAct = "";
+        this.keyClose = "";
+    }
+    parse(args) {
+        this.escClose = isStringTrue(args.escClose);
+        this.keyClose = args.keyClose;
+        this.timeout = getIntOrDefault(args.timeout, cover_classPrivateFieldGet(this, cover_defTimeout));
+        this.openAct = getStringOrDefault(args.openAct, replacePrefix(COVER_OPEN_ANIMATION_CLASS, cover_classPrivateFieldGet(this, cover_prefix)));
+        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(COVER_CLOSE_ANIMATION_CLASS, cover_classPrivateFieldGet(this, cover_prefix)));
+    }
+}
+cover_defTimeout = new WeakMap(), cover_prefix = new WeakMap();
+class CuiCoverComponent {
+    constructor(prefix) {
+        cover_prefix_1.set(this, void 0);
+        cover_classPrivateFieldSet(this, cover_prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${cover_classPrivateFieldGet(this, cover_prefix_1)}-cover`;
+    }
+    getStyle() {
+        return null;
+    }
+    get(element, utils) {
+        return new cover_CuiCoverHandler(element, utils, this.attribute, cover_classPrivateFieldGet(this, cover_prefix_1));
+    }
+}
+cover_prefix_1 = new WeakMap();
+class cover_CuiCoverHandler extends base_CuiInteractableHandler {
+    constructor(element, utils, attribute, prefix) {
+        super("CuiDialogHandler", element, attribute, new cover_CuiCoverArgs(prefix, utils.setup.animationTimeLong), utils);
+        _bodyClass.set(this, void 0);
+        _scrollY.set(this, void 0);
+        cover_classPrivateFieldSet(this, _bodyClass, replacePrefix(bodyClass, prefix));
+        cover_classPrivateFieldSet(this, _scrollY, 0);
+    }
+    onInit() {
+        AriaAttributes.setAria(this.element, 'aria-modal', "");
+    }
+    onUpdate() {
+    }
+    onDestroy() {
+    }
+    onBeforeOpen() {
+        if (this.isAnyActive()) {
+            return false;
+        }
+        cover_classPrivateFieldSet(this, _scrollY, window.pageYOffset);
+        return true;
+    }
+    onAfterOpen() {
+        this.helper.setClass(cover_classPrivateFieldGet(this, _bodyClass), document.body);
+        document.body.style.top = `-${cover_classPrivateFieldGet(this, _scrollY)}px`;
+        AriaAttributes.setAria(this.element, 'aria-hidden', "false");
+    }
+    onAfterClose() {
+        document.body.style.top = '';
+        window.scrollTo(0, (cover_classPrivateFieldGet(this, _scrollY) || 0) * -1);
+        cover_classPrivateFieldSet(this, _scrollY, 0);
+        this.helper.removeClass(cover_classPrivateFieldGet(this, _bodyClass), document.body);
+        AriaAttributes.setAria(this.element, 'aria-hidden', "true");
+    }
+    onBeforeClose() {
+        return true;
+    }
+    isAnyActive() {
+        return this.helper.hasClass(cover_classPrivateFieldGet(this, _bodyClass), document.body);
+    }
+}
+_bodyClass = new WeakMap(), _scrollY = new WeakMap();
+
 // CONCATENATED MODULE: ./src/components/dialog/dialog.ts
 var dialog_dialog_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
@@ -5160,14 +6011,14 @@ var dialog_dialog_classPrivateFieldGet = (undefined && undefined.__classPrivateF
     }
     return privateMap.get(receiver);
 };
-var dialog_defTimeout, dialog_prefix, _prefix_1, _prefix_2, _bodyClass, _scrollY, _windowClickEventId;
+var dialog_defTimeout, dialog_prefix, dialog_prefix_1, _prefix_2, dialog_bodyClass, dialog_scrollY, _windowClickEventId;
 
 
 
 
 const DIALOG_OPEN_ANIMATION_CLASS = '.{prefix}-dialog-default-in';
 const DIALOG_CLOSE_ANIMATION_CLASS = '.{prefix}-dialog-default-out';
-const bodyClass = '{prefix}-dialog-open';
+const dialog_dialog_bodyClass = '{prefix}-dialog-open';
 const CONTAINER = '.{prefix}-dialog-container';
 class dialog_CuiDialogArgs {
     constructor(prefix, defTimeout) {
@@ -5194,28 +6045,28 @@ class dialog_CuiDialogArgs {
 dialog_defTimeout = new WeakMap(), dialog_prefix = new WeakMap();
 class CuiDialogComponent {
     constructor(prefix) {
-        _prefix_1.set(this, void 0);
-        dialog_dialog_classPrivateFieldSet(this, _prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${dialog_dialog_classPrivateFieldGet(this, _prefix_1)}-dialog`;
+        dialog_prefix_1.set(this, void 0);
+        dialog_dialog_classPrivateFieldSet(this, dialog_prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${dialog_dialog_classPrivateFieldGet(this, dialog_prefix_1)}-dialog`;
     }
     getStyle() {
         return null;
     }
     get(element, utils) {
-        return new dialog_CuiDialogHandler(element, utils, this.attribute, dialog_dialog_classPrivateFieldGet(this, _prefix_1));
+        return new dialog_CuiDialogHandler(element, utils, this.attribute, dialog_dialog_classPrivateFieldGet(this, dialog_prefix_1));
     }
 }
-_prefix_1 = new WeakMap();
+dialog_prefix_1 = new WeakMap();
 class dialog_CuiDialogHandler extends base_CuiInteractableHandler {
     constructor(element, utils, attribute, prefix) {
         super("CuiDialogHandler", element, attribute, new dialog_CuiDialogArgs(prefix, utils.setup.animationTimeLong), utils);
         _prefix_2.set(this, void 0);
-        _bodyClass.set(this, void 0);
-        _scrollY.set(this, void 0);
+        dialog_bodyClass.set(this, void 0);
+        dialog_scrollY.set(this, void 0);
         _windowClickEventId.set(this, void 0);
-        dialog_dialog_classPrivateFieldSet(this, _bodyClass, replacePrefix(bodyClass, prefix));
+        dialog_dialog_classPrivateFieldSet(this, dialog_bodyClass, replacePrefix(dialog_dialog_bodyClass, prefix));
         dialog_dialog_classPrivateFieldSet(this, _prefix_2, prefix);
-        dialog_dialog_classPrivateFieldSet(this, _scrollY, 0);
+        dialog_dialog_classPrivateFieldSet(this, dialog_scrollY, 0);
         dialog_dialog_classPrivateFieldSet(this, _windowClickEventId, null);
     }
     onInit() {
@@ -5229,28 +6080,28 @@ class dialog_CuiDialogHandler extends base_CuiInteractableHandler {
         if (this.isAnyActive()) {
             return false;
         }
-        dialog_dialog_classPrivateFieldSet(this, _scrollY, window.pageYOffset);
+        dialog_dialog_classPrivateFieldSet(this, dialog_scrollY, window.pageYOffset);
         return true;
     }
     onAfterOpen() {
         if (this.args.outClose) {
             dialog_dialog_classPrivateFieldSet(this, _windowClickEventId, this.onEvent(EVENTS.WINDOW_CLICK, this.onWindowClick.bind(this)));
         }
-        this.helper.setClass(dialog_dialog_classPrivateFieldGet(this, _bodyClass), document.body);
-        document.body.style.top = `-${dialog_dialog_classPrivateFieldGet(this, _scrollY)}px`;
+        this.helper.setClass(dialog_dialog_classPrivateFieldGet(this, dialog_bodyClass), document.body);
+        document.body.style.top = `-${dialog_dialog_classPrivateFieldGet(this, dialog_scrollY)}px`;
     }
     onAfterClose() {
         document.body.style.top = '';
-        window.scrollTo(0, (dialog_dialog_classPrivateFieldGet(this, _scrollY) || 0) * -1);
-        dialog_dialog_classPrivateFieldSet(this, _scrollY, 0);
-        this.helper.removeClass(dialog_dialog_classPrivateFieldGet(this, _bodyClass), document.body);
+        window.scrollTo(0, (dialog_dialog_classPrivateFieldGet(this, dialog_scrollY) || 0) * -1);
+        dialog_dialog_classPrivateFieldSet(this, dialog_scrollY, 0);
+        this.helper.removeClass(dialog_dialog_classPrivateFieldGet(this, dialog_bodyClass), document.body);
         this.detachEvent(EVENTS.WINDOW_CLICK, dialog_dialog_classPrivateFieldGet(this, _windowClickEventId));
     }
     onBeforeClose() {
         return true;
     }
     isAnyActive() {
-        return this.helper.hasClass(dialog_dialog_classPrivateFieldGet(this, _bodyClass), document.body);
+        return this.helper.hasClass(dialog_dialog_classPrivateFieldGet(this, dialog_bodyClass), document.body);
     }
     onWindowClick(ev) {
         let container = this.element.querySelector(replacePrefix(CONTAINER, dialog_dialog_classPrivateFieldGet(this, _prefix_2)));
@@ -5261,7 +6112,7 @@ class dialog_CuiDialogHandler extends base_CuiInteractableHandler {
         }
     }
 }
-_prefix_2 = new WeakMap(), _bodyClass = new WeakMap(), _scrollY = new WeakMap(), _windowClickEventId = new WeakMap();
+_prefix_2 = new WeakMap(), dialog_bodyClass = new WeakMap(), dialog_scrollY = new WeakMap(), _windowClickEventId = new WeakMap();
 
 // CONCATENATED MODULE: ./src/core/listeners/hover.ts
 var hover_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -5563,16 +6414,16 @@ var task_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) 
     }
     return privateMap.get(receiver);
 };
-var _taskId, _autoRenew, _timeout, task_callback;
+var _taskId, _autoRenew, task_timeout, task_callback;
 
 class task_CuiTaskRunner {
     constructor(timeout, autoRenew, callback) {
         _taskId.set(this, void 0);
         _autoRenew.set(this, void 0);
-        _timeout.set(this, void 0);
+        task_timeout.set(this, void 0);
         task_callback.set(this, void 0);
         task_classPrivateFieldSet(this, _autoRenew, autoRenew);
-        task_classPrivateFieldSet(this, _timeout, timeout);
+        task_classPrivateFieldSet(this, task_timeout, timeout);
         task_classPrivateFieldSet(this, task_callback, callback);
     }
     start() {
@@ -5587,7 +6438,7 @@ class task_CuiTaskRunner {
             if (task_classPrivateFieldGet(this, _autoRenew)) {
                 this.start();
             }
-        }, task_classPrivateFieldGet(this, _timeout)));
+        }, task_classPrivateFieldGet(this, task_timeout)));
     }
     stop() {
         if (task_classPrivateFieldGet(this, _taskId)) {
@@ -5599,16 +6450,16 @@ class task_CuiTaskRunner {
         return task_classPrivateFieldGet(this, _taskId);
     }
     canRun() {
-        return is(task_classPrivateFieldGet(this, task_callback)) && task_classPrivateFieldGet(this, _timeout) > 0;
+        return is(task_classPrivateFieldGet(this, task_callback)) && task_classPrivateFieldGet(this, task_timeout) > 0;
     }
     setCallback(callback) {
         task_classPrivateFieldSet(this, task_callback, callback);
     }
     setTimeout(timeout) {
-        task_classPrivateFieldSet(this, _timeout, timeout);
+        task_classPrivateFieldSet(this, task_timeout, timeout);
     }
 }
-_taskId = new WeakMap(), _autoRenew = new WeakMap(), _timeout = new WeakMap(), task_callback = new WeakMap();
+_taskId = new WeakMap(), _autoRenew = new WeakMap(), task_timeout = new WeakMap(), task_callback = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/drop/drop.ts
 var drop_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -5944,6 +6795,251 @@ class drop_CuiDropHandler extends CuiHandler {
 }
 drop_prefix_1 = new WeakMap(), drop_bodyClass = new WeakMap(), drop_attribute = new WeakMap(), _triggerHoverListener = new WeakMap(), _hoverListener = new WeakMap(), _trigger = new WeakMap(), drop_windowClickEventId = new WeakMap(), drop_openEventId = new WeakMap(), drop_closeEventId = new WeakMap(), _positionCalculator = new WeakMap(), _posClass = new WeakMap(), _autoTask = new WeakMap(), _actions = new WeakMap();
 
+// CONCATENATED MODULE: ./src/components/float/helpers.ts
+var float_helpers_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var float_helpers_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var helpers_element, helpers_element_1, _element_2;
+class BasePositionCalculator {
+    calculate(x, y, diffX, diffY) {
+        return [x, y];
+    }
+}
+class OptionalPositionCalculator {
+    constructor(element) {
+        helpers_element.set(this, void 0);
+        float_helpers_classPrivateFieldSet(this, helpers_element, element);
+    }
+    calculate(x, y, diffX, diffY) {
+        let newX = float_helpers_classPrivateFieldGet(this, helpers_element).offsetLeft + diffX;
+        let newY = float_helpers_classPrivateFieldGet(this, helpers_element).offsetTop + diffY;
+        return [newX, newY];
+    }
+}
+helpers_element = new WeakMap();
+class BaseResizeCalculator {
+    constructor(element) {
+        helpers_element_1.set(this, void 0);
+        float_helpers_classPrivateFieldSet(this, helpers_element_1, element);
+    }
+    calculate(x, y, diffX, diffY) {
+        let width = x - float_helpers_classPrivateFieldGet(this, helpers_element_1).offsetLeft;
+        let height = y - float_helpers_classPrivateFieldGet(this, helpers_element_1).offsetTop;
+        return [width, height];
+    }
+}
+helpers_element_1 = new WeakMap();
+class OptionalResizeCalculator {
+    constructor(element) {
+        _element_2.set(this, void 0);
+        float_helpers_classPrivateFieldSet(this, _element_2, element);
+    }
+    calculate(x, y, diffX, diffY) {
+        let width = float_helpers_classPrivateFieldGet(this, _element_2).offsetWidth + diffX;
+        let height = float_helpers_classPrivateFieldGet(this, _element_2).offsetHeight + diffY;
+        return [width, height];
+    }
+}
+_element_2 = new WeakMap();
+
+// CONCATENATED MODULE: ./src/components/float/float.ts
+var float_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var float_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var float_defTimeout, float_prefix, float_prefix_1, _isMoving, _isResizing, _prevX, _prevY, float_prefix_2, float_moveListener, float_positionCalculator, _resizeCalculator, _resizeBtn, _moveBtn;
+
+
+
+
+
+
+const FLOAT_OPEN_ANIMATION_CLASS = '.{prefix}-float-default-in';
+const FLOAT_CLOSE_ANIMATION_CLASS = '.{prefix}-float-default-out';
+const MOVE = '.{prefix}-float-move';
+const RESIZE = '.{prefix}-float-resize';
+class float_CuiFloatArgs {
+    constructor(prefix, defTimeout) {
+        float_defTimeout.set(this, void 0);
+        float_prefix.set(this, void 0);
+        float_classPrivateFieldSet(this, float_defTimeout, defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300);
+        float_classPrivateFieldSet(this, float_prefix, prefix);
+        this.escClose = false;
+        this.keyClose = "";
+        this.openAct = "";
+        this.closeAct = "";
+        this.timeout = float_classPrivateFieldGet(this, float_defTimeout);
+    }
+    parse(args) {
+        this.escClose = isStringTrue(args.escClose);
+        this.keyClose = args.keyClose;
+        this.timeout = getIntOrDefault(args.timeout, float_classPrivateFieldGet(this, float_defTimeout));
+        this.openAct = getStringOrDefault(args.openAct, replacePrefix(FLOAT_OPEN_ANIMATION_CLASS, float_classPrivateFieldGet(this, float_prefix)));
+        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(FLOAT_CLOSE_ANIMATION_CLASS, float_classPrivateFieldGet(this, float_prefix)));
+    }
+}
+float_defTimeout = new WeakMap(), float_prefix = new WeakMap();
+class CuiFloatComponent {
+    constructor(prefix) {
+        float_prefix_1.set(this, void 0);
+        float_classPrivateFieldSet(this, float_prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${float_classPrivateFieldGet(this, float_prefix_1)}-float`;
+    }
+    getStyle() {
+        return null;
+    }
+    get(element, utils) {
+        return new float_CuiFloatHandler(element, utils, this.attribute, float_classPrivateFieldGet(this, float_prefix_1));
+    }
+}
+float_prefix_1 = new WeakMap();
+class float_CuiFloatHandler extends base_CuiInteractableHandler {
+    constructor(element, utils, attribute, prefix) {
+        super("CuiFloatHandler", element, attribute, new float_CuiFloatArgs(prefix, utils.setup.animationTime), utils);
+        _isMoving.set(this, void 0);
+        _isResizing.set(this, void 0);
+        _prevX.set(this, void 0);
+        _prevY.set(this, void 0);
+        float_prefix_2.set(this, void 0);
+        float_moveListener.set(this, void 0);
+        float_positionCalculator.set(this, void 0);
+        _resizeCalculator.set(this, void 0);
+        _resizeBtn.set(this, void 0);
+        _moveBtn.set(this, void 0);
+        float_classPrivateFieldSet(this, _isMoving, false);
+        float_classPrivateFieldSet(this, _isResizing, false);
+        float_classPrivateFieldSet(this, _prevX, 0);
+        float_classPrivateFieldSet(this, _prevY, 0);
+        float_classPrivateFieldSet(this, float_moveListener, new move_CuiMoveEventListener());
+        float_classPrivateFieldGet(this, float_moveListener).preventDefault(false);
+        float_classPrivateFieldSet(this, float_positionCalculator, new BasePositionCalculator());
+        float_classPrivateFieldSet(this, _resizeCalculator, new BaseResizeCalculator(element));
+        float_classPrivateFieldSet(this, float_prefix_2, prefix);
+        this.move = this.move.bind(this);
+        this.resize = this.resize.bind(this);
+        float_classPrivateFieldSet(this, _moveBtn, null);
+        float_classPrivateFieldSet(this, _resizeBtn, null);
+    }
+    onInit() {
+        AriaAttributes.setAria(this.element, 'aria-modal', "");
+        float_classPrivateFieldSet(this, _moveBtn, this.element.querySelector(replacePrefix(MOVE, float_classPrivateFieldGet(this, float_prefix_2))));
+        float_classPrivateFieldSet(this, _resizeBtn, this.element.querySelector(replacePrefix(RESIZE, float_classPrivateFieldGet(this, float_prefix_2))));
+        float_classPrivateFieldGet(this, float_moveListener).setCallback(this.onMove.bind(this));
+    }
+    onUpdate() {
+    }
+    onDestroy() {
+    }
+    onBeforeOpen() {
+        return true;
+    }
+    onAfterOpen() {
+        float_classPrivateFieldGet(this, float_moveListener).attach();
+    }
+    onAfterClose() {
+        float_classPrivateFieldGet(this, float_moveListener).detach();
+    }
+    onBeforeClose() {
+        return true;
+    }
+    onMove(ev) {
+        switch (ev.type) {
+            case 'down':
+                this.onMouseDown(ev);
+                break;
+            case 'up':
+                this.onMouseUp(ev);
+                break;
+            case 'move':
+                this.onMouseMove(ev);
+                break;
+        }
+    }
+    onMouseDown(ev) {
+        if (ev.target === float_classPrivateFieldGet(this, _moveBtn)) {
+            float_classPrivateFieldSet(this, _isMoving, true);
+            ev.event.preventDefault();
+        }
+        else if (ev.target === float_classPrivateFieldGet(this, _resizeBtn)) {
+            float_classPrivateFieldSet(this, _isResizing, true);
+            ev.event.preventDefault();
+            //this.helper.setClass("cui-float-resize-shadow")
+        }
+        float_classPrivateFieldSet(this, _prevX, ev.x);
+        float_classPrivateFieldSet(this, _prevY, ev.y);
+        this.helper.setClassesAs(document.body, CLASSES.swipingOn);
+        // Lock global move handler
+        this.utils.bus.emit(EVENTS.MOVE_LOCK, null, true);
+    }
+    onMouseMove(ev) {
+        if (float_classPrivateFieldGet(this, _isMoving)) {
+            this.peform(ev, this.move);
+        }
+        else if (float_classPrivateFieldGet(this, _isResizing)) {
+            this.peform(ev, this.resize);
+        }
+    }
+    onMouseUp(ev) {
+        float_classPrivateFieldSet(this, _isMoving, false);
+        float_classPrivateFieldSet(this, _isResizing, false);
+        this.helper.removeClassesAs(document.body, CLASSES.swipingOn);
+        // Unlock global handler
+        this.utils.bus.emit(EVENTS.MOVE_LOCK, null, false);
+    }
+    peform(ev, callback) {
+        this.mutate(() => {
+            if (is(callback))
+                callback(this.element, ev.x, ev.y, (ev.x - float_classPrivateFieldGet(this, _prevX)), (ev.y - float_classPrivateFieldGet(this, _prevY)));
+            float_classPrivateFieldSet(this, _prevX, ev.x);
+            float_classPrivateFieldSet(this, _prevY, ev.y);
+        });
+        ev.event.preventDefault();
+    }
+    resize(element, x, y, diffX, diffY) {
+        let [newWidth, newHeight] = float_classPrivateFieldGet(this, _resizeCalculator).calculate(x, y, diffX, diffY);
+        if (this.fitsWindow(element.offsetTop, element.offsetLeft, newWidth, newHeight)) {
+            this.mutate(() => {
+                element.style.width = newWidth + "px";
+                element.style.height = newHeight + "px";
+            });
+        }
+    }
+    move(element, x, y, diffX, diffY) {
+        let [newX, newY] = float_classPrivateFieldGet(this, float_positionCalculator).calculate(x, y, diffX, diffY);
+        if (this.fitsWindow(newY, newX, element.offsetWidth, element.offsetHeight)) {
+            this.mutate(() => {
+                element.style.left = newX + "px";
+                element.style.top = newY + "px";
+            });
+        }
+    }
+    fitsWindow(top, left, width, height) {
+        return (top + height < window.innerHeight - 10) &&
+            (top > 10) && (left > 10) &&
+            (left + width < window.innerWidth - 10);
+    }
+}
+_isMoving = new WeakMap(), _isResizing = new WeakMap(), _prevX = new WeakMap(), _prevY = new WeakMap(), float_prefix_2 = new WeakMap(), float_moveListener = new WeakMap(), float_positionCalculator = new WeakMap(), _resizeCalculator = new WeakMap(), _resizeBtn = new WeakMap(), _moveBtn = new WeakMap();
+
 // CONCATENATED MODULE: ./src/components/icon/icon.ts
 var icon_icon_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
@@ -6123,7 +7219,7 @@ var intersection_intersection_classPrivateFieldGet = (undefined && undefined.__c
     }
     return privateMap.get(receiver);
 };
-var intersection_intersection_observer, _targets, intersection_actions;
+var intersection_intersection_observer, intersection_targets, intersection_actions;
 
 
 
@@ -6168,17 +7264,17 @@ class intersection_CuiIntersectionHandler extends CuiHandler {
     constructor(element, utils, attribute) {
         super("CuiIntersectionHandler", element, attribute, new intersection_CuiIntersectionAttributes(), utils);
         intersection_intersection_observer.set(this, void 0);
-        _targets.set(this, void 0);
+        intersection_targets.set(this, void 0);
         intersection_actions.set(this, void 0);
         intersection_intersection_classPrivateFieldSet(this, intersection_intersection_observer, new CuiIntersectionObserver(this.element));
-        intersection_intersection_classPrivateFieldSet(this, _targets, []);
+        intersection_intersection_classPrivateFieldSet(this, intersection_targets, []);
         intersection_intersection_classPrivateFieldSet(this, intersection_actions, []);
     }
     onInit() {
         this.parseArguments();
         intersection_intersection_classPrivateFieldGet(this, intersection_intersection_observer).setCallback(this.onIntersection.bind(this));
         intersection_intersection_classPrivateFieldGet(this, intersection_intersection_observer).connect();
-        intersection_intersection_classPrivateFieldGet(this, _targets).forEach(target => {
+        intersection_intersection_classPrivateFieldGet(this, intersection_targets).forEach(target => {
             intersection_intersection_classPrivateFieldGet(this, intersection_intersection_observer).observe(target);
         });
     }
@@ -6192,12 +7288,12 @@ class intersection_CuiIntersectionHandler extends CuiHandler {
         // @ts-ignore prevArgs is correct
         if (!is(this.prevArgs) || (this.prevArgs.target !== this.args.target)) {
             let el = this.args.isRoot ? document.body : this.element;
-            intersection_intersection_classPrivateFieldSet(this, _targets, [...el.querySelectorAll(this.args.target)]);
+            intersection_intersection_classPrivateFieldSet(this, intersection_targets, [...el.querySelectorAll(this.args.target)]);
         }
         intersection_intersection_classPrivateFieldSet(this, intersection_actions, actions_CuiActionsListFactory.get(this.args.action));
     }
     onIntersection(entries, observer) {
-        if (!is(intersection_intersection_classPrivateFieldGet(this, _targets))) {
+        if (!is(intersection_intersection_classPrivateFieldGet(this, intersection_targets))) {
             return;
         }
         entries.forEach(entry => {
@@ -6224,7 +7320,7 @@ class intersection_CuiIntersectionHandler extends CuiHandler {
         intersection_intersection_classPrivateFieldGet(this, intersection_actions).forEach(action => action.remove(element));
     }
 }
-intersection_intersection_observer = new WeakMap(), _targets = new WeakMap(), intersection_actions = new WeakMap();
+intersection_intersection_observer = new WeakMap(), intersection_targets = new WeakMap(), intersection_actions = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/offcanvas/offcanvas.ts
 var offcanvas_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -6505,7 +7601,7 @@ var scroll_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet
     }
     return privateMap.get(receiver);
 };
-var scroll_target, scroll_inProgress, scroll_threshold, _prevX, _prevY, scroll_callback, scroll_isAttached, scroll_box, _task, _listener;
+var scroll_target, scroll_inProgress, scroll_threshold, scroll_prevX, scroll_prevY, scroll_callback, scroll_isAttached, scroll_box, _task, _listener;
 
 
 
@@ -6515,8 +7611,8 @@ class scroll_CuiScrollListener {
         scroll_target.set(this, void 0);
         scroll_inProgress.set(this, void 0);
         scroll_threshold.set(this, void 0);
-        _prevX.set(this, void 0);
-        _prevY.set(this, void 0);
+        scroll_prevX.set(this, void 0);
+        scroll_prevY.set(this, void 0);
         scroll_callback.set(this, void 0);
         scroll_isAttached.set(this, void 0);
         scroll_box.set(this, void 0);
@@ -6526,7 +7622,7 @@ class scroll_CuiScrollListener {
         scroll_classPrivateFieldSet(this, scroll_box, CuiElementBoxFactory.get(target));
         scroll_classPrivateFieldSet(this, scroll_inProgress, false);
         scroll_classPrivateFieldSet(this, scroll_threshold, getRangeValueOrDefault(threshold, 0, 100, 0));
-        scroll_classPrivateFieldSet(this, _prevX, scroll_classPrivateFieldSet(this, _prevY, 0));
+        scroll_classPrivateFieldSet(this, scroll_prevX, scroll_classPrivateFieldSet(this, scroll_prevY, 0));
         scroll_classPrivateFieldSet(this, scroll_isAttached, false);
         scroll_classPrivateFieldSet(this, scroll_callback, undefined);
         scroll_classPrivateFieldSet(this, _task, new task_CuiTaskRunner(DEFAULT_SCROLL_END_TIMEOUT, false, this.onScrollFinish.bind(this)));
@@ -6567,8 +7663,8 @@ class scroll_CuiScrollListener {
         }
         let left = scroll_classPrivateFieldGet(this, scroll_box).getScrollLeft();
         let top = scroll_classPrivateFieldGet(this, scroll_box).getScrollTop();
-        scroll_classPrivateFieldSet(this, _prevX, scroll_classPrivateFieldGet(this, _prevX) + left);
-        scroll_classPrivateFieldSet(this, _prevY, scroll_classPrivateFieldGet(this, _prevY) + top);
+        scroll_classPrivateFieldSet(this, scroll_prevX, scroll_classPrivateFieldGet(this, scroll_prevX) + left);
+        scroll_classPrivateFieldSet(this, scroll_prevY, scroll_classPrivateFieldGet(this, scroll_prevY) + top);
         if (scroll_classPrivateFieldGet(this, scroll_inProgress) || (!this.passedThreshold() && is(ev))) {
             return;
         }
@@ -6585,17 +7681,17 @@ class scroll_CuiScrollListener {
         if (is(ev))
             scroll_classPrivateFieldGet(this, _task).start();
         scroll_classPrivateFieldSet(this, scroll_inProgress, false);
-        scroll_classPrivateFieldSet(this, _prevX, 0);
-        scroll_classPrivateFieldSet(this, _prevY, 0);
+        scroll_classPrivateFieldSet(this, scroll_prevX, 0);
+        scroll_classPrivateFieldSet(this, scroll_prevY, 0);
     }
     passedThreshold() {
-        return scroll_classPrivateFieldGet(this, scroll_threshold) <= 0 || (scroll_classPrivateFieldGet(this, _prevX) >= scroll_classPrivateFieldGet(this, scroll_threshold) || scroll_classPrivateFieldGet(this, _prevY) >= scroll_classPrivateFieldGet(this, scroll_threshold));
+        return scroll_classPrivateFieldGet(this, scroll_threshold) <= 0 || (scroll_classPrivateFieldGet(this, scroll_prevX) >= scroll_classPrivateFieldGet(this, scroll_threshold) || scroll_classPrivateFieldGet(this, scroll_prevY) >= scroll_classPrivateFieldGet(this, scroll_threshold));
     }
     onScrollFinish() {
         this.listener(undefined, false, "task");
     }
 }
-scroll_target = new WeakMap(), scroll_inProgress = new WeakMap(), scroll_threshold = new WeakMap(), _prevX = new WeakMap(), _prevY = new WeakMap(), scroll_callback = new WeakMap(), scroll_isAttached = new WeakMap(), scroll_box = new WeakMap(), _task = new WeakMap(), _listener = new WeakMap();
+scroll_target = new WeakMap(), scroll_inProgress = new WeakMap(), scroll_threshold = new WeakMap(), scroll_prevX = new WeakMap(), scroll_prevY = new WeakMap(), scroll_callback = new WeakMap(), scroll_isAttached = new WeakMap(), scroll_box = new WeakMap(), _task = new WeakMap(), _listener = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/offset/modes.ts
 var modes_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -7808,7 +8904,7 @@ var drag_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) 
     }
     return privateMap.get(receiver);
 };
-var drag_root, _moveHandler, _onDragStart, _onDragOver, _onDragEnd, drag_timeout, _isTracking, _timeoutId;
+var drag_root, _moveHandler, _onDragStart, _onDragOver, _onDragEnd, drag_timeout, drag_isTracking, _timeoutId;
 
 class drag_CuiDragHandler {
     constructor(root) {
@@ -7818,12 +8914,12 @@ class drag_CuiDragHandler {
         _onDragOver.set(this, void 0);
         _onDragEnd.set(this, void 0);
         drag_timeout.set(this, void 0);
-        _isTracking.set(this, void 0);
+        drag_isTracking.set(this, void 0);
         _timeoutId.set(this, void 0);
         drag_classPrivateFieldSet(this, drag_root, root);
         drag_classPrivateFieldSet(this, _moveHandler, new move_CuiMoveEventListener());
         drag_classPrivateFieldSet(this, drag_timeout, 150);
-        drag_classPrivateFieldSet(this, _isTracking, false);
+        drag_classPrivateFieldSet(this, drag_isTracking, false);
         drag_classPrivateFieldSet(this, _timeoutId, undefined);
         drag_classPrivateFieldGet(this, _moveHandler).setTarget(drag_classPrivateFieldGet(this, drag_root));
         drag_classPrivateFieldGet(this, _moveHandler).preventDefault(false);
@@ -7853,18 +8949,18 @@ class drag_CuiDragHandler {
     onMove(data) {
         switch (data.type) {
             case "down":
-                if (drag_classPrivateFieldGet(this, _isTracking)) {
+                if (drag_classPrivateFieldGet(this, drag_isTracking)) {
                     return;
                 }
                 drag_classPrivateFieldSet(this, _timeoutId, setTimeout(() => {
                     if (drag_classPrivateFieldGet(this, _onDragStart) && drag_classPrivateFieldGet(this, _onDragStart).call(this, data)) {
-                        drag_classPrivateFieldSet(this, _isTracking, true);
+                        drag_classPrivateFieldSet(this, drag_isTracking, true);
                     }
                 }, drag_classPrivateFieldGet(this, drag_timeout)));
                 break;
             case "move":
                 this.cancelTimeout();
-                if (!drag_classPrivateFieldGet(this, _isTracking)) {
+                if (!drag_classPrivateFieldGet(this, drag_isTracking)) {
                     return;
                 }
                 if (drag_classPrivateFieldGet(this, _onDragOver)) {
@@ -7873,13 +8969,13 @@ class drag_CuiDragHandler {
                 break;
             case "up":
                 this.cancelTimeout();
-                if (!drag_classPrivateFieldGet(this, _isTracking)) {
+                if (!drag_classPrivateFieldGet(this, drag_isTracking)) {
                     return;
                 }
                 if (drag_classPrivateFieldGet(this, _onDragEnd)) {
                     drag_classPrivateFieldGet(this, _onDragEnd).call(this, data);
                 }
-                drag_classPrivateFieldSet(this, _isTracking, false);
+                drag_classPrivateFieldSet(this, drag_isTracking, false);
                 break;
         }
     }
@@ -7890,418 +8986,7 @@ class drag_CuiDragHandler {
         }
     }
 }
-drag_root = new WeakMap(), _moveHandler = new WeakMap(), _onDragStart = new WeakMap(), _onDragOver = new WeakMap(), _onDragEnd = new WeakMap(), drag_timeout = new WeakMap(), _isTracking = new WeakMap(), _timeoutId = new WeakMap();
-
-// CONCATENATED MODULE: ./src/core/animation/animators.ts
-var animators_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var animators_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _unit;
-
-
-/**
- * Changes the opacity of the element from 0 to 1
- */
-class animators_OpacityAnimator {
-    constructor() {
-        this.length = this.to = this.from = -1;
-        this.rtl = false;
-    }
-    setProperty(prop) {
-        if (!prop || !is(prop.from) || !is(prop.to)) {
-            throw new AnimatorError("[OpacityAnimator] Property has incorrect format");
-        }
-        this.from = prop.from;
-        this.to = prop.to;
-        this.length = Math.abs(this.to - this.from);
-        this.rtl = this.from > this.to;
-    }
-    perform(element, progress, factor) {
-        if (this.to < 0) {
-            return;
-        }
-        let current = this.length * progress;
-        if (element["style"]) {
-            element.style.opacity = this.rtl ? Math.max(this.from - current, 0) : Math.min(this.from + current, 1);
-        }
-    }
-}
-/**
- * Changes any style property of the element
- */
-class animators_PropertyAnimator {
-    constructor(property) {
-        _unit.set(this, void 0);
-        if (!is(property)) {
-            throw new AnimatorError("[PropertyAnimator] Valid property is required");
-        }
-        this.property = property;
-        this.length = this.to = this.from = -1;
-        this.rtl = false;
-        animators_classPrivateFieldSet(this, _unit, "");
-    }
-    setProperty(prop) {
-        if (!prop || !is(prop.from) || !is(prop.to)) {
-            throw new AnimatorError("[PropertyAnimator] Property has incorrect format");
-        }
-        this.from = prop.from;
-        this.to = prop.to;
-        this.length = Math.abs(this.to - this.from);
-        this.rtl = this.from > this.to;
-        animators_classPrivateFieldSet(this, _unit, prop.unit);
-    }
-    perform(element, progress, factor) {
-        if (!this.property) {
-            return;
-        }
-        let current = this.length * progress;
-        if (element["style"]) {
-            element.style[this.property] = this.createValue(this.rtl ? this.from - current : this.from + current, animators_classPrivateFieldGet(this, _unit));
-        }
-    }
-    createValue(value, unit) {
-        return `${value}${unit !== null && unit !== void 0 ? unit : ""}`;
-    }
-}
-_unit = new WeakMap();
-/**
- * Changes transform property of the element. Supports mulitple properties at the time
- */
-class animators_TransformAnimator {
-    constructor() {
-        this.prop = undefined;
-    }
-    setProperty(prop) {
-        if (!prop) {
-            throw new AnimatorError("[TransformAnimator] Property has incorrect format");
-        }
-        this.prop = prop;
-    }
-    build(progress) {
-        let props = [];
-        for (let name in this.prop) {
-            let cur = this.prop[name];
-            let diff = Math.abs(cur.to - cur.from);
-            let rtl = cur.from > cur.to;
-            let val = rtl ? cur.from - (diff * progress) : cur.from + (diff * progress);
-            props.push(this.buildSingle(name, val, cur.unit));
-        }
-        return props.join(" ");
-    }
-    buildSingle(name, value, unit) {
-        return `${name}(${value}${unit})`;
-    }
-    perform(element, progress) {
-        if (!this.prop) {
-            return;
-        }
-        if (element["style"]) {
-            element.style.transform = this.build(progress);
-        }
-    }
-}
-
-// CONCATENATED MODULE: ./src/core/animation/engine.ts
-var engine_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var engine_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _engine, engine_timeout, _factory, _onError, _onFinishCallback, _animators, engine_lock, _animStartStamp, engine_element, _cleanOnFinish, _errorOccured, _factory_1, _onError_1, engine_element_1, _animators_1, _animationEngine, _factory_2, _onError_2;
-
-
-class engine_CuiAnimation {
-    constructor(element) {
-        _engine.set(this, void 0);
-        engine_timeout.set(this, void 0);
-        _factory.set(this, void 0);
-        _onError.set(this, void 0);
-        engine_classPrivateFieldSet(this, _engine, new engine_CuiAnimationEngine(true));
-        engine_classPrivateFieldSet(this, _onError, undefined);
-        engine_classPrivateFieldSet(this, engine_timeout, 0);
-        engine_classPrivateFieldSet(this, _factory, new engine_AnimatorFactory());
-        if (element) {
-            engine_classPrivateFieldGet(this, _engine).setElement(element);
-        }
-    }
-    setElement(element) {
-        engine_classPrivateFieldGet(this, _engine).setElement(element);
-    }
-    setTimeout(timeout) {
-        engine_classPrivateFieldSet(this, engine_timeout, timeout);
-    }
-    onError(callback) {
-        engine_classPrivateFieldSet(this, _onError, callback);
-        engine_classPrivateFieldGet(this, _engine).setOnError(callback);
-    }
-    onFinish(callback) {
-        engine_classPrivateFieldGet(this, _engine).onFinish(callback);
-    }
-    perform(props, timeout, factor) {
-        if (!is(props)) {
-            this.reportError(new Error("Animation property cannot be empty"));
-            return;
-        }
-        let animators = [];
-        try {
-            for (let prop in props) {
-                let animator = engine_classPrivateFieldGet(this, _factory).get(prop);
-                if (!animator)
-                    return;
-                animator.setProperty(props[prop]);
-                animators.push(animator);
-                engine_classPrivateFieldGet(this, _engine).setAnimators(animators);
-                engine_classPrivateFieldGet(this, _engine).animate(timeout !== null && timeout !== void 0 ? timeout : engine_classPrivateFieldGet(this, engine_timeout));
-            }
-        }
-        catch (e) {
-            this.reportError(e);
-            return;
-        }
-    }
-    reportError(e) {
-        if (engine_classPrivateFieldGet(this, _onError)) {
-            engine_classPrivateFieldGet(this, _onError).call(this, e);
-        }
-        else {
-            console.error(e);
-        }
-    }
-}
-_engine = new WeakMap(), engine_timeout = new WeakMap(), _factory = new WeakMap(), _onError = new WeakMap();
-class engine_AnimatorFactory {
-    get(id) {
-        if (!is(id)) {
-            return undefined;
-        }
-        switch (id) {
-            case "opacity":
-                return new animators_OpacityAnimator();
-            case "transform":
-                return new animators_TransformAnimator();
-            default:
-                return new animators_PropertyAnimator(id);
-        }
-    }
-}
-class engine_CuiAnimationEngine {
-    constructor(cleanOnFinish) {
-        _onFinishCallback.set(this, void 0);
-        _animators.set(this, void 0);
-        engine_lock.set(this, void 0);
-        // Needed in animation perform - set on first animation exec, cleaned on end
-        _animStartStamp.set(this, void 0);
-        engine_element.set(this, void 0);
-        _cleanOnFinish.set(this, void 0);
-        _errorOccured.set(this, void 0);
-        _factory_1.set(this, void 0);
-        _onError_1.set(this, void 0);
-        engine_classPrivateFieldSet(this, _animators, []);
-        engine_classPrivateFieldSet(this, engine_element, undefined);
-        engine_classPrivateFieldSet(this, _animStartStamp, undefined);
-        engine_classPrivateFieldSet(this, _cleanOnFinish, cleanOnFinish !== null && cleanOnFinish !== void 0 ? cleanOnFinish : false);
-        engine_classPrivateFieldSet(this, _factory_1, new engine_AnimatorFactory());
-        engine_classPrivateFieldSet(this, engine_lock, false);
-        engine_classPrivateFieldSet(this, _onFinishCallback, undefined);
-        engine_classPrivateFieldSet(this, _errorOccured, false);
-        engine_classPrivateFieldSet(this, _onError_1, undefined);
-    }
-    onFinish(callback) {
-        engine_classPrivateFieldSet(this, _onFinishCallback, callback);
-    }
-    setAnimators(animators) {
-        engine_classPrivateFieldSet(this, _animators, animators);
-    }
-    setProps(props) {
-        if (!is(props)) {
-            return;
-        }
-        engine_classPrivateFieldSet(this, _animators, []);
-        try {
-            for (let prop in props) {
-                let animator = engine_classPrivateFieldGet(this, _factory_1).get(prop);
-                if (!animator)
-                    return;
-                animator.setProperty(props[prop]);
-                engine_classPrivateFieldGet(this, _animators).push(animator);
-            }
-        }
-        catch (e) {
-            this.reportError(e);
-        }
-    }
-    setElement(element) {
-        engine_classPrivateFieldSet(this, engine_element, element);
-    }
-    setOnError(callback) {
-        engine_classPrivateFieldSet(this, _onError_1, callback);
-    }
-    animate(timeout, progress, revert) {
-        if (engine_classPrivateFieldGet(this, engine_lock)) {
-            return;
-        }
-        if (!engine_classPrivateFieldGet(this, engine_element) || engine_classPrivateFieldGet(this, _animators).length === 0) {
-            this.reportError(new Error("Animation cannot be performed: element or animators are not set"));
-            return;
-        }
-        let animationProgress = progress !== null && progress !== void 0 ? progress : 0;
-        let shouldCalcRevert = revert ? revert : false;
-        engine_classPrivateFieldSet(this, engine_lock, true);
-        requestAnimationFrame(this.animateAsync.bind(this, timeout, animationProgress, shouldCalcRevert));
-    }
-    isLocked() {
-        return engine_classPrivateFieldGet(this, engine_lock);
-    }
-    animateAsync(timeout, initialProgress, revert, timestamp) {
-        if (!engine_classPrivateFieldGet(this, _animStartStamp)) {
-            engine_classPrivateFieldSet(this, _animStartStamp, timestamp);
-        }
-        let pr = timestamp - engine_classPrivateFieldGet(this, _animStartStamp);
-        let animationProgress = pr / timeout;
-        let currProgress = 0;
-        if (initialProgress === 0) {
-            currProgress = animationProgress;
-        }
-        else {
-            currProgress = revert ? initialProgress - (animationProgress * initialProgress) : initialProgress + (animationProgress * initialProgress);
-        }
-        this.callUpdate(revert ? Math.max(currProgress, 0) : Math.min(currProgress, 1), 1);
-        if (pr < timeout && !engine_classPrivateFieldGet(this, _errorOccured)) {
-            requestAnimationFrame(this.animateAsync.bind(this, timeout, initialProgress, revert));
-        }
-        else {
-            this.endAnimation(revert);
-        }
-    }
-    endAnimation(reverted) {
-        if (engine_classPrivateFieldGet(this, _cleanOnFinish) && engine_classPrivateFieldGet(this, engine_element)) {
-            engine_classPrivateFieldGet(this, engine_element).removeAttribute("style");
-        }
-        if (engine_classPrivateFieldGet(this, _onFinishCallback)) {
-            engine_classPrivateFieldGet(this, _onFinishCallback).call(this, engine_classPrivateFieldGet(this, engine_element), reverted, engine_classPrivateFieldGet(this, _errorOccured));
-        }
-        engine_classPrivateFieldSet(this, _errorOccured, false);
-        engine_classPrivateFieldSet(this, _animStartStamp, undefined);
-        engine_classPrivateFieldSet(this, engine_lock, false);
-    }
-    callUpdate(progress, factor) {
-        try {
-            engine_classPrivateFieldGet(this, _animators).forEach(animator => animator.perform(engine_classPrivateFieldGet(this, engine_element), progress, factor));
-        }
-        catch (e) {
-            this.reportError(e);
-            engine_classPrivateFieldSet(this, _errorOccured, true);
-        }
-    }
-    reportError(e) {
-        if (engine_classPrivateFieldGet(this, _onError_1)) {
-            engine_classPrivateFieldGet(this, _onError_1).call(this, e);
-        }
-        else {
-            console.error("An error occured in CuiAnimtionEngine");
-            console.error(e);
-        }
-    }
-}
-_onFinishCallback = new WeakMap(), _animators = new WeakMap(), engine_lock = new WeakMap(), _animStartStamp = new WeakMap(), engine_element = new WeakMap(), _cleanOnFinish = new WeakMap(), _errorOccured = new WeakMap(), _factory_1 = new WeakMap(), _onError_1 = new WeakMap();
-class engine_CuiSwipeAnimationEngine {
-    constructor(shouldCleanOnFinish) {
-        engine_element_1.set(this, void 0);
-        _animators_1.set(this, void 0);
-        _animationEngine.set(this, void 0);
-        _factory_2.set(this, void 0);
-        _onError_2.set(this, void 0);
-        engine_classPrivateFieldSet(this, engine_element_1, undefined);
-        engine_classPrivateFieldSet(this, _animators_1, []);
-        engine_classPrivateFieldSet(this, _animationEngine, new engine_CuiAnimationEngine(shouldCleanOnFinish));
-        engine_classPrivateFieldSet(this, _factory_2, new engine_AnimatorFactory());
-        engine_classPrivateFieldSet(this, _onError_2, undefined);
-    }
-    setElement(element) {
-        engine_classPrivateFieldSet(this, engine_element_1, element);
-    }
-    setOnFinish(callback) {
-        engine_classPrivateFieldGet(this, _animationEngine).onFinish(callback);
-    }
-    setOnError(callback) {
-        engine_classPrivateFieldSet(this, _onError_2, callback);
-        engine_classPrivateFieldGet(this, _animationEngine).setOnError(callback);
-    }
-    setProps(props) {
-        if (!is(props)) {
-            return;
-        }
-        engine_classPrivateFieldSet(this, _animators_1, []);
-        try {
-            for (let prop in props) {
-                let animator = engine_classPrivateFieldGet(this, _factory_2).get(prop);
-                if (!animator)
-                    return;
-                animator.setProperty(props[prop]);
-                engine_classPrivateFieldGet(this, _animators_1).push(animator);
-            }
-        }
-        catch (e) {
-            this.reportError(e);
-        }
-    }
-    /**
-     * Perform single update on animators
-     * @param progress - progress value to be set to animators 0..1
-     */
-    update(progress) {
-        if (!engine_classPrivateFieldGet(this, engine_element_1) || engine_classPrivateFieldGet(this, _animators_1).length === 0) {
-            return;
-        }
-        engine_classPrivateFieldGet(this, _animators_1).forEach(animator => animator.perform(engine_classPrivateFieldGet(this, engine_element_1), Math.min(progress, 1), 1));
-    }
-    /**
-     * Perform single update on animators in RAF
-     * @param progress - progress value to be set to animators 0..1
-     */
-    updateAsync(progress) {
-        requestAnimationFrame(this.update.bind(this, progress));
-    }
-    /**
-     * Finish swipe animation using animation engine
-     * @param progress - initial progress value 0..1
-     * @param timeout - time for animation to perform
-     * @param revert - whether animation should return back to 0 or progress to the end
-     */
-    finish(progress, timeout, revert) {
-        if (engine_classPrivateFieldGet(this, engine_element_1))
-            engine_classPrivateFieldGet(this, _animationEngine).setElement(engine_classPrivateFieldGet(this, engine_element_1));
-        engine_classPrivateFieldGet(this, _animationEngine).setAnimators(engine_classPrivateFieldGet(this, _animators_1));
-        engine_classPrivateFieldGet(this, _animationEngine).animate(timeout, progress, revert);
-    }
-    reportError(e) {
-        if (engine_classPrivateFieldGet(this, _onError_2)) {
-            engine_classPrivateFieldGet(this, _onError_2).call(this, e);
-        }
-        else {
-            console.log(e);
-        }
-    }
-}
-engine_element_1 = new WeakMap(), _animators_1 = new WeakMap(), _animationEngine = new WeakMap(), _factory_2 = new WeakMap(), _onError_2 = new WeakMap();
+drag_root = new WeakMap(), _moveHandler = new WeakMap(), _onDragStart = new WeakMap(), _onDragOver = new WeakMap(), _onDragEnd = new WeakMap(), drag_timeout = new WeakMap(), drag_isTracking = new WeakMap(), _timeoutId = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/sortable/sortable.ts
 var sortable_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -8708,7 +9393,7 @@ var slider_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet
     }
     return privateMap.get(receiver);
 };
-var slider_prefix, slider_defTimeout, slider_targets, slider_currentIdx, slider_links, slider_task, _switchEventId, slider_isTracking, _startX, _swipeRatio, _nextIdx, _nextElement, _ratioThreshold, _currSlider, _nextSlider, _animationDef, _targetsCount, _moveEventId;
+var slider_prefix, slider_defTimeout, slider_targets, slider_currentIdx, slider_links, slider_task, slider_switchEventId, slider_isTracking, slider_startX, _swipeRatio, _nextIdx, _nextElement, _ratioThreshold, _currSlider, _nextSlider, _animationDef, _targetsCount, slider_moveEventId;
 
 
 
@@ -8769,10 +9454,10 @@ class slider_CuiSliderHandler extends base_CuiMutableHandler {
         slider_currentIdx.set(this, void 0);
         slider_links.set(this, void 0);
         slider_task.set(this, void 0);
-        _switchEventId.set(this, void 0);
+        slider_switchEventId.set(this, void 0);
         //  #moveListener: CuiMoveEventListener;
         slider_isTracking.set(this, void 0);
-        _startX.set(this, void 0);
+        slider_startX.set(this, void 0);
         _swipeRatio.set(this, void 0);
         _nextIdx.set(this, void 0);
         _nextElement.set(this, void 0);
@@ -8781,15 +9466,15 @@ class slider_CuiSliderHandler extends base_CuiMutableHandler {
         _nextSlider.set(this, void 0);
         _animationDef.set(this, void 0);
         _targetsCount.set(this, void 0);
-        _moveEventId.set(this, void 0);
+        slider_moveEventId.set(this, void 0);
         slider_classPrivateFieldSet(this, slider_targets, []);
         slider_classPrivateFieldSet(this, slider_currentIdx, -1);
         slider_classPrivateFieldSet(this, _nextIdx, -1);
         slider_classPrivateFieldSet(this, slider_links, []);
-        slider_classPrivateFieldSet(this, _switchEventId, null);
-        slider_classPrivateFieldSet(this, _moveEventId, null);
+        slider_classPrivateFieldSet(this, slider_switchEventId, null);
+        slider_classPrivateFieldSet(this, slider_moveEventId, null);
         slider_classPrivateFieldSet(this, slider_isTracking, false);
-        slider_classPrivateFieldSet(this, _startX, -1);
+        slider_classPrivateFieldSet(this, slider_startX, -1);
         slider_classPrivateFieldSet(this, _swipeRatio, 0);
         slider_classPrivateFieldSet(this, _nextElement, null);
         slider_classPrivateFieldSet(this, _ratioThreshold, 0.4);
@@ -8801,8 +9486,8 @@ class slider_CuiSliderHandler extends base_CuiMutableHandler {
         slider_classPrivateFieldSet(this, _animationDef, SWIPE_ANIMATIONS_DEFINITIONS[this.args.animation]);
     }
     onInit() {
-        slider_classPrivateFieldSet(this, _switchEventId, this.onEvent(EVENTS.SWITCH, this.onPushSwitch.bind(this)));
-        slider_classPrivateFieldSet(this, _moveEventId, this.onEvent(EVENTS.GLOBAL_MOVE, this.onMove.bind(this)));
+        slider_classPrivateFieldSet(this, slider_switchEventId, this.onEvent(EVENTS.SWITCH, this.onPushSwitch.bind(this)));
+        slider_classPrivateFieldSet(this, slider_moveEventId, this.onEvent(EVENTS.GLOBAL_MOVE, this.onMove.bind(this)));
         this.getTargets();
         this.getLinks();
         this.getActiveIndex();
@@ -8823,8 +9508,8 @@ class slider_CuiSliderHandler extends base_CuiMutableHandler {
     }
     onDestroy() {
         slider_classPrivateFieldGet(this, slider_task).stop();
-        this.detachEvent(EVENTS.SWITCH, slider_classPrivateFieldGet(this, _switchEventId));
-        this.detachEvent(EVENTS.GLOBAL_MOVE, slider_classPrivateFieldGet(this, _moveEventId));
+        this.detachEvent(EVENTS.SWITCH, slider_classPrivateFieldGet(this, slider_switchEventId));
+        this.detachEvent(EVENTS.GLOBAL_MOVE, slider_classPrivateFieldGet(this, slider_moveEventId));
     }
     onMutation(record) {
     }
@@ -8843,7 +9528,7 @@ class slider_CuiSliderHandler extends base_CuiMutableHandler {
                     return;
                 }
                 slider_classPrivateFieldSet(this, slider_isTracking, true);
-                slider_classPrivateFieldSet(this, _startX, data.x);
+                slider_classPrivateFieldSet(this, slider_startX, data.x);
                 slider_classPrivateFieldGet(this, _currSlider).setElement(current);
                 this.helper.setClassesAs(document.body, CLASSES.swipingOn);
                 if (data.event.cancelable)
@@ -8867,7 +9552,7 @@ class slider_CuiSliderHandler extends base_CuiMutableHandler {
                 if (!slider_classPrivateFieldGet(this, slider_isTracking)) {
                     break;
                 }
-                let newRatio = (data.x - slider_classPrivateFieldGet(this, _startX)) / current.offsetWidth;
+                let newRatio = (data.x - slider_classPrivateFieldGet(this, slider_startX)) / current.offsetWidth;
                 if (Math.abs(newRatio - slider_classPrivateFieldGet(this, _swipeRatio)) < 0.02) {
                     break;
                 }
@@ -8947,7 +9632,7 @@ class slider_CuiSliderHandler extends base_CuiMutableHandler {
                     slider_classPrivateFieldSet(this, slider_currentIdx, slider_classPrivateFieldGet(this, _nextIdx));
                     slider_classPrivateFieldSet(this, _nextIdx, -1);
                     slider_classPrivateFieldSet(this, _nextElement, null);
-                    slider_classPrivateFieldSet(this, _startX, -1);
+                    slider_classPrivateFieldSet(this, slider_startX, -1);
                     slider_classPrivateFieldSet(this, _swipeRatio, 0);
                 });
             }
@@ -8962,7 +9647,7 @@ class slider_CuiSliderHandler extends base_CuiMutableHandler {
             this.helper.removeAttribute("style", current);
             slider_classPrivateFieldSet(this, _nextIdx, -1);
             slider_classPrivateFieldSet(this, _nextElement, null);
-            slider_classPrivateFieldSet(this, _startX, -1);
+            slider_classPrivateFieldSet(this, slider_startX, -1);
             slider_classPrivateFieldSet(this, _swipeRatio, 0);
         }
         this.startTask();
@@ -9047,7 +9732,7 @@ class slider_CuiSliderHandler extends base_CuiMutableHandler {
         }
     }
 }
-slider_targets = new WeakMap(), slider_currentIdx = new WeakMap(), slider_links = new WeakMap(), slider_task = new WeakMap(), _switchEventId = new WeakMap(), slider_isTracking = new WeakMap(), _startX = new WeakMap(), _swipeRatio = new WeakMap(), _nextIdx = new WeakMap(), _nextElement = new WeakMap(), _ratioThreshold = new WeakMap(), _currSlider = new WeakMap(), _nextSlider = new WeakMap(), _animationDef = new WeakMap(), _targetsCount = new WeakMap(), _moveEventId = new WeakMap();
+slider_targets = new WeakMap(), slider_currentIdx = new WeakMap(), slider_links = new WeakMap(), slider_task = new WeakMap(), slider_switchEventId = new WeakMap(), slider_isTracking = new WeakMap(), slider_startX = new WeakMap(), _swipeRatio = new WeakMap(), _nextIdx = new WeakMap(), _nextElement = new WeakMap(), _ratioThreshold = new WeakMap(), _currSlider = new WeakMap(), _nextSlider = new WeakMap(), _animationDef = new WeakMap(), _targetsCount = new WeakMap(), slider_moveEventId = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/switch/switch.ts
 var switch_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -9675,14 +10360,14 @@ class tooltip_CuiTooltipHandler extends CuiHandler {
 tooltip_hoverListener = new WeakMap(), _tooltip = new WeakMap(), tooltip_margin = new WeakMap(), tooltip_positionCalculator = new WeakMap(), _tooltipDataCls = new WeakMap(), tooltip_actions = new WeakMap(), tooltip_task = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/module.ts
-//import { CuiAccordionComponent } from "./accordion/accordion";
-//import { CuiBanerComponent } from "./banner/banner";
 
 
-//import { CuiCoverComponent } from "./cover/cover";
 
 
-//import { CuiFloatComponent } from "./float/float";
+
+
+
+
 
 
 
@@ -9717,15 +10402,15 @@ function GetComponents(attributes) {
         new CuiToggleComponent(prefix),
         new CuiDialogComponent(prefix),
         new CuiOffCanvasComponent(prefix),
-        //new CuiAccordionComponent(prefix),
+        new CuiAccordionComponent(prefix),
         new CuiDropComponenet(prefix),
         new CuiOffsetComponent(prefix),
         new CuiSwitchComponent(prefix),
         new CuiSwitcherComponent(prefix),
-        // new CuiFloatComponent(prefix),
+        new CuiFloatComponent(prefix),
         new CuiSliderComponent(prefix),
-        //  new CuiBanerComponent(prefix),
-        //  new CuiCoverComponent(prefix),
+        new CuiBanerComponent(prefix),
+        new CuiCoverComponent(prefix),
         new CuiSortableComponent(prefix),
         new CuiResizeComponent(prefix),
     ];
@@ -10954,14 +11639,9 @@ class init_CuiInit {
             if (data.plugins) {
                 appPlugins = Object.assign(Object.assign({}, pluginList), data.plugins);
             }
-            let result = yield initializer.init({
-                setup: data.setup,
-                icons: data.icons,
-                plugins: appPlugins,
+            let result = yield initializer.init(Object.assign(Object.assign({}, data), { plugins: appPlugins, 
                 // @ts-ignore already checked
-                components: is(data.components) ? [...componentList, ...data.components] : componentList,
-                swipeAnimations: data.swipeAnimations
-            });
+                components: is(data.components) ? [...componentList, ...data.components] : componentList }));
             if (result.result) {
                 init_classPrivateFieldSet(this, init_isInitialized, true);
                 return true;
@@ -10978,7 +11658,7 @@ init_isInitialized = new WeakMap();
 
 // CONCATENATED MODULE: ./src/index.ts
 
-const CUI_LIGHT_VERSION = "0.2.5";
+const CUI_LIGHT_VERSION = "0.3.0";
 
 window.cuiInit = new init_CuiInit();
 

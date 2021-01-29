@@ -1,9 +1,13 @@
 # bpd cUI Light changelog
-# [0.2.5] 2020-01-15
+
+# [0.3.0] 2021-01-29
+Merge components under new repository
+
+# [0.2.5] 2021-01-15
 * [Changed] Update dependencies
-# [0.2.4] 2020-01-14
+# [0.2.4] 2021-01-14
 * [Changed] Update dependencies
-# [0.2.3] 2020-01-10
+# [0.2.3] 2021-01-10
 * [Changed] Update dependencies
 # [0.2.2] 2020-12-18
 * [Changed] Update dependencies
@@ -11,6 +15,34 @@
 * [Change] Move some interfaces to main project
 # [0.2.0] 2020-12-08
 * [Added] Split core, plugins and components into separate projects. Change in in build features.
+
+
+# cui-light-core
+# [0.2.8] 2020-01-15
+* [Added] New action handler = style
+* [Changed] style and attribute hanlders will use colon (:) to diff tag and value
+# [0.2.7] 2020-01-14
+* [Changed] Resize observer cosmetics 
+* [Changed] New function to calculate window size 
+# [0.2.6] 2020-01-10
+* [Fixed] Swipe animation not performed
+* [Fixed] Error thrown during removal of mutated element
+# [0.2.5] 2020-12-18
+* [Changed] Development tool wrapper adjustments
+* [Changed] FastDom errors are reported to utils
+# [0.2.4] 2020-12-18
+* [Added] FastDom report error callback added - if not provided, error will be printed in console
+* [Changed] Position calculator interface to get target box rather than width and height only
+# [0.2.2] 2020-12-09
+* [Changed] Moved some interfaces from core to main project
+# [0.2.1] 2020-12-08
+* [Added] Move Plugin manager interface to main project
+# [0.2.0] 2020-12-07
+* [Added] Core scope has been moved to new project cui-light-core
+
+
+
+
 # [0.1.38] 2020-11-18
 * [Added] Introduction to developing interface
 * [Fixed] Small adjustments and fixed to links in scrollspy

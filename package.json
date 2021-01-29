@@ -1,27 +1,15 @@
 {
   "name": "cui-light",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "description": "cUI light framework for the web",
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
   "files": [
     "/dist/index.js",
     "/dist/index.js.map",
-    "/dist/vendors~index.js",
-    "/dist/vendors~index.js.map",
     "/dist/index.min.js",
     "/dist/index.min.js.map",
-    "/dist/vendors~index.min.js",
-    "/dist/vendors~index.min.js.map",
     "/dist/index.d.ts",
-    "/dist/esm/index.js",
-    "/dist/esm/index.d.ts",
-    "/dist/esm/init.js",
-    "/dist/esm/init.d.ts",
-    "/dist/esm/initializer.js",
-    "/dist/esm/initializer.d.ts",
-    "/dist/esm/instance.js",
-    "/dist/esm/instance.d.ts",
     "/dist/esm/**/*"
   ],
   "scripts": {
@@ -33,13 +21,13 @@
     "dev": "webpack-dev-server --config webpack.development.js"
   },
   "bugs": {
-    "url": "https://github.com/bpd-d/cui-light/issues"
+    "url": "https://github.com/bpd-d/cui-light-app/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bpd-d/cui-light.git"
+    "url": "git+https://github.com/bpd-d/cui-light-app.git"
   },
-  "homepage": "https://github.com/bpd-d/cui-icons#readme",
+  "homepage": "https://github.com/bpd-d/cui-light-app#readme",
   "keywords": [
     "ui",
     "cui",

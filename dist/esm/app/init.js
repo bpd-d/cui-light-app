@@ -49,14 +49,9 @@ export class CuiInit {
             if (data.plugins) {
                 appPlugins = Object.assign(Object.assign({}, pluginList), data.plugins);
             }
-            let result = yield initializer.init({
-                setup: data.setup,
-                icons: data.icons,
-                plugins: appPlugins,
+            let result = yield initializer.init(Object.assign(Object.assign({}, data), { plugins: appPlugins, 
                 // @ts-ignore already checked
-                components: is(data.components) ? [...componentList, ...data.components] : componentList,
-                swipeAnimations: data.swipeAnimations
-            });
+                components: is(data.components) ? [...componentList, ...data.components] : componentList }));
             if (result.result) {
                 __classPrivateFieldSet(this, _isInitialized, true);
                 return true;

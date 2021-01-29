@@ -1,11 +1,11 @@
-//import { CuiAccordionComponent } from "./accordion/accordion";
-//import { CuiBanerComponent } from "./banner/banner";
+import { CuiAccordionComponent } from "./accordion/accordion";
+import { CuiBanerComponent } from "./banner/banner";
 import { CuiCircleComponent } from "./circle/circle";
 import { CuiCloseComponent } from "./close/close";
-//import { CuiCoverComponent } from "./cover/cover";
+import { CuiCoverComponent } from "./cover/cover";
 import { CuiDialogComponent } from "./dialog/dialog";
 import { CuiDropComponenet } from "./drop/drop";
-//import { CuiFloatComponent } from "./float/float";
+import { CuiFloatComponent } from "./float/float";
 import { CuiIconComponent } from "./icon/icon";
 import { CuiIntersectionComponent } from "./intersection/intersection";
 import { CuiOffCanvasComponent } from "./offcanvas/offcanvas";
@@ -40,15 +40,15 @@ export function GetComponents(attributes) {
         new CuiToggleComponent(prefix),
         new CuiDialogComponent(prefix),
         new CuiOffCanvasComponent(prefix),
-        //new CuiAccordionComponent(prefix),
+        new CuiAccordionComponent(prefix),
         new CuiDropComponenet(prefix),
         new CuiOffsetComponent(prefix),
         new CuiSwitchComponent(prefix),
         new CuiSwitcherComponent(prefix),
-        // new CuiFloatComponent(prefix),
+        new CuiFloatComponent(prefix),
         new CuiSliderComponent(prefix),
-        //  new CuiBanerComponent(prefix),
-        //  new CuiCoverComponent(prefix),
+        new CuiBanerComponent(prefix),
+        new CuiCoverComponent(prefix),
         new CuiSortableComponent(prefix),
         new CuiResizeComponent(prefix),
     ];
