@@ -13,11 +13,12 @@ export declare class CuiUtils {
     colors: CuiInstanceColorHandler;
     styleAppender: ICuiDocumentStyleAppender;
     development: CuiDevelopmentToolManager;
-    constructor(initialSetup: CuiSetupInit);
+    constructor(initialSetup: CuiSetupInit, plugins?: string[]);
     setLightMode(mode: CuiLightMode): void;
     getLightMode(): CuiLightMode;
     setPrintMode(flag: boolean): void;
     isPrintMode(): boolean;
     setProperty(name: string, value: string): void;
+    isPlugin(name: string): string | false | undefined;
     private onInteractionError;
 }

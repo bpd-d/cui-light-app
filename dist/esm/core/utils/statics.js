@@ -154,8 +154,17 @@ export const EVENTS = {
     PAUSE: "pause",
     PAUSED: "paused",
     SORTED: "sorted",
-    SORT_START: "sortstart"
+    SORT_START: "sortstart",
+    TOAST: "toast",
+    TOAST_SHOW: "toastshow",
+    TOAST_HIDDEN: "toasthidden",
+    ALERT: "alert",
+    GESTURE_DOWN: "gesture-down",
+    GESTURE_UP: "gesture-up",
+    GESTURE_LEFT: "gesture-left",
+    GESTURE_RIGHT: "gesture-right",
 };
+// export const GLOBAL_EVENTS = [EVENTS.ALERT, EVENTS.TOAST, EVENTS.KEYDOWN, EVENTS.MOVE_LOCK, EVENTS.GLOBAL_MOVE, EVENTS.RESIZE]
 export const OBSERVABLE_SCROLL = "SCROLL";
 export const OBSERVABLE_INTERSECTION = "INTERSECTION";
 export const COMPONENTS_COUNTER = counter();

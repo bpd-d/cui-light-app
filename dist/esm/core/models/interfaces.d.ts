@@ -101,6 +101,7 @@ export interface ICuiComponent {
 export interface ICuiPluginManager {
     init(utils: CuiUtils): void;
     get(name: string): ICuiPlugin | undefined;
+    has(name: string): boolean;
     onMutation(mutation: MutationRecord): Promise<boolean>;
 }
 export interface ICuiObservableArg {
@@ -131,15 +132,6 @@ export interface ICuiEventListener<T> {
     attach(): void;
     detach(): void;
     isAttached(): boolean;
-}
-export interface CuiAlertData {
-    title: string;
-    message: string;
-    reverse?: boolean;
-    onCancel?: () => void;
-    onOk?: () => void;
-    onYes?: () => void;
-    onNo?: () => void;
 }
 export interface ICuiDevelopmentTool {
     registerElement(element: HTMLElement, cuid: string, component: string): void;

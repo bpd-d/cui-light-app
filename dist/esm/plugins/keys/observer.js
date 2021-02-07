@@ -12,8 +12,8 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _listener, _bus;
-import { CuiKeyPressListener } from "../../core/listeners/keys";
 import { EVENTS } from "../../core/utils/statics";
+import { CuiKeyPressListener } from "./listener";
 export class CuiKeysObserver {
     constructor(bus) {
         _listener.set(this, void 0);

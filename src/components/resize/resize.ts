@@ -1,12 +1,12 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiHandler } from "../../core/handlers/base";
-import { CuiResizeData } from "../../core/observers/resize";
 import { EVENTS } from "../../core/utils/statics";
 import { calcWindowSize2, getIntOrDefault, getStringOrDefault, is } from "../../core/utils/functions";
 import { CuiIntersectionObserver } from "../../core/observers/intersection";
 import { CuiWindowSize } from "../../core/utils/types";
 import { CuiActionsFatory, ICuiComponentAction } from "../../core/utils/actions";
+import { CuiResizeData } from "src/plugins/resize/observer";
 
 type CuiResizeComponentMode = "smart" | "simple";
 export class CuiResizeArgs implements ICuiParsable {

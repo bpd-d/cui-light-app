@@ -51,20 +51,29 @@ export class CuiIconHandler extends CuiHandler<CuiIconArgs> {
     }
 
     onInit(): void {
+        if (this.isLocked) {
+            return;
+        }
         if (this.#currentIcon !== null) {
             this._log.debug("Icon already initialized")
             return;
         }
-        this.addIcon(this.args.icon)
+        this.isLocked = true;
         this.#currentIcon = this.args.icon;
+        this.addIcon(this.args.icon)
+
     }
 
     onUpdate(): void {
+        if (this.isLocked) {
+            return;
+        }
         if (this.args.icon === this.#currentIcon) {
             return;
         }
-        this.addIcon(this.args.icon);
         this.#currentIcon = this.args.icon;
+        this.addIcon(this.args.icon);
+
     }
 
     onDestroy(): void {
@@ -79,6 +88,7 @@ export class CuiIconHandler extends CuiHandler<CuiIconArgs> {
     private addIcon(icon: string) {
         const iconStr = icon ? ICONS[icon] : null;
         if (!iconStr) {
+            this.isLocked = false;
             return;
         }
         const iconSvg = new IconBuilder(iconStr).setScale(this.args.scale).build();
@@ -93,13 +103,16 @@ export class CuiIconHandler extends CuiHandler<CuiIconArgs> {
         } else {
             this.mutate(this.appendChild, iconSvg)
         }
+
     }
 
     private insertBefore(iconElement: Element) {
         this.element.insertBefore(iconElement, this.element.firstChild);
+        this.isLocked = false;
     }
 
     private appendChild(iconElement: Element) {
         this.element.appendChild(iconElement);
+        this.isLocked = false;
     }
 }

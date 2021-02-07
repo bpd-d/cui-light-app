@@ -15,7 +15,7 @@ var _keysObserver;
 import { CuiKeysObserver } from "./observer";
 export class CuiKeysObserverPlugin {
     constructor(keySetup) {
-        this.name = 'keys-observer';
+        this.name = 'keys-plugin';
         _keysObserver.set(this, void 0);
         this.description = "CuiKeysObserverPlugin";
         this.setup = keySetup;

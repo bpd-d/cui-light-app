@@ -42,7 +42,6 @@ export class SimpleEventEmitHandler extends EmitHandlerBase implements ICuiEvent
         if (!this.isBusy) {
             if (!this.isBusy) {
                 this.isBusy = true;
-                this.perform();
                 if (this.queue.length > 0) {
                     await this.perform();
                 }

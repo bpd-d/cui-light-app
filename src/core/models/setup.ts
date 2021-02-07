@@ -12,6 +12,7 @@ interface CuiSetupCommon {
     animationTimeLong?: number;
     scrollThreshold?: number;
     resizeThreshold?: number;
+    root: HTMLElement;
 }
 
 export class CuiSetup implements CuiSetupCommon {
@@ -25,6 +26,7 @@ export class CuiSetup implements CuiSetupCommon {
     scrollThreshold: number;
     resizeThreshold: number;
     plugins: any;
+    root: HTMLElement;
 
     constructor() {
         this.autoLightMode = false;
@@ -32,6 +34,7 @@ export class CuiSetup implements CuiSetupCommon {
         this.resizeThreshold = 20;
         this.prefix = "cui";
         this.plugins = {};
+        this.root = document.body
     }
 
     fromInit(init: CuiSetupInit): CuiSetup {
@@ -44,6 +47,7 @@ export class CuiSetup implements CuiSetupCommon {
         this.animationTimeLong = init.animationTimeLong;
         this.scrollThreshold = init.scrollThreshold;
         this.resizeThreshold = init.resizeThreshold;
+        this.root = init.root;
 
         return this;
     }
@@ -65,7 +69,6 @@ export class CuiSetupInit implements CuiSetupCommon {
     busSetup?: ICuiEventBusQueueSetup[];
     development: ICuiDevelopmentTool | undefined;
     root: HTMLElement;
-
     constructor() {
         this.prefix = 'cui';
         this.app = '$cui';

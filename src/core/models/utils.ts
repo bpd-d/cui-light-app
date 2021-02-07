@@ -4,11 +4,10 @@ import { CuiLightMode } from "../utils/types";
 import { CuiInteractionsFactory } from "../factories/interactions";
 import { CuiCacheManager } from "../managers/cache";
 import { CuiEventBusFactory } from "../bus/bus";
-import { are, getName, replacePrefix } from "../utils/functions";
+import { are, getName, is, replacePrefix } from "../utils/functions";
 import { CLASSES } from "../utils/statics";
 import { ICuiDocumentStyleAppender, CuiDocumentStyleAppender } from "../styles/appender";
 import { CuiInstanceColorHandler } from "../handlers/colors";
-import { ICuiResizableObserver, CuiResizeObserver } from "../observers/resize";
 import { CSSVariableError } from "./errors";
 import { CuiDevelopmentToolManager } from "../managers/development";
 
@@ -19,9 +18,9 @@ export class CuiUtils {
     cache: ICuiManager<CuiCachable>;
     colors: CuiInstanceColorHandler;
     styleAppender: ICuiDocumentStyleAppender;
-    #resizeObserver: ICuiResizableObserver;
     development: CuiDevelopmentToolManager;
-    constructor(initialSetup: CuiSetupInit) {
+    #plugins: string[];
+    constructor(initialSetup: CuiSetupInit, plugins?: string[]) {
         this.setup = new CuiSetup().fromInit(initialSetup);
         this.interactions = CuiInteractionsFactory.get(initialSetup.interaction, this.onInteractionError.bind(this));
         this.cache = new CuiCacheManager(this.setup.cacheSize);
@@ -29,8 +28,7 @@ export class CuiUtils {
         this.colors = new CuiInstanceColorHandler(this.interactions);
         this.development = new CuiDevelopmentToolManager(initialSetup.development);
         this.styleAppender = new CuiDocumentStyleAppender(this.interactions);
-        this.#resizeObserver = new CuiResizeObserver(this.bus, this.setup.resizeThreshold);
-        this.#resizeObserver.connect();
+        this.#plugins = plugins ?? [];
     }
 
     setLightMode(mode: CuiLightMode) {
@@ -75,6 +73,10 @@ export class CuiUtils {
         }
         let prop = replacePrefix(name, this.setup.prefix);
         document.documentElement.style.setProperty(prop, value);
+    }
+
+    isPlugin(name: string) {
+        return is(name) && this.#plugins.find(plugin => plugin === name);
     }
 
     private onInteractionError(e: Error) {

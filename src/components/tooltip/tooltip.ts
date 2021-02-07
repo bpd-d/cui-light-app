@@ -139,15 +139,14 @@ export class CuiTooltipHandler extends CuiHandler<CuiTooltipArgs> {
     }
 
     private removeTooltip() {
-        if (!is(this.#tooltip)) {
-            return;
-        }
         if (this.#task)
             this.#task.stop();
         this.mutate(() => {
-            //@ts-ignore already checked
-            this.#tooltip.remove();
-            this.#tooltip = undefined;
+            if (is(this.#tooltip)) {
+                //@ts-ignore already checked
+                this.#tooltip.remove();
+                this.#tooltip = undefined;
+            }
         })
     }
 

@@ -49,19 +49,26 @@ export class CuiIconHandler extends CuiHandler {
         __classPrivateFieldSet(this, _currentIcon, null);
     }
     onInit() {
+        if (this.isLocked) {
+            return;
+        }
         if (__classPrivateFieldGet(this, _currentIcon) !== null) {
             this._log.debug("Icon already initialized");
             return;
         }
-        this.addIcon(this.args.icon);
+        this.isLocked = true;
         __classPrivateFieldSet(this, _currentIcon, this.args.icon);
+        this.addIcon(this.args.icon);
     }
     onUpdate() {
+        if (this.isLocked) {
+            return;
+        }
         if (this.args.icon === __classPrivateFieldGet(this, _currentIcon)) {
             return;
         }
-        this.addIcon(this.args.icon);
         __classPrivateFieldSet(this, _currentIcon, this.args.icon);
+        this.addIcon(this.args.icon);
     }
     onDestroy() {
         const svg = this.element.querySelector('svg');
@@ -74,6 +81,7 @@ export class CuiIconHandler extends CuiHandler {
     addIcon(icon) {
         const iconStr = icon ? ICONS[icon] : null;
         if (!iconStr) {
+            this.isLocked = false;
             return;
         }
         const iconSvg = new IconBuilder(iconStr).setScale(this.args.scale).build();
@@ -91,9 +99,11 @@ export class CuiIconHandler extends CuiHandler {
     }
     insertBefore(iconElement) {
         this.element.insertBefore(iconElement, this.element.firstChild);
+        this.isLocked = false;
     }
     appendChild(iconElement) {
         this.element.appendChild(iconElement);
+        this.isLocked = false;
     }
 }
 _currentIcon = new WeakMap();

@@ -1,4 +1,4 @@
-import { ICuiEventListener } from "../models/interfaces";
+import { ICuiEventListener } from "../../core/models/interfaces";
 export declare class CuiKeyPressListener implements ICuiEventListener<KeyboardEvent> {
     #private;
     constructor(singleEmit: boolean, keys?: string[]);

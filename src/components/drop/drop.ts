@@ -109,7 +109,11 @@ export class CuiDropHandler extends CuiHandler<CuiDropArgs> implements ICuiOpena
         this.#triggerHoverListener = undefined;
         this.#trigger = this.element;
         this.#actions = [];
-        this.#autoTask = new CuiTaskRunner(this.args.timeout, false, this.close.bind(this));;
+        this.#autoTask = new CuiTaskRunner(this.args.timeout, false, this.close.bind(this));
+
+        if (!utils.isPlugin("click-plugin")) {
+            this.logWarning("Window click plugin is not available: outClose will not work")
+        }
     }
 
     onInit(): void {

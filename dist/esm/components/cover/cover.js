@@ -60,6 +60,12 @@ export class CuiCoverHandler extends CuiInteractableHandler {
         _scrollY.set(this, void 0);
         __classPrivateFieldSet(this, _bodyClass, replacePrefix(bodyClass, prefix));
         __classPrivateFieldSet(this, _scrollY, 0);
+        if (!utils.isPlugin("click-plugin")) {
+            this.logWarning("WindowClick plugin is not available, outClose will not work");
+        }
+        if (!utils.isPlugin("keys-plugin")) {
+            this.logWarning("KeyObserver plugin is not available, escClose and keyClose will not work");
+        }
     }
     onInit() {
         AriaAttributes.setAria(this.element, 'aria-modal', "");

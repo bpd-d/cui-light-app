@@ -80,6 +80,12 @@ export class CuiOffCanvasHandler extends CuiInteractableHandler {
         __classPrivateFieldSet(this, _bodyClass, replacePrefix(OFFCANVAS_BODY, prefix));
         __classPrivateFieldSet(this, _windowClickEventId, null);
         __classPrivateFieldSet(this, _scrollY, 0);
+        if (!utils.isPlugin("click-plugin")) {
+            this.logWarning("WindowClick plugin is not available, outClose will not work");
+        }
+        if (!utils.isPlugin("keys-plugin")) {
+            this.logWarning("KeyObserver plugin is not available, escClose and keyClose will not work");
+        }
     }
     onInit() {
         this.mutate(() => {

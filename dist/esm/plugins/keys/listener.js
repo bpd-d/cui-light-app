@@ -12,7 +12,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _callback, _keys, _inProgress, _singleEmit, _isAttached, _onKeyDownBound, _onKeyUpBound;
-import { is } from "../utils/functions";
+import { is } from "../../core/utils/functions";
 export class CuiKeyPressListener {
     constructor(singleEmit, keys) {
         _callback.set(this, void 0);

@@ -11,6 +11,7 @@ interface CuiSetupCommon {
     animationTimeLong?: number;
     scrollThreshold?: number;
     resizeThreshold?: number;
+    root: HTMLElement;
 }
 export declare class CuiSetup implements CuiSetupCommon {
     prefix: string;
@@ -23,6 +24,7 @@ export declare class CuiSetup implements CuiSetupCommon {
     scrollThreshold: number;
     resizeThreshold: number;
     plugins: any;
+    root: HTMLElement;
     constructor();
     fromInit(init: CuiSetupInit): CuiSetup;
 }

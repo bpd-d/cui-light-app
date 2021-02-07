@@ -86,6 +86,14 @@ export declare const EVENTS: {
     PAUSED: string;
     SORTED: string;
     SORT_START: string;
+    TOAST: string;
+    TOAST_SHOW: string;
+    TOAST_HIDDEN: string;
+    ALERT: string;
+    GESTURE_DOWN: string;
+    GESTURE_UP: string;
+    GESTURE_LEFT: string;
+    GESTURE_RIGHT: string;
 };
 export declare const OBSERVABLE_SCROLL = "SCROLL";
 export declare const OBSERVABLE_INTERSECTION = "INTERSECTION";

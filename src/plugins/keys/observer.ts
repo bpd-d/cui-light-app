@@ -1,6 +1,7 @@
 import { ICuiEventBus } from "../../core/models/interfaces";
-import { CuiKeyPressListener } from "../../core/listeners/keys";
 import { EVENTS } from "../../core/utils/statics";
+import { CuiKeyPressListener } from "./listener";
+
 export interface KeyDownEvent {
     timestamp: number;
     event: KeyboardEvent;

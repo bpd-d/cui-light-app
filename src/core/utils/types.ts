@@ -4,4 +4,3 @@ export type CuiColorSetType = 'light' | 'dark' | 'accent' | 'secondary' | 'succe
 export type CuiClearCacheType = 'element' | "collection" | "all";
 export type CuiLightMode = 'light' | 'dark';
 export type CuiWindowSize = 'small' | 'medium' | 'large' | 'xlarge' | "none";
-export type CuiAlertType = "Info" | "OkCancel" | "YesNoCancel";

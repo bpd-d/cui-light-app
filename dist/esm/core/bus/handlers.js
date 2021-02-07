@@ -54,7 +54,6 @@ export class SimpleEventEmitHandler extends EmitHandlerBase {
             if (!this.isBusy) {
                 if (!this.isBusy) {
                     this.isBusy = true;
-                    this.perform();
                     if (this.queue.length > 0) {
                         yield this.perform();
                     }

@@ -1,122 +1,110 @@
-import { ElementManager } from "../managers/element";
-import { DialogBuilder } from "../builders/dialog";
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _callbacks, _utils, _id, _manager, _attid, _id_1, _id_2, _id_3;
+import { ElementManager } from "../../app/managers/element";
 import { ElementBuilder } from "../../core/builders/element";
-import { CuiAlertData, CuiContext } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
 import { is } from "../../core/utils/functions";
-import { CuiAlertType } from "../../core/utils/types";
-
-export interface ICuiAlertHandler {
-    show(root: Element): void;
-}
-
-interface AlertCallbacks {
-    [name: string]: (() => void) | undefined;
-}
-
-abstract class CuiAlertHandlerBase implements ICuiAlertHandler, CuiContext {
-    #callbacks: AlertCallbacks;
-    #utils: CuiUtils;
-    #id: string;
-    #manager: ElementManager | undefined;
-    closeStr: string;
-    iconStr: string;
-    content: string;
-    title: string;
-    prefix: string;
-    reverse: boolean;
-    #attid: string | null;
-    constructor(setup: CuiUtils, id: string, data: CuiAlertData) {
-        this.#callbacks = {
+import { DialogBuilder } from "./builder";
+class CuiAlertHandlerBase {
+    constructor(setup, id, data) {
+        _callbacks.set(this, void 0);
+        _utils.set(this, void 0);
+        _id.set(this, void 0);
+        _manager.set(this, void 0);
+        _attid.set(this, void 0);
+        __classPrivateFieldSet(this, _callbacks, {
             "yes": data.onYes,
             "no": data.onNo,
             "cancel": data.onCancel,
             "ok": data.onOk
-        }
+        });
         this.content = data.message;
         this.title = data.title;
         this.prefix = setup.setup.prefix;
-        this.#utils = setup;
-        this.#id = id;
+        __classPrivateFieldSet(this, _utils, setup);
+        __classPrivateFieldSet(this, _id, id);
         this.reverse = false;
-        this.#attid = null;
-        this.closeStr = `${this.#utils.setup.prefix}-close`;
-        this.iconStr = `${this.#utils.setup.prefix}-icon`;
-        this.#manager = undefined;
+        __classPrivateFieldSet(this, _attid, null);
+        this.closeStr = `${__classPrivateFieldGet(this, _utils).setup.prefix}-close`;
+        this.iconStr = `${__classPrivateFieldGet(this, _utils).setup.prefix}-icon`;
+        __classPrivateFieldSet(this, _manager, undefined);
     }
-
-    getId(): string {
-        return this.#id;
+    getId() {
+        return __classPrivateFieldGet(this, _id);
     }
-
-    show(root: Element): void {
-        let element = document.getElementById(this.#id);
+    show(root) {
+        let element = document.getElementById(__classPrivateFieldGet(this, _id));
         if (!is(element)) {
             element = this.createElement();
             root.appendChild(element);
-        } else {
+        }
+        else {
             // @ts-ignore - already checked
             this.updateElement(element);
         }
         setTimeout(() => {
             // @ts-ignore - already checked
-            this.#manager = new ElementManager([element], this.#utils);
-            let ids = this.#manager.on('closed', this.onClose.bind(this));
-            this.#attid = ids.length > 0 ? ids[0] : null;
-            this.#manager.emit("open");
+            __classPrivateFieldSet(this, _manager, new ElementManager([element], __classPrivateFieldGet(this, _utils)));
+            let ids = __classPrivateFieldGet(this, _manager).on('closed', this.onClose.bind(this));
+            __classPrivateFieldSet(this, _attid, ids.length > 0 ? ids[0] : null);
+            __classPrivateFieldGet(this, _manager).emit("open");
         }, 100);
     }
-
-    updateElement(element: HTMLElement) {
+    updateElement(element) {
         let title = element.querySelector(`.${this.prefix}-dialog-title`);
         let content = element.querySelector(`.${this.prefix}-dialog-body>p`);
-        this.#utils.interactions.mutate(() => {
+        __classPrivateFieldGet(this, _utils).interactions.mutate(() => {
             if (title) {
                 title.innerHTML = this.title;
             }
             if (content) {
                 content.innerHTML = this.content;
             }
-        }, null)
+        }, null);
     }
-
-    onClose(arg: any) {
+    onClose(arg) {
         try {
-            if (is(arg) && arg.state && this.#callbacks) {
-                if (is(this.#callbacks[arg.state])) {
-                    let callback = this.#callbacks[arg.state];
+            if (is(arg) && arg.state && __classPrivateFieldGet(this, _callbacks)) {
+                if (is(__classPrivateFieldGet(this, _callbacks)[arg.state])) {
+                    let callback = __classPrivateFieldGet(this, _callbacks)[arg.state];
                     if (callback) {
                         callback();
                     }
                 }
             }
-        } finally {
-            if (this.#attid != null) {
-                if (this.#manager)
-                    this.#manager.detach('closed', this.#attid);
-                this.#attid = null;
+        }
+        finally {
+            if (__classPrivateFieldGet(this, _attid) != null) {
+                if (__classPrivateFieldGet(this, _manager))
+                    __classPrivateFieldGet(this, _manager).detach('closed', __classPrivateFieldGet(this, _attid));
+                __classPrivateFieldSet(this, _attid, null);
             }
-
-            this.#manager = undefined;
+            __classPrivateFieldSet(this, _manager, undefined);
         }
     }
-
-    abstract createElement(): HTMLElement;
-
-
 }
-
+_callbacks = new WeakMap(), _utils = new WeakMap(), _id = new WeakMap(), _manager = new WeakMap(), _attid = new WeakMap();
 export class CuiAlertHandler extends CuiAlertHandlerBase {
-    #id: string;
-    constructor(setup: CuiUtils, id: string, data: CuiAlertData) {
+    constructor(setup, id, data) {
+        var _a;
         super(setup, id, data);
-        this.#id = id;
-        this.reverse = data.reverse ?? false;
+        _id_1.set(this, void 0);
+        __classPrivateFieldSet(this, _id_1, id);
+        this.reverse = (_a = data.reverse) !== null && _a !== void 0 ? _a : false;
     }
-
     createElement() {
         let dialogBuilder = new DialogBuilder(this.prefix, this.reverse);
-
         dialogBuilder.createHeader(this.title, [], [
             new ElementBuilder('a').setClasses(`${this.prefix}-icon`).setAttributes({
                 [this.closeStr]: "state: cancel",
@@ -129,23 +117,23 @@ export class CuiAlertHandler extends CuiAlertHandlerBase {
         dialogBuilder.createFooter([`${this.prefix}-flex`, `${this.prefix}-right`], [
             new ElementBuilder('button').setClasses(`${this.prefix}-button`, `${this.prefix}-margin-small-right`).setAttributes({ [this.closeStr]: "state: cancel" }).build("Cancel"),
             new ElementBuilder('button').setClasses(`${this.prefix}-button`, `${this.prefix}-accent`).setAttributes({ [this.closeStr]: "state: ok" }).build("Ok")
-        ])
-        return dialogBuilder.build(this.#id);
+        ]);
+        return dialogBuilder.build(__classPrivateFieldGet(this, _id_1));
     }
 }
-
+_id_1 = new WeakMap();
 export class CuiInfoAlertUpHandler extends CuiAlertHandlerBase {
-    #id: string;
-    constructor(setup: CuiUtils, id: string, data: CuiAlertData) {
+    constructor(setup, id, data) {
+        var _a;
         super(setup, id, data);
-        this.#id = id;
-        this.content = data.message;;
+        _id_2.set(this, void 0);
+        __classPrivateFieldSet(this, _id_2, id);
+        this.content = data.message;
+        ;
         this.title = data.title;
         this.prefix = setup.setup.prefix;
-        this.reverse = data.reverse ?? false;
-
+        this.reverse = (_a = data.reverse) !== null && _a !== void 0 ? _a : false;
     }
-
     createElement() {
         let dialogBuilder = new DialogBuilder(this.prefix, this.reverse);
         dialogBuilder.createHeader(this.title, []);
@@ -154,26 +142,24 @@ export class CuiInfoAlertUpHandler extends CuiAlertHandlerBase {
         ]);
         dialogBuilder.createFooter([`${this.prefix}-flex`, `${this.prefix}-right`], [
             new ElementBuilder('button').setClasses(`${this.prefix}-button`, `${this.prefix}-accent`).setAttributes({ [this.closeStr]: "state: ok" }).build("Ok")
-        ])
-
-        return dialogBuilder.build(this.#id);
+        ]);
+        return dialogBuilder.build(__classPrivateFieldGet(this, _id_2));
     }
 }
-
+_id_2 = new WeakMap();
 export class CuiYesNoPopUpHandler extends CuiAlertHandlerBase {
-    #id: string;
-    constructor(setup: CuiUtils, id: string, data: CuiAlertData) {
+    constructor(setup, id, data) {
+        var _a;
         super(setup, id, data);
-        this.#id = id;
+        _id_3.set(this, void 0);
+        __classPrivateFieldSet(this, _id_3, id);
         this.content = data.message;
         this.title = data.title;
         this.prefix = setup.setup.prefix;
-        this.reverse = data.reverse ?? false;
+        this.reverse = (_a = data.reverse) !== null && _a !== void 0 ? _a : false;
     }
-
     createElement() {
         let dialogBuilder = new DialogBuilder(this.prefix, this.reverse);
-
         dialogBuilder.createHeader(this.title, [], [
             new ElementBuilder('a').setClasses(`${this.prefix}-icon`).setAttributes({
                 [this.closeStr]: "state: cancel",
@@ -186,22 +172,22 @@ export class CuiYesNoPopUpHandler extends CuiAlertHandlerBase {
         dialogBuilder.createFooter([`${this.prefix}-flex`, `${this.prefix}-right`], [
             new ElementBuilder('button').setClasses(`${this.prefix}-button`, `${this.prefix}-margin-small-right`).setAttributes({ [this.closeStr]: "state: no" }).build("No"),
             new ElementBuilder('button').setClasses(`${this.prefix}-button`, `${this.prefix}-accent`).setAttributes({ [this.closeStr]: "state: yes" }).build("Yes")
-        ])
-        return dialogBuilder.build(this.#id);
+        ]);
+        return dialogBuilder.build(__classPrivateFieldGet(this, _id_3));
     }
 }
-
+_id_3 = new WeakMap();
 export class CuiAlertFactory {
-    static get(id: string, type: CuiAlertType, data: CuiAlertData, utils: CuiUtils): ICuiAlertHandler | undefined {
+    static get(id, type, data, utils) {
         if (type === "Info") {
             return new CuiInfoAlertUpHandler(utils, id, data);
-        } else if (type === 'YesNoCancel') {
+        }
+        else if (type === 'YesNoCancel') {
             return new CuiYesNoPopUpHandler(utils, id, data);
-        } else if (type === 'OkCancel') {
+        }
+        else if (type === 'OkCancel') {
             return new CuiAlertHandler(utils, id, data);
         }
         return undefined;
     }
 }
-
-

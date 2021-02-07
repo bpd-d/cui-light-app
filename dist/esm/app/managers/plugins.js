@@ -49,6 +49,9 @@ export class CuiPluginManager {
         }
         return __classPrivateFieldGet(this, _plugins).find(p => p.name === name);
     }
+    has(name) {
+        return is(this.get(name));
+    }
     onMutation(mutation) {
         return __awaiter(this, void 0, void 0, function* () {
             let tasks = [];

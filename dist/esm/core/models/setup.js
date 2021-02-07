@@ -5,6 +5,7 @@ export class CuiSetup {
         this.resizeThreshold = 20;
         this.prefix = "cui";
         this.plugins = {};
+        this.root = document.body;
     }
     fromInit(init) {
         var _a;
@@ -17,6 +18,7 @@ export class CuiSetup {
         this.animationTimeLong = init.animationTimeLong;
         this.scrollThreshold = init.scrollThreshold;
         this.resizeThreshold = init.resizeThreshold;
+        this.root = init.root;
         return this;
     }
 }

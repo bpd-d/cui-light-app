@@ -9,7 +9,7 @@ export interface CuiKeysObserverPluginSetup {
 
 export class CuiKeysObserverPlugin implements ICuiPlugin {
     description: string;
-    name: string = 'keys-observer';
+    name: string = 'keys-plugin';
     setup: CuiKeysObserverPluginSetup;
     #keysObserver: ICuiKeysObserver | undefined;
     constructor(keySetup: CuiKeysObserverPluginSetup) {

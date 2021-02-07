@@ -34,6 +34,10 @@ export class CuiPluginManager implements ICuiPluginManager {
         return this.#plugins.find(p => p.name === name);
     }
 
+    has(name: string): boolean {
+        return is(this.get(name))
+    }
+
     async onMutation(mutation: MutationRecord): Promise<boolean> {
         let tasks: Promise<boolean>[] = [];
         this.#mutated.forEach((plugin: any) => {

@@ -106,7 +106,7 @@ export class CuiEventBus {
             let callbacks = __classPrivateFieldGet(this, _events)[event];
             if (is(callbacks)) {
                 __classPrivateFieldGet(this, _log).debug(`Emit: [${event}]`);
-                yield __classPrivateFieldGet(this, _eventHandler).handle(__classPrivateFieldGet(this, _events)[event], cuid, args);
+                yield __classPrivateFieldGet(this, _eventHandler).handle(callbacks, cuid, args);
             }
             return true;
         });

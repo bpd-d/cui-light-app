@@ -83,6 +83,12 @@ export class CuiFloatHandler extends CuiInteractableHandler {
         this.resize = this.resize.bind(this);
         __classPrivateFieldSet(this, _moveBtn, null);
         __classPrivateFieldSet(this, _resizeBtn, null);
+        if (!utils.isPlugin("click-plugin")) {
+            this.logWarning("WindowClick plugin is not available, outClose will not work");
+        }
+        if (!utils.isPlugin("keys-plugin")) {
+            this.logWarning("KeyObserver plugin is not available, escClose and keyClose will not work");
+        }
     }
     onInit() {
         AriaAttributes.setAria(this.element, 'aria-modal', "");

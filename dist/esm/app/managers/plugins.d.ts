@@ -5,5 +5,6 @@ export declare class CuiPluginManager implements ICuiPluginManager {
     constructor(plugins: ICuiPlugin[]);
     init(utils: CuiUtils): void;
     get(name: string): ICuiPlugin | undefined;
+    has(name: string): boolean;
     onMutation(mutation: MutationRecord): Promise<boolean>;
 }

@@ -99,7 +99,7 @@ export class CuiEventBus implements ICuiEventBus {
         let callbacks = this.#events[event];
         if (is(callbacks)) {
             this.#log.debug(`Emit: [${event}]`)
-            await this.#eventHandler.handle(this.#events[event], cuid, args)
+            await this.#eventHandler.handle(callbacks, cuid, args)
         }
         return true;
     }

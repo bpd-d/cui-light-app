@@ -1,5 +1,13 @@
 # bpd cUI Light changelog
 
+# [0.3.2] 2021-02-07
+* [Added] Support for gestures in move plugin
+* [Fixed] Attempt to fix issue with doubled icons in React
+
+# [0.3.1] 2021-01-31
+* [Changed] Moved some observers to plugins: resize, move, keys
+* [Changed] Moved toast and alerts to plugins - now call emit to get alert or toast
+
 # [0.3.0] 2021-01-29
 Merge components under new repository
 

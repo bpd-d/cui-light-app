@@ -131,15 +131,14 @@ export class CuiTooltipHandler extends CuiHandler {
         });
     }
     removeTooltip() {
-        if (!is(__classPrivateFieldGet(this, _tooltip))) {
-            return;
-        }
         if (__classPrivateFieldGet(this, _task))
             __classPrivateFieldGet(this, _task).stop();
         this.mutate(() => {
-            //@ts-ignore already checked
-            __classPrivateFieldGet(this, _tooltip).remove();
-            __classPrivateFieldSet(this, _tooltip, undefined);
+            if (is(__classPrivateFieldGet(this, _tooltip))) {
+                //@ts-ignore already checked
+                __classPrivateFieldGet(this, _tooltip).remove();
+                __classPrivateFieldSet(this, _tooltip, undefined);
+            }
         });
     }
     getDataFromArgs() {

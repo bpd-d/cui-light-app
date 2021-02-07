@@ -108,7 +108,9 @@ export class CuiDropHandler extends CuiHandler {
         __classPrivateFieldSet(this, _trigger, this.element);
         __classPrivateFieldSet(this, _actions, []);
         __classPrivateFieldSet(this, _autoTask, new CuiTaskRunner(this.args.timeout, false, this.close.bind(this)));
-        ;
+        if (!utils.isPlugin("click-plugin")) {
+            this.logWarning("Window click plugin is not available: outClose will not work");
+        }
     }
     onInit() {
         __classPrivateFieldSet(this, _trigger, this.acquireTrigger());

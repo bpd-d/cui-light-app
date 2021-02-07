@@ -1,41 +1,33 @@
 import { CuiSetupInit } from "../core/models/setup";
 import { is, joinAttributesForQuery, are, registerCuiElement, addCuiArgument } from "../core/utils/functions";
 import { STATICS, EVENTS, CSS_VARIABLES } from "../core/utils/statics";
-import { ICuiLogger, ICuiPlugin, ICuiComponent, ICuiPluginManager, CuiElement, CuiAlertData } from "../core/models/interfaces";
+import { ICuiLogger, ICuiPlugin, ICuiComponent, ICuiPluginManager, CuiElement } from "../core/models/interfaces";
 import { ICuiMutionObserver, CuiMutationObserver } from "../core/observers/mutations";
 import { CuiLoggerFactory } from "../core/factories/logger";
 import { CuiUtils } from "../core/models/utils";
 import { CuiInstanceInitError } from "../core/models/errors";
-import { CuiAlertFactory } from "./handlers/alert";
-import { CuiMoveObserver } from "./observers/move";
 import { ElementManager } from "./managers/element";
-import { CuiToastHandler } from "./managers/toast";
 import { CollectionManager } from "./managers/collection";
 import { CuiPluginManager } from "./managers/plugins";
-import { CuiAlertType } from "../core/utils/types";
 
 
 export class CuiInstance {
     #log: ICuiLogger;
     #mutationObserver: ICuiMutionObserver | undefined;
-    #toastManager: CuiToastHandler | undefined;
     #utils: CuiUtils;
     #plugins: ICuiPluginManager;
     #components: ICuiComponent[];
     #rootElement: HTMLElement;
-    #moveObserver: CuiMoveObserver;
     #mutatedAttributes: string[];
     constructor(setup: CuiSetupInit, plugins: ICuiPlugin[], components: ICuiComponent[]) {
         STATICS.prefix = setup.prefix;
         STATICS.logLevel = setup.logLevel;
+        this.#log = CuiLoggerFactory.get('CuiInstance')
         this.#plugins = new CuiPluginManager(plugins);
         this.#components = components ?? [];
-        this.#utils = new CuiUtils(setup);
-        this.#log = CuiLoggerFactory.get('CuiInstance')
+        this.#utils = new CuiUtils(setup, plugins.map(plugin => { return plugin.name; }));
         this.#rootElement = setup.root;
-        this.#moveObserver = new CuiMoveObserver(this.#utils.bus);
         this.#mutationObserver = undefined;
-        this.#toastManager = undefined;
         this.#mutatedAttributes = [];
     }
 
@@ -45,7 +37,6 @@ export class CuiInstance {
         if (!is(window.MutationObserver)) {
             throw new CuiInstanceInitError("Mutation observer does not exists");
         }
-        this.#toastManager = new CuiToastHandler(this.#utils.interactions, this.#utils.setup.prefix, this.#utils.setup.animationTimeLong ?? 0);
         this.#mutatedAttributes = this.#components.map(x => { return x.attribute }); // MUTATED_ATTRIBUTES; 
         const initElements = is(this.#mutatedAttributes) ? this.#rootElement.querySelectorAll(joinAttributesForQuery(this.#mutatedAttributes)) : null
         if (is(initElements)) {
@@ -78,7 +69,6 @@ export class CuiInstance {
             this.#utils.setProperty(CSS_VARIABLES.animationTime, `${this.#utils.setup.animationTime}ms`);
             this.#utils.setProperty(CSS_VARIABLES.animationTimeShort, `${this.#utils.setup.animationTimeShort}ms`);
         }, null)
-        this.#moveObserver.attach();
 
         this.#utils.bus.emit(EVENTS.INSTANCE_INITIALIZED, null)
         return this;
@@ -87,7 +77,6 @@ export class CuiInstance {
     finish(): void {
         if (this.#mutationObserver)
             this.#mutationObserver.stop();
-        this.#moveObserver.detach();
         this.#utils.bus.emit(EVENTS.INSTANCE_FINISHED, null)
     }
 
@@ -108,15 +97,6 @@ export class CuiInstance {
         // @ts-ignore already checked
         let manager = new CollectionManager(elements, this.#utils.interactions);
         return manager;
-    }
-
-
-    async toast(message: string): Promise<boolean> {
-        if (!are(message, this.#toastManager)) {
-            return false;
-        }
-        //@ts-ignore toast manager exists
-        return this.#toastManager.show(message)
     }
 
     select(selector: string): Element | null {
@@ -161,22 +141,18 @@ export class CuiInstance {
             this.#log.warning("Not enough data to emit event", "emit")
             return;
         }
-        let el = typeof element === 'string' ? document.querySelector(element) : element;
-        let cuid = (<CuiElement>(el as any)).$cuid;
+        let cuid = null
+        if (typeof element === 'string' && element.startsWith('~')) {
+            cuid = element.substring(1);
+        } else {
+            let el = typeof element === 'string' ? document.querySelector(element) : element;
+            cuid = (<CuiElement>(el as any)).$cuid;
+        }
         if (!is(cuid)) {
             this.#log.warning("Element is not a cUI element", "emit")
             return
         }
         this.#utils.bus.emit(event, cuid, ...args);
-    }
-
-    alert(id: string, type: CuiAlertType, data: CuiAlertData): void {
-        let popup = CuiAlertFactory.get(id, type, data, this.#utils);
-        if (!popup) {
-            this.#log.error("Possibly incorrect alert type");
-            return;
-        }
-        popup.show(this.#rootElement);
     }
 
     getPlugin(name: string): ICuiPlugin | undefined {
