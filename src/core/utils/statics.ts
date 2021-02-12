@@ -177,6 +177,8 @@ export const EVENTS = {
     GESTURE_UP: "gesture-up",
     GESTURE_LEFT: "gesture-left",
     GESTURE_RIGHT: "gesture-right",
+    NOTIFY: "notify",
+    NOTIFIED: "notified",
 }
 
 // export const GLOBAL_EVENTS = [EVENTS.ALERT, EVENTS.TOAST, EVENTS.KEYDOWN, EVENTS.MOVE_LOCK, EVENTS.GLOBAL_MOVE, EVENTS.RESIZE]

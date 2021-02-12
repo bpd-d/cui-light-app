@@ -94,6 +94,8 @@ export declare const EVENTS: {
     GESTURE_UP: string;
     GESTURE_LEFT: string;
     GESTURE_RIGHT: string;
+    NOTIFY: string;
+    NOTIFIED: string;
 };
 export declare const OBSERVABLE_SCROLL = "SCROLL";
 export declare const OBSERVABLE_INTERSECTION = "INTERSECTION";

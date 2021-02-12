@@ -331,6 +331,8 @@ const EVENTS = {
     GESTURE_UP: "gesture-up",
     GESTURE_LEFT: "gesture-left",
     GESTURE_RIGHT: "gesture-right",
+    NOTIFY: "notify",
+    NOTIFIED: "notified",
 };
 // export const GLOBAL_EVENTS = [EVENTS.ALERT, EVENTS.TOAST, EVENTS.KEYDOWN, EVENTS.MOVE_LOCK, EVENTS.GLOBAL_MOVE, EVENTS.RESIZE]
 const OBSERVABLE_SCROLL = "SCROLL";
@@ -8229,7 +8231,7 @@ var builders_element_classPrivateFieldGet = (undefined && undefined.__classPriva
     }
     return privateMap.get(receiver);
 };
-var _id, _classes, element_attributes, _tag;
+var _id, _classes, element_attributes, _tag, _text, element_children, _rawChildren, element_callback, _evName;
 
 class element_ElementBuilder {
     constructor(tag) {
@@ -8237,10 +8239,20 @@ class element_ElementBuilder {
         _classes.set(this, void 0);
         element_attributes.set(this, void 0);
         _tag.set(this, void 0);
+        _text.set(this, void 0);
+        element_children.set(this, void 0);
+        _rawChildren.set(this, void 0);
+        element_callback.set(this, void 0);
+        _evName.set(this, void 0);
         builders_element_classPrivateFieldSet(this, _tag, tag);
         builders_element_classPrivateFieldSet(this, _classes, []);
         builders_element_classPrivateFieldSet(this, element_attributes, undefined);
         builders_element_classPrivateFieldSet(this, _id, undefined);
+        builders_element_classPrivateFieldSet(this, _text, undefined);
+        builders_element_classPrivateFieldSet(this, element_children, []);
+        builders_element_classPrivateFieldSet(this, _rawChildren, []);
+        builders_element_classPrivateFieldSet(this, _evName, undefined);
+        builders_element_classPrivateFieldSet(this, element_callback, undefined);
     }
     setId(id) {
         builders_element_classPrivateFieldSet(this, _id, id);
@@ -8252,6 +8264,23 @@ class element_ElementBuilder {
     }
     setAttributes(attributes) {
         builders_element_classPrivateFieldSet(this, element_attributes, attributes);
+        return this;
+    }
+    setTextContent(text) {
+        builders_element_classPrivateFieldSet(this, _text, text);
+        return this;
+    }
+    setChildren(...elements) {
+        builders_element_classPrivateFieldSet(this, element_children, [...elements]);
+        return this;
+    }
+    setRawChildren(...elements) {
+        builders_element_classPrivateFieldSet(this, _rawChildren, [...elements]);
+        return this;
+    }
+    onEvent(name, callback) {
+        builders_element_classPrivateFieldSet(this, _evName, name);
+        builders_element_classPrivateFieldSet(this, element_callback, callback);
         return this;
     }
     build(innerHTML) {
@@ -8273,10 +8302,23 @@ class element_ElementBuilder {
             // @ts-ignore innerHTML checked already
             element.innerHTML = innerHTML;
         }
+        else if (is(builders_element_classPrivateFieldGet(this, _text))) {
+            // @ts-ignore text checked already
+            element.textContent = builders_element_classPrivateFieldGet(this, _text);
+        }
+        builders_element_classPrivateFieldGet(this, _rawChildren).forEach(raw => { element.appendChild(raw.build()); });
+        builders_element_classPrivateFieldGet(this, element_children).forEach(child => element.appendChild(child));
+        if (are(builders_element_classPrivateFieldGet(this, _evName), builders_element_classPrivateFieldGet(this, element_callback))) {
+            // @ts-ignore
+            element.addEventListener(builders_element_classPrivateFieldGet(this, _evName), (ev) => {
+                // @ts-ignore
+                builders_element_classPrivateFieldGet(this, element_callback).call(this, ev);
+            });
+        }
         return element;
     }
 }
-_id = new WeakMap(), _classes = new WeakMap(), element_attributes = new WeakMap(), _tag = new WeakMap();
+_id = new WeakMap(), _classes = new WeakMap(), element_attributes = new WeakMap(), _tag = new WeakMap(), _text = new WeakMap(), element_children = new WeakMap(), _rawChildren = new WeakMap(), element_callback = new WeakMap(), _evName = new WeakMap();
 
 // CONCATENATED MODULE: ./src/core/handlers/drag/detectors.ts
 var detectors_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -10714,6 +10756,234 @@ class move_CuiMoveObserverPlugin {
 }
 _moveObserver = new WeakMap(), move_gesturesEnabled = new WeakMap();
 
+// CONCATENATED MODULE: ./src/plugins/notification/helpers.ts
+
+function validateNotificationData(data) {
+    return is(data) && are(data.id, data.title);
+}
+
+// CONCATENATED MODULE: ./src/plugins/notification/builder.ts
+
+
+
+const closeIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\" width=\"20\" height=\"20\"><path d=\"M 3,3 17,17\"></path><path d=\"M 17,3 3,17\"></path></svg>";
+function getNotification(data, utils, cache, onClose) {
+    let prefix = utils.setup.prefix;
+    if (!are(data.title, data.id)) {
+        return undefined;
+    }
+    const parts = [getHeader(data.title, cache, onClose)];
+    if (is(data.message)) {
+        //@ts-ignore message is defined
+        parts.push(getBody(data.message, cache));
+    }
+    if (is(data.actions)) {
+        //@ts-ignore actions is defined
+        parts.push(getFooter(data.actions, cache));
+    }
+    return new element_ElementBuilder('div').setClasses(cache.NOTIFICATION_CLS, cache.MARGIN_SMALL_VERTICAL, getClassByType(prefix, data.type)).setId(data.id).setRawChildren(...parts).build();
+}
+function getHeader(title, cache, onClose) {
+    const titleElement = new element_ElementBuilder('span').setClasses(cache.NOTIFICATION_TITLE_CLS).setTextContent(title);
+    const iconCloseElement = new icon_IconBuilder(closeIcon).build();
+    const closeElement = new element_ElementBuilder('a').setClasses(cache.ICON_CLS, cache.NOTIFICATION_CLOSE_CLS).onEvent('click', onClose);
+    if (iconCloseElement) {
+        closeElement.setChildren(iconCloseElement);
+    }
+    const header = new element_ElementBuilder('div').setClasses(cache.NOTIFICATION_HEADER_CLS).setRawChildren(titleElement, closeElement);
+    return header;
+}
+function getBody(message, cache) {
+    return new element_ElementBuilder('div').setClasses(cache.NOTIFICATION_BODY_CLS).setTextContent(message);
+}
+function getFooter(actions, cache) {
+    return new element_ElementBuilder('div').setClasses(cache.NOTIFICATION_FOOTER_CLS).setRawChildren(getActionsList(actions));
+}
+function getActionsList(actions) {
+    return new element_ElementBuilder('ul').setRawChildren(...actions.map(action => {
+        return new element_ElementBuilder('li').setRawChildren(new element_ElementBuilder('a').onEvent('click', action.callback).setTextContent(action.name));
+    }));
+}
+function getClassByType(prefix, type) {
+    return `${prefix}-${type !== null && type !== void 0 ? type : 'default'}`;
+}
+
+// CONCATENATED MODULE: ./src/plugins/notification/notification.ts
+var notification_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var notification_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var notification_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var notification_utils, _container, notification_handleId, notification_cache, _holder, notification_actionsHelper, notification_timeout;
+
+
+
+
+
+
+
+const CONTAINER_ID = "notifications-container";
+const CONTAINER_CLS = "{prefix}-notification-container";
+const NOTIFICATION_CLS = '{prefix}-notification';
+const NOTIFICATION_HEADER_CLS = '{prefix}-notification-header';
+const NOTIFICATION_TITLE_CLS = '{prefix}-notification-title';
+const NOTIFICATION_BODY_CLS = '{prefix}-notification-body';
+const NOTIFICATION_FOOTER_CLS = '{prefix}-notification-footer';
+const NOTIFICATION_ACTIVE_CLS = '{prefix}-active';
+const NOTIFICATION_ICON_CLS = "{prefix}-notification-icon";
+const NOTIFICATION_CLOSE_CLS = "{prefix}-notification-close";
+const ICON_CLS = "{prefix}-icon";
+const NOTIFICATION_ANIMATION_IN = "{prefix}-notification-animation-in";
+const NOTIFICATION_ANIMATION_OUT = "{prefix}-notification-animation-out";
+const MARGIN_SMALL_VERTICAL = "{prefix}-margin-small-vertical";
+class notification_CuiNotificationPlugin {
+    constructor(setup) {
+        var _a;
+        this.name = 'notification-plugin';
+        notification_utils.set(this, void 0);
+        _container.set(this, void 0);
+        notification_handleId.set(this, void 0);
+        notification_cache.set(this, void 0);
+        _holder.set(this, void 0);
+        notification_actionsHelper.set(this, void 0);
+        notification_timeout.set(this, void 0);
+        this.description = "CuiNotificationPlugin";
+        notification_classPrivateFieldSet(this, _container, null);
+        notification_classPrivateFieldSet(this, notification_utils, undefined);
+        notification_classPrivateFieldSet(this, notification_handleId, null);
+        notification_classPrivateFieldSet(this, notification_cache, {});
+        notification_classPrivateFieldSet(this, _holder, {});
+        notification_classPrivateFieldSet(this, notification_actionsHelper, undefined);
+        notification_classPrivateFieldSet(this, notification_timeout, (_a = setup.timeout) !== null && _a !== void 0 ? _a : 5000);
+    }
+    init(utils) {
+        this.createCache(utils.setup.prefix);
+        this.getOrCreateContainer(utils, document.body);
+        notification_classPrivateFieldSet(this, notification_actionsHelper, new helpers_CuiActionsHelper(utils.interactions));
+        notification_classPrivateFieldSet(this, notification_utils, utils);
+        notification_classPrivateFieldSet(this, notification_handleId, notification_classPrivateFieldGet(this, notification_utils).bus.on(EVENTS.NOTIFY, this.onEvent.bind(this), { $cuid: this.name }));
+    }
+    destroy() {
+        if (notification_classPrivateFieldGet(this, _container))
+            notification_classPrivateFieldGet(this, _container).remove();
+        if (notification_classPrivateFieldGet(this, notification_handleId) && notification_classPrivateFieldGet(this, notification_utils)) {
+            notification_classPrivateFieldGet(this, notification_utils).bus.detach(EVENTS.NOTIFY, notification_classPrivateFieldGet(this, notification_handleId));
+        }
+    }
+    onEvent(data) {
+        if (!validateNotificationData(data) || !notification_classPrivateFieldGet(this, notification_utils) || !notification_classPrivateFieldGet(this, notification_actionsHelper) || !notification_classPrivateFieldGet(this, _container)) {
+            return;
+        }
+        if (notification_classPrivateFieldGet(this, _holder)[data.id]) {
+            return;
+        }
+        // Create element
+        const notificationEl = getNotification(data, notification_classPrivateFieldGet(this, notification_utils), notification_classPrivateFieldGet(this, notification_cache), () => {
+            this.onNotificationClose(data, false, true);
+        });
+        if (!notificationEl) {
+            return;
+        }
+        notification_classPrivateFieldGet(this, notification_utils).interactions.mutate(() => {
+            // Add to DOM treee
+            //@ts-ignore container is defined
+            if (notification_classPrivateFieldGet(this, _container).children.length === 0) {
+                //@ts-ignore container is defined
+                notification_classPrivateFieldGet(this, _container).appendChild(notificationEl);
+            }
+            else {
+                //@ts-ignore container is defined
+                notification_classPrivateFieldGet(this, _container).insertBefore(notificationEl, notification_classPrivateFieldGet(this, _container).firstChild);
+            }
+            // Set timeout function
+            let timeoutId = null;
+            //  If auto option is not specifically set to false
+            if (!(data.auto === false)) {
+                timeoutId = setTimeout(() => {
+                    this.onNotificationClose(data, true, false);
+                }, notification_classPrivateFieldGet(this, notification_timeout));
+            }
+            // Setup holder
+            notification_classPrivateFieldGet(this, _holder)[data.id] = {
+                element: notificationEl,
+                timeoutId: timeoutId
+            };
+            // Call open
+            this.act(notificationEl, notification_classPrivateFieldGet(this, notification_cache).NOTIFICATION_ANIMATION_IN).then(() => {
+                notificationEl.classList.add(notification_classPrivateFieldGet(this, notification_cache).NOTIFICATION_ACTIVE_CLS);
+            });
+        }, null);
+    }
+    onNotificationClose(notification, fromTimeout, dissmissed) {
+        if (!notification || !notification_classPrivateFieldGet(this, notification_actionsHelper) || !notification_classPrivateFieldGet(this, notification_utils)) {
+            return;
+        }
+        const holder = notification_classPrivateFieldGet(this, _holder)[notification.id];
+        if (!holder) {
+            return;
+        }
+        if (!fromTimeout) {
+            clearTimeout(holder.timeoutId);
+        }
+        this.act(holder.element, notification_classPrivateFieldGet(this, notification_cache).NOTIFICATION_ANIMATION_OUT).then(() => {
+            // @ts-ignore utils is defined
+            notification_classPrivateFieldGet(this, notification_utils).bus.emit(EVENTS.NOTIFIED, null, Object.assign(Object.assign({}, notification), { dissmissed: dissmissed }));
+            holder.element.remove();
+            delete notification_classPrivateFieldGet(this, _holder)[notification.id];
+        });
+    }
+    getOrCreateContainer(utils, root) {
+        notification_classPrivateFieldSet(this, _container, document.getElementById(CONTAINER_ID));
+        if (!notification_classPrivateFieldGet(this, _container)) {
+            notification_classPrivateFieldSet(this, _container, new element_ElementBuilder('div').setClasses(replacePrefix(CONTAINER_CLS, utils.setup.prefix)).build());
+            root.appendChild(notification_classPrivateFieldGet(this, _container));
+        }
+    }
+    createCache(prefix) {
+        notification_classPrivateFieldSet(this, notification_cache, {
+            "NOTIFICATION_CLS": replacePrefix(NOTIFICATION_CLS, prefix),
+            "NOTIFICATION_HEADER_CLS": replacePrefix(NOTIFICATION_HEADER_CLS, prefix),
+            "NOTIFICATION_TITLE_CLS": replacePrefix(NOTIFICATION_TITLE_CLS, prefix),
+            "NOTIFICATION_BODY_CLS": replacePrefix(NOTIFICATION_BODY_CLS, prefix),
+            "NOTIFICATION_FOOTER_CLS": replacePrefix(NOTIFICATION_FOOTER_CLS, prefix),
+            "NOTIFICATION_ACTIVE_CLS": replacePrefix(NOTIFICATION_ACTIVE_CLS, prefix),
+            "NOTIFICATION_ANIMATION_IN": replacePrefix(NOTIFICATION_ANIMATION_IN, prefix),
+            "NOTIFICATION_ANIMATION_OUT": replacePrefix(NOTIFICATION_ANIMATION_OUT, prefix),
+            "NOTIFICATION_ICON_CLS": replacePrefix(NOTIFICATION_ICON_CLS, prefix),
+            "NOTIFICATION_CLOSE_CLS": replacePrefix(NOTIFICATION_CLOSE_CLS, prefix),
+            "ICON_CLS": replacePrefix(ICON_CLS, prefix),
+            "MARGIN_SMALL_VERTICAL": replacePrefix(MARGIN_SMALL_VERTICAL, prefix),
+        });
+    }
+    act(element, animationClass, timeout) {
+        return notification_awaiter(this, void 0, void 0, function* () {
+            //@ts-ignore utils is ignored
+            const delay = timeout !== null && timeout !== void 0 ? timeout : notification_classPrivateFieldGet(this, notification_utils).setup.animationTime;
+            const action = new actions_CuiClassAction(animationClass);
+            //@ts-ignore actionsHelper is defined
+            return notification_classPrivateFieldGet(this, notification_actionsHelper).performAction(element, action, delay !== null && delay !== void 0 ? delay : 0);
+        });
+    }
+}
+notification_utils = new WeakMap(), _container = new WeakMap(), notification_handleId = new WeakMap(), notification_cache = new WeakMap(), _holder = new WeakMap(), notification_actionsHelper = new WeakMap(), notification_timeout = new WeakMap();
+
 // CONCATENATED MODULE: ./src/plugins/print/print.ts
 var print_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
@@ -11836,6 +12106,7 @@ _toastHandler = new WeakMap(), toast_eventId = new WeakMap(), toast_utils = new 
 
 
 
+
 function GetPlugins(init) {
     let light = init ? init.autoLight : true;
     let print = init ? init.autoPrint : true;
@@ -11848,7 +12119,8 @@ function GetPlugins(init) {
         new move_CuiMoveObserverPlugin(),
         new resize_CuiResizeObserverPlugin({}),
         new toast_CuiToastPlugin({}),
-        new alert_CuiAlertsPlugin()
+        new alert_CuiAlertsPlugin(),
+        new notification_CuiNotificationPlugin({ timeout: init.notifcationTimeout })
     ];
 }
 
@@ -11923,7 +12195,7 @@ init_isInitialized = new WeakMap();
 
 // CONCATENATED MODULE: ./src/index.ts
 
-const CUI_LIGHT_VERSION = "0.3.2";
+const CUI_LIGHT_VERSION = "0.3.3";
 
 window.cuiInit = new init_CuiInit();
 

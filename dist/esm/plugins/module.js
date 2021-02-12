@@ -3,6 +3,7 @@ import { CuiWindowClickPlugin } from "./click/click";
 import { CuiKeysObserverPlugin } from "./keys/keys";
 import { CuiAutoLightModePlugin } from "./light/light";
 import { CuiMoveObserverPlugin } from "./move/move";
+import { CuiNotificationPlugin } from "./notification/notification";
 import { CuiAutoPrintModePlugin } from "./print/print";
 import { CuiCSSVariablesPlugin } from "./properties/properties";
 import { CuiResizeObserverPlugin } from "./resize/resize";
@@ -19,6 +20,7 @@ export function GetPlugins(init) {
         new CuiMoveObserverPlugin(),
         new CuiResizeObserverPlugin({}),
         new CuiToastPlugin({}),
-        new CuiAlertsPlugin()
+        new CuiAlertsPlugin(),
+        new CuiNotificationPlugin({ timeout: init.notifcationTimeout })
     ];
 }
