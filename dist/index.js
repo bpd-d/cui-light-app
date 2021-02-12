@@ -12195,7 +12195,7 @@ init_isInitialized = new WeakMap();
 
 // CONCATENATED MODULE: ./src/index.ts
 
-const CUI_LIGHT_VERSION = "0.3.3";
+const CUI_LIGHT_VERSION = "0.3.4";
 
 window.cuiInit = new init_CuiInit();
 

@@ -1,5 +1,7 @@
 # bpd cUI Light changelog
 
+# [0.3.4] 2021-02-12
+* [Changed] Project cleanup
 # [0.3.3] 2021-02-12
 * [Added] Notification plugin
 # [0.3.2] 2021-02-07
