@@ -10766,6 +10766,7 @@ function validateNotificationData(data) {
 
 
 
+
 const closeIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\" width=\"20\" height=\"20\"><path d=\"M 3,3 17,17\"></path><path d=\"M 17,3 3,17\"></path></svg>";
 function getNotification(data, utils, cache, onClose) {
     let prefix = utils.setup.prefix;
@@ -10779,7 +10780,7 @@ function getNotification(data, utils, cache, onClose) {
     }
     if (is(data.actions)) {
         //@ts-ignore actions is defined
-        parts.push(getFooter(data.actions, cache));
+        parts.push(getFooter(data.actions, cache, onClose));
     }
     return new element_ElementBuilder('div').setClasses(cache.NOTIFICATION_CLS, cache.MARGIN_SMALL_VERTICAL, getClassByType(prefix, data.type)).setId(data.id).setRawChildren(...parts).build();
 }
@@ -10794,14 +10795,25 @@ function getHeader(title, cache, onClose) {
     return header;
 }
 function getBody(message, cache) {
-    return new element_ElementBuilder('div').setClasses(cache.NOTIFICATION_BODY_CLS).setTextContent(message);
+    return new element_ElementBuilder('div').setClasses(cache.NOTIFICATION_BODY_CLS).setRawChildren(new element_ElementBuilder('div').setTextContent(message));
 }
-function getFooter(actions, cache) {
-    return new element_ElementBuilder('div').setClasses(cache.NOTIFICATION_FOOTER_CLS).setRawChildren(getActionsList(actions));
+function getFooter(actions, cache, onClose) {
+    return new element_ElementBuilder('div').setClasses(cache.NOTIFICATION_FOOTER_CLS).setRawChildren(getActionsList(actions, onClose));
 }
-function getActionsList(actions) {
+function getActionsList(actions, onClose) {
     return new element_ElementBuilder('ul').setRawChildren(...actions.map(action => {
-        return new element_ElementBuilder('li').setRawChildren(new element_ElementBuilder('a').onEvent('click', action.callback).setTextContent(action.name));
+        return new element_ElementBuilder('li').setRawChildren(new element_ElementBuilder('a').onEvent('click', () => {
+            try {
+                action.callback();
+            }
+            catch (e) {
+                const log = logger_CuiLoggerFactory.get("Notifications");
+                log.exception(e, "OnActionClick");
+            }
+            finally {
+                onClose();
+            }
+        }).setTextContent(action.name));
     }));
 }
 function getClassByType(prefix, type) {
@@ -12195,7 +12207,7 @@ init_isInitialized = new WeakMap();
 
 // CONCATENATED MODULE: ./src/index.ts
 
-const CUI_LIGHT_VERSION = "0.3.4";
+const CUI_LIGHT_VERSION = "0.3.5";
 
 window.cuiInit = new init_CuiInit();
 

@@ -1,5 +1,7 @@
 # bpd cUI Light changelog
 
+# [0.3.4] 2021-02-18
+* [Changed] Notification close when action is performed
 # [0.3.4] 2021-02-12
 * [Changed] Project cleanup
 # [0.3.3] 2021-02-12

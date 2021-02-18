@@ -1,8 +1,9 @@
 import { IconBuilder } from "../../core/builders/icon";
 import { ElementBuilder } from "../../core/builders/element";
 import { CuiUtils } from "../../core/models/utils";
-import { are, is, replacePrefix } from "../../core/utils/functions";
+import { are, is } from "../../core/utils/functions";
 import { CuiNotificationType, ICuiNotification, ICuiNotificationAction } from "./interfaces";
+import { CuiLoggerFactory } from "../../core/factories/logger";
 
 
 
@@ -22,7 +23,7 @@ export default function getNotification(data: ICuiNotification, utils: CuiUtils,
     }
     if (is(data.actions)) {
         //@ts-ignore actions is defined
-        parts.push(getFooter(data.actions, cache));
+        parts.push(getFooter(data.actions, cache, onClose));
     }
 
 
@@ -42,16 +43,25 @@ function getHeader(title: string, cache: any, onClose: () => void): ElementBuild
 }
 
 function getBody(message: string, cache: any): ElementBuilder {
-    return new ElementBuilder('div').setClasses(cache.NOTIFICATION_BODY_CLS).setTextContent(message);
+    return new ElementBuilder('div').setClasses(cache.NOTIFICATION_BODY_CLS).setRawChildren(new ElementBuilder('div').setTextContent(message));
 }
 
-function getFooter(actions: ICuiNotificationAction[], cache: any): ElementBuilder {
-    return new ElementBuilder('div').setClasses(cache.NOTIFICATION_FOOTER_CLS).setRawChildren(getActionsList(actions));
+function getFooter(actions: ICuiNotificationAction[], cache: any, onClose: () => void): ElementBuilder {
+    return new ElementBuilder('div').setClasses(cache.NOTIFICATION_FOOTER_CLS).setRawChildren(getActionsList(actions, onClose));
 }
 
-function getActionsList(actions: ICuiNotificationAction[]): ElementBuilder {
+function getActionsList(actions: ICuiNotificationAction[], onClose: () => void): ElementBuilder {
     return new ElementBuilder('ul').setRawChildren(...actions.map(action => {
-        return new ElementBuilder('li').setRawChildren(new ElementBuilder('a').onEvent('click', action.callback).setTextContent(action.name))
+        return new ElementBuilder('li').setRawChildren(new ElementBuilder('a').onEvent('click', () => {
+            try {
+                action.callback();
+            } catch (e) {
+                const log = CuiLoggerFactory.get("Notifications");
+                log.exception(e, "OnActionClick");
+            } finally {
+                onClose();
+            }
+        }).setTextContent(action.name))
     }));
 }
 
