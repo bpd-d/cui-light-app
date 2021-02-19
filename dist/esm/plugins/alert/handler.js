@@ -44,10 +44,16 @@ class CuiAlertHandlerBase {
         return __classPrivateFieldGet(this, _id);
     }
     show(root) {
+        if (!__classPrivateFieldGet(this, _utils)) {
+            return;
+        }
         let element = document.getElementById(__classPrivateFieldGet(this, _id));
         if (!is(element)) {
             element = this.createElement();
-            root.appendChild(element);
+            __classPrivateFieldGet(this, _utils).interactions.mutate(() => {
+                // @ts-ignore - already checked
+                root.appendChild(element);
+            }, null);
         }
         else {
             // @ts-ignore - already checked
@@ -59,18 +65,20 @@ class CuiAlertHandlerBase {
             let ids = __classPrivateFieldGet(this, _manager).on('closed', this.onClose.bind(this));
             __classPrivateFieldSet(this, _attid, ids.length > 0 ? ids[0] : null);
             __classPrivateFieldGet(this, _manager).emit("open");
-        }, 100);
+        }, 50);
     }
     updateElement(element) {
-        let title = element.querySelector(`.${this.prefix}-dialog-title`);
-        let content = element.querySelector(`.${this.prefix}-dialog-body>p`);
-        __classPrivateFieldGet(this, _utils).interactions.mutate(() => {
-            if (title) {
-                title.innerHTML = this.title;
-            }
-            if (content) {
-                content.innerHTML = this.content;
-            }
+        __classPrivateFieldGet(this, _utils).interactions.fetch(() => {
+            let title = element.querySelector(`.${this.prefix}-dialog-title`);
+            let content = element.querySelector(`.${this.prefix}-dialog-body>p`);
+            __classPrivateFieldGet(this, _utils).interactions.mutate(() => {
+                if (title) {
+                    title.innerHTML = this.title;
+                }
+                if (content) {
+                    content.innerHTML = this.content;
+                }
+            }, null);
         }, null);
     }
     onClose(arg) {

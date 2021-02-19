@@ -50,10 +50,18 @@ abstract class CuiAlertHandlerBase implements ICuiAlertHandler, CuiContext {
     }
 
     show(root: Element): void {
+        if (!this.#utils) {
+            return;
+        }
+
         let element = document.getElementById(this.#id);
         if (!is(element)) {
             element = this.createElement();
-            root.appendChild(element);
+            this.#utils.interactions.mutate(() => {
+                // @ts-ignore - already checked
+                root.appendChild(element);
+            }, null)
+
         } else {
             // @ts-ignore - already checked
             this.updateElement(element);
@@ -64,19 +72,21 @@ abstract class CuiAlertHandlerBase implements ICuiAlertHandler, CuiContext {
             let ids = this.#manager.on('closed', this.onClose.bind(this));
             this.#attid = ids.length > 0 ? ids[0] : null;
             this.#manager.emit("open");
-        }, 100);
+        }, 50);
     }
 
     updateElement(element: HTMLElement) {
-        let title = element.querySelector(`.${this.prefix}-dialog-title`);
-        let content = element.querySelector(`.${this.prefix}-dialog-body>p`);
-        this.#utils.interactions.mutate(() => {
-            if (title) {
-                title.innerHTML = this.title;
-            }
-            if (content) {
-                content.innerHTML = this.content;
-            }
+        this.#utils.interactions.fetch(() => {
+            let title = element.querySelector(`.${this.prefix}-dialog-title`);
+            let content = element.querySelector(`.${this.prefix}-dialog-body>p`);
+            this.#utils.interactions.mutate(() => {
+                if (title) {
+                    title.innerHTML = this.title;
+                }
+                if (content) {
+                    content.innerHTML = this.content;
+                }
+            }, null)
         }, null)
     }
 

@@ -84,30 +84,18 @@ export class CuiNotificationPlugin {
             return;
         }
         // Create element
-        const notificationEl = getNotification(data, __classPrivateFieldGet(this, _utils), __classPrivateFieldGet(this, _cache), () => {
+        getNotification(data, __classPrivateFieldGet(this, _utils), __classPrivateFieldGet(this, _cache), () => {
             this.onNotificationClose(data, false, true);
-        });
-        if (!notificationEl) {
-            return;
-        }
-        __classPrivateFieldGet(this, _utils).interactions.mutate(() => {
-            // Add to DOM treee
-            //@ts-ignore container is defined
-            if (__classPrivateFieldGet(this, _container).children.length === 0) {
-                //@ts-ignore container is defined
-                __classPrivateFieldGet(this, _container).appendChild(notificationEl);
+        }).then(notificationEl => {
+            if (!notificationEl) {
+                return;
             }
-            else {
-                //@ts-ignore container is defined
-                __classPrivateFieldGet(this, _container).insertBefore(notificationEl, __classPrivateFieldGet(this, _container).firstChild);
-            }
+            this.addNotificationToTree(notificationEl);
             // Set timeout function
             let timeoutId = null;
             //  If auto option is not specifically set to false
             if (!(data.auto === false)) {
-                timeoutId = setTimeout(() => {
-                    this.onNotificationClose(data, true, false);
-                }, __classPrivateFieldGet(this, _timeout));
+                timeoutId = this.setAutoClose(data);
             }
             // Setup holder
             __classPrivateFieldGet(this, _holder)[data.id] = {
@@ -118,6 +106,26 @@ export class CuiNotificationPlugin {
             this.act(notificationEl, __classPrivateFieldGet(this, _cache).NOTIFICATION_ANIMATION_IN).then(() => {
                 notificationEl.classList.add(__classPrivateFieldGet(this, _cache).NOTIFICATION_ACTIVE_CLS);
             });
+        });
+    }
+    setAutoClose(data) {
+        return setTimeout(() => {
+            this.onNotificationClose(data, true, false);
+        }, __classPrivateFieldGet(this, _timeout));
+    }
+    addNotificationToTree(notifiactionElement) {
+        //@ts-ignore utils is defined
+        __classPrivateFieldGet(this, _utils).interactions.mutate(() => {
+            // Add to DOM treee
+            //@ts-ignore container is defined
+            if (__classPrivateFieldGet(this, _container).children.length === 0) {
+                //@ts-ignore container is defined
+                __classPrivateFieldGet(this, _container).appendChild(notifiactionElement);
+            }
+            else {
+                //@ts-ignore container is defined
+                __classPrivateFieldGet(this, _container).insertBefore(notifiactionElement, __classPrivateFieldGet(this, _container).firstChild);
+            }
         }, null);
     }
     onNotificationClose(notification, fromTimeout, dissmissed) {

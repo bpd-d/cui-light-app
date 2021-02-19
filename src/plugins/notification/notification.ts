@@ -79,45 +79,49 @@ export class CuiNotificationPlugin implements ICuiPlugin {
             return;
         }
         // Create element
-        const notificationEl = getNotification(data, this.#utils, this.#cache, () => {
+        getNotification(data, this.#utils, this.#cache, () => {
             this.onNotificationClose(data, false, true);
-        });
-
-        if (!notificationEl) {
-            return;
-        }
-
-        this.#utils.interactions.mutate(() => {
-            // Add to DOM treee
-            //@ts-ignore container is defined
-            if (this.#container.children.length === 0) {
-                //@ts-ignore container is defined
-                this.#container.appendChild(notificationEl)
-            } else {
-                //@ts-ignore container is defined
-                this.#container.insertBefore(notificationEl, this.#container.firstChild);
+        }).then(notificationEl => {
+            if (!notificationEl) {
+                return;
             }
+            this.addNotificationToTree(notificationEl)
             // Set timeout function
             let timeoutId = null;
             //  If auto option is not specifically set to false
             if (!(data.auto === false)) {
-                timeoutId = setTimeout(() => {
-                    this.onNotificationClose(data, true, false);
-                }, this.#timeout);
+                timeoutId = this.setAutoClose(data);
             }
-
             // Setup holder
             this.#holder[data.id] = {
                 element: notificationEl,
                 timeoutId: timeoutId
             }
-
             // Call open
             this.act(notificationEl, this.#cache.NOTIFICATION_ANIMATION_IN).then(() => {
                 notificationEl.classList.add(this.#cache.NOTIFICATION_ACTIVE_CLS);
             });
+        });
+    }
 
+    private setAutoClose(data: ICuiNotification): any {
+        return setTimeout(() => {
+            this.onNotificationClose(data, true, false);
+        }, this.#timeout);
+    }
 
+    private addNotificationToTree(notifiactionElement: HTMLElement) {
+        //@ts-ignore utils is defined
+        this.#utils.interactions.mutate(() => {
+            // Add to DOM treee
+            //@ts-ignore container is defined
+            if (this.#container.children.length === 0) {
+                //@ts-ignore container is defined
+                this.#container.appendChild(notifiactionElement)
+            } else {
+                //@ts-ignore container is defined
+                this.#container.insertBefore(notifiactionElement, this.#container.firstChild);
+            }
         }, null)
     }
 

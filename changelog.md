@@ -1,6 +1,8 @@
 # bpd cUI Light changelog
 
-# [0.3.4] 2021-02-18
+# [0.3.6] 2021-02-19
+* [Added] Focus plugin to add proper class to body depending on input type - ability to turn off some focus on precise events
+# [0.3.5] 2021-02-18
 * [Changed] Notification close when action is performed
 # [0.3.4] 2021-02-12
 * [Changed] Project cleanup

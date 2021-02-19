@@ -10,6 +10,8 @@ export declare class CuiNotificationPlugin implements ICuiPlugin {
     init(utils: CuiUtils): void;
     destroy(): void;
     private onEvent;
+    private setAutoClose;
+    private addNotificationToTree;
     private onNotificationClose;
     private getOrCreateContainer;
     private createCache;

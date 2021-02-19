@@ -1,6 +1,7 @@
 import { ICuiPlugin } from "../core/models/interfaces";
 import { CuiAlertsPlugin } from "./alert/alert";
 import { CuiWindowClickPlugin } from "./click/click";
+import { CuiLightFocusPlugin, ICuiLightFocusPluginSetup } from "./focus/focus";
 import { CuiKeysObserverPlugin } from "./keys/keys";
 import { CuiAutoLightModePlugin } from "./light/light";
 import { CuiMoveObserverPlugin } from "./move/move";
@@ -14,6 +15,7 @@ export interface CuiPluginsInit {
     autoLight: boolean;
     autoPrint: boolean;
     notifcationTimeout?: number;
+    focusSetup?: ICuiLightFocusPluginSetup;
 }
 
 export function GetPlugins(init: CuiPluginsInit): ICuiPlugin[] {
@@ -29,7 +31,8 @@ export function GetPlugins(init: CuiPluginsInit): ICuiPlugin[] {
         new CuiResizeObserverPlugin({}),
         new CuiToastPlugin({}),
         new CuiAlertsPlugin(),
-        new CuiNotificationPlugin({ timeout: init.notifcationTimeout })
+        new CuiNotificationPlugin({ timeout: init.notifcationTimeout }),
+        new CuiLightFocusPlugin(init.focusSetup ?? {})
 
     ]
 }

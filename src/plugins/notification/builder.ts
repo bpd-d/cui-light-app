@@ -10,7 +10,7 @@ import { CuiLoggerFactory } from "../../core/factories/logger";
 const closeIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\" width=\"20\" height=\"20\"><path d=\"M 3,3 17,17\"></path><path d=\"M 17,3 3,17\"></path></svg>";
 
 
-export default function getNotification(data: ICuiNotification, utils: CuiUtils, cache: any, onClose: () => void): HTMLElement | undefined {
+export default async function getNotification(data: ICuiNotification, utils: CuiUtils, cache: any, onClose: () => void): Promise<HTMLElement | undefined> {
     let prefix = utils.setup.prefix;
 
     if (!are(data.title, data.id)) {
@@ -25,7 +25,6 @@ export default function getNotification(data: ICuiNotification, utils: CuiUtils,
         //@ts-ignore actions is defined
         parts.push(getFooter(data.actions, cache, onClose));
     }
-
 
     return new ElementBuilder('div').setClasses(cache.NOTIFICATION_CLS, cache.MARGIN_SMALL_VERTICAL, getClassByType(prefix, data.type)).setId(data.id).setRawChildren(...parts).build();
 

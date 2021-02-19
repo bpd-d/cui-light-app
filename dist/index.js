@@ -10051,10 +10051,16 @@ class handler_CuiAlertHandlerBase {
         return handler_classPrivateFieldGet(this, handler_id);
     }
     show(root) {
+        if (!handler_classPrivateFieldGet(this, handler_utils)) {
+            return;
+        }
         let element = document.getElementById(handler_classPrivateFieldGet(this, handler_id));
         if (!is(element)) {
             element = this.createElement();
-            root.appendChild(element);
+            handler_classPrivateFieldGet(this, handler_utils).interactions.mutate(() => {
+                // @ts-ignore - already checked
+                root.appendChild(element);
+            }, null);
         }
         else {
             // @ts-ignore - already checked
@@ -10066,18 +10072,20 @@ class handler_CuiAlertHandlerBase {
             let ids = handler_classPrivateFieldGet(this, _manager).on('closed', this.onClose.bind(this));
             handler_classPrivateFieldSet(this, _attid, ids.length > 0 ? ids[0] : null);
             handler_classPrivateFieldGet(this, _manager).emit("open");
-        }, 100);
+        }, 50);
     }
     updateElement(element) {
-        let title = element.querySelector(`.${this.prefix}-dialog-title`);
-        let content = element.querySelector(`.${this.prefix}-dialog-body>p`);
-        handler_classPrivateFieldGet(this, handler_utils).interactions.mutate(() => {
-            if (title) {
-                title.innerHTML = this.title;
-            }
-            if (content) {
-                content.innerHTML = this.content;
-            }
+        handler_classPrivateFieldGet(this, handler_utils).interactions.fetch(() => {
+            let title = element.querySelector(`.${this.prefix}-dialog-title`);
+            let content = element.querySelector(`.${this.prefix}-dialog-body>p`);
+            handler_classPrivateFieldGet(this, handler_utils).interactions.mutate(() => {
+                if (title) {
+                    title.innerHTML = this.title;
+                }
+                if (content) {
+                    content.innerHTML = this.content;
+                }
+            }, null);
         }, null);
     }
     onClose(arg) {
@@ -10305,6 +10313,112 @@ class click_CuiWindowClickPlugin {
     }
 }
 _bus = new WeakMap(), _boundClick = new WeakMap();
+
+// CONCATENATED MODULE: ./src/plugins/focus/focus.ts
+var focus_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var focus_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var focus_interactions, _inputType, _onMouseListener, _onTouchListener, _onKeyDownListener, _currentCls;
+const DEFAULT_FOCUS_VISIBLE = "focus-visible";
+const DEFAULT_FOCUS_PRECISE = "focus-precise";
+class CuiLightFocusPlugin {
+    constructor(setup) {
+        focus_interactions.set(this, void 0);
+        _inputType.set(this, void 0);
+        _onMouseListener.set(this, void 0);
+        _onTouchListener.set(this, void 0);
+        _onKeyDownListener.set(this, void 0);
+        _currentCls.set(this, void 0);
+        this.setup = Object.assign({ keybordClass: DEFAULT_FOCUS_VISIBLE, mouseClass: DEFAULT_FOCUS_PRECISE, touchClass: DEFAULT_FOCUS_PRECISE }, setup);
+        this.description = "CuiLightFocusPlugin";
+        this.name = "focus-plugin";
+        focus_classPrivateFieldSet(this, focus_interactions, undefined);
+        focus_classPrivateFieldSet(this, _onKeyDownListener, this.onKeyDownEvent.bind(this));
+        focus_classPrivateFieldSet(this, _onMouseListener, this.onMouseEvent.bind(this));
+        focus_classPrivateFieldSet(this, _onTouchListener, this.onTouchEvent.bind(this));
+        focus_classPrivateFieldSet(this, _inputType, 'none');
+        focus_classPrivateFieldSet(this, _currentCls, undefined);
+    }
+    init(utils) {
+        focus_classPrivateFieldSet(this, focus_interactions, utils.interactions);
+        document.body.addEventListener('touchstart', focus_classPrivateFieldGet(this, _onTouchListener));
+        document.body.addEventListener('mousedown', focus_classPrivateFieldGet(this, _onMouseListener));
+        window.addEventListener('keydown', focus_classPrivateFieldGet(this, _onKeyDownListener));
+    }
+    onMouseEvent(ev) {
+        if (focus_classPrivateFieldGet(this, _inputType) === 'mouse') {
+            return;
+        }
+        this.update('mouse');
+    }
+    onKeyDownEvent(ev) {
+        if (focus_classPrivateFieldGet(this, _inputType) === 'keyboard') {
+            return;
+        }
+        this.update('keyboard');
+    }
+    onTouchEvent(ev) {
+        if (focus_classPrivateFieldGet(this, _inputType) === 'touch') {
+            return;
+        }
+        this.update('touch');
+    }
+    update(type) {
+        let cls = this.getClass(type);
+        this.setClasses(cls, focus_classPrivateFieldGet(this, _currentCls), () => {
+            focus_classPrivateFieldSet(this, _currentCls, cls);
+            focus_classPrivateFieldSet(this, _inputType, type);
+        });
+    }
+    getClass(type) {
+        switch (type) {
+            case "keyboard":
+                return this.setup.keybordClass;
+            case "mouse":
+                return this.setup.mouseClass;
+            case "touch":
+                return this.setup.touchClass;
+            default:
+                return undefined;
+        }
+    }
+    setClasses(cls, prevCls, callback) {
+        if (!focus_classPrivateFieldGet(this, focus_interactions) || cls === prevCls) {
+            return;
+        }
+        focus_classPrivateFieldGet(this, focus_interactions).fetch(() => {
+            let hasCls = cls && document.body.classList.contains(cls);
+            let hasPrevCls = prevCls && document.body.classList.contains(prevCls);
+            // @ts-ignore interactions is set
+            focus_classPrivateFieldGet(this, focus_interactions).mutate(() => {
+                if (!hasCls)
+                    // @ts-ignore cls is set
+                    document.body.classList.add(cls);
+                if (hasPrevCls) {
+                    // @ts-ignore prevCls is set
+                    document.body.classList.remove(prevCls);
+                }
+                callback();
+            }, null);
+        }, null);
+    }
+    destroy() {
+        document.body.removeEventListener('touchstart', focus_classPrivateFieldGet(this, _onTouchListener));
+        document.body.removeEventListener('mousedown', focus_classPrivateFieldGet(this, _onMouseListener));
+        window.removeEventListener('keydown', focus_classPrivateFieldGet(this, _onKeyDownListener));
+    }
+}
+focus_interactions = new WeakMap(), _inputType = new WeakMap(), _onMouseListener = new WeakMap(), _onTouchListener = new WeakMap(), _onKeyDownListener = new WeakMap(), _currentCls = new WeakMap();
 
 // CONCATENATED MODULE: ./src/plugins/keys/listener.ts
 var listener_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -10763,26 +10877,37 @@ function validateNotificationData(data) {
 }
 
 // CONCATENATED MODULE: ./src/plugins/notification/builder.ts
+var builder_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 
 
 
 
 const closeIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\" width=\"20\" height=\"20\"><path d=\"M 3,3 17,17\"></path><path d=\"M 17,3 3,17\"></path></svg>";
 function getNotification(data, utils, cache, onClose) {
-    let prefix = utils.setup.prefix;
-    if (!are(data.title, data.id)) {
-        return undefined;
-    }
-    const parts = [getHeader(data.title, cache, onClose)];
-    if (is(data.message)) {
-        //@ts-ignore message is defined
-        parts.push(getBody(data.message, cache));
-    }
-    if (is(data.actions)) {
-        //@ts-ignore actions is defined
-        parts.push(getFooter(data.actions, cache, onClose));
-    }
-    return new element_ElementBuilder('div').setClasses(cache.NOTIFICATION_CLS, cache.MARGIN_SMALL_VERTICAL, getClassByType(prefix, data.type)).setId(data.id).setRawChildren(...parts).build();
+    return builder_awaiter(this, void 0, void 0, function* () {
+        let prefix = utils.setup.prefix;
+        if (!are(data.title, data.id)) {
+            return undefined;
+        }
+        const parts = [getHeader(data.title, cache, onClose)];
+        if (is(data.message)) {
+            //@ts-ignore message is defined
+            parts.push(getBody(data.message, cache));
+        }
+        if (is(data.actions)) {
+            //@ts-ignore actions is defined
+            parts.push(getFooter(data.actions, cache, onClose));
+        }
+        return new element_ElementBuilder('div').setClasses(cache.NOTIFICATION_CLS, cache.MARGIN_SMALL_VERTICAL, getClassByType(prefix, data.type)).setId(data.id).setRawChildren(...parts).build();
+    });
 }
 function getHeader(title, cache, onClose) {
     const titleElement = new element_ElementBuilder('span').setClasses(cache.NOTIFICATION_TITLE_CLS).setTextContent(title);
@@ -10907,30 +11032,18 @@ class notification_CuiNotificationPlugin {
             return;
         }
         // Create element
-        const notificationEl = getNotification(data, notification_classPrivateFieldGet(this, notification_utils), notification_classPrivateFieldGet(this, notification_cache), () => {
+        getNotification(data, notification_classPrivateFieldGet(this, notification_utils), notification_classPrivateFieldGet(this, notification_cache), () => {
             this.onNotificationClose(data, false, true);
-        });
-        if (!notificationEl) {
-            return;
-        }
-        notification_classPrivateFieldGet(this, notification_utils).interactions.mutate(() => {
-            // Add to DOM treee
-            //@ts-ignore container is defined
-            if (notification_classPrivateFieldGet(this, _container).children.length === 0) {
-                //@ts-ignore container is defined
-                notification_classPrivateFieldGet(this, _container).appendChild(notificationEl);
+        }).then(notificationEl => {
+            if (!notificationEl) {
+                return;
             }
-            else {
-                //@ts-ignore container is defined
-                notification_classPrivateFieldGet(this, _container).insertBefore(notificationEl, notification_classPrivateFieldGet(this, _container).firstChild);
-            }
+            this.addNotificationToTree(notificationEl);
             // Set timeout function
             let timeoutId = null;
             //  If auto option is not specifically set to false
             if (!(data.auto === false)) {
-                timeoutId = setTimeout(() => {
-                    this.onNotificationClose(data, true, false);
-                }, notification_classPrivateFieldGet(this, notification_timeout));
+                timeoutId = this.setAutoClose(data);
             }
             // Setup holder
             notification_classPrivateFieldGet(this, _holder)[data.id] = {
@@ -10941,6 +11054,26 @@ class notification_CuiNotificationPlugin {
             this.act(notificationEl, notification_classPrivateFieldGet(this, notification_cache).NOTIFICATION_ANIMATION_IN).then(() => {
                 notificationEl.classList.add(notification_classPrivateFieldGet(this, notification_cache).NOTIFICATION_ACTIVE_CLS);
             });
+        });
+    }
+    setAutoClose(data) {
+        return setTimeout(() => {
+            this.onNotificationClose(data, true, false);
+        }, notification_classPrivateFieldGet(this, notification_timeout));
+    }
+    addNotificationToTree(notifiactionElement) {
+        //@ts-ignore utils is defined
+        notification_classPrivateFieldGet(this, notification_utils).interactions.mutate(() => {
+            // Add to DOM treee
+            //@ts-ignore container is defined
+            if (notification_classPrivateFieldGet(this, _container).children.length === 0) {
+                //@ts-ignore container is defined
+                notification_classPrivateFieldGet(this, _container).appendChild(notifiactionElement);
+            }
+            else {
+                //@ts-ignore container is defined
+                notification_classPrivateFieldGet(this, _container).insertBefore(notifiactionElement, notification_classPrivateFieldGet(this, _container).firstChild);
+            }
         }, null);
     }
     onNotificationClose(notification, fromTimeout, dissmissed) {
@@ -12119,7 +12252,9 @@ _toastHandler = new WeakMap(), toast_eventId = new WeakMap(), toast_utils = new 
 
 
 
+
 function GetPlugins(init) {
+    var _a;
     let light = init ? init.autoLight : true;
     let print = init ? init.autoPrint : true;
     return [
@@ -12132,7 +12267,8 @@ function GetPlugins(init) {
         new resize_CuiResizeObserverPlugin({}),
         new toast_CuiToastPlugin({}),
         new alert_CuiAlertsPlugin(),
-        new notification_CuiNotificationPlugin({ timeout: init.notifcationTimeout })
+        new notification_CuiNotificationPlugin({ timeout: init.notifcationTimeout }),
+        new CuiLightFocusPlugin((_a = init.focusSetup) !== null && _a !== void 0 ? _a : {})
     ];
 }
 
@@ -12207,7 +12343,7 @@ init_isInitialized = new WeakMap();
 
 // CONCATENATED MODULE: ./src/index.ts
 
-const CUI_LIGHT_VERSION = "0.3.5";
+const CUI_LIGHT_VERSION = "0.3.6";
 
 window.cuiInit = new init_CuiInit();
 
