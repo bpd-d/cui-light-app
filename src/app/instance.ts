@@ -47,7 +47,7 @@ export class CuiInstance {
             //@ts-ignore initElements already checked
             for (let element of initElements) {
                 try {
-                    let matchingComponents = await getMatchingComponents(element, this.#components)
+                    let matchingComponents = getMatchingComponents(element, this.#components)
                     promises.push(createCuiElement(element, matchingComponents, this.#utils));
                 } catch (e) {
                     this.#log.exception(e);

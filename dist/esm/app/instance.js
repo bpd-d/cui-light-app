@@ -66,7 +66,7 @@ export class CuiInstance {
                 //@ts-ignore initElements already checked
                 for (let element of initElements) {
                     try {
-                        let matchingComponents = yield getMatchingComponents(element, __classPrivateFieldGet(this, _components));
+                        let matchingComponents = getMatchingComponents(element, __classPrivateFieldGet(this, _components));
                         promises.push(createCuiElement(element, matchingComponents, __classPrivateFieldGet(this, _utils)));
                     }
                     catch (e) {

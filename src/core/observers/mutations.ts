@@ -150,10 +150,7 @@ export class CuiMutationObserver implements ICuiMutionObserver {
 
     private async handleAddedNodes(nodes: NodeList): Promise<boolean> {
         for (let node of nodes) {
-            let mainresult = await this.handleAddedNode(node);
-            if (!mainresult) {
-                return false;
-            }
+            await this.handleAddedNode(node);
             let element = node as Element
             let children = element.hasChildNodes() ? element.querySelectorAll(this.#queryString) : null;
             if (is(children)) {
@@ -176,23 +173,23 @@ export class CuiMutationObserver implements ICuiMutionObserver {
     }
 
     private async handleAddedNode(node: any): Promise<boolean> {
-        let matchingComponents = await getMatchingComponents(node, this.#components)
+        let matchingComponents: ICuiComponent[] = [];
+        matchingComponents = getMatchingComponents(node, this.#components)
         return createCuiElement(node, matchingComponents, this.#utils);
     }
 
     private async handleRemovedNodes(nodes: NodeList): Promise<boolean> {
         for (let node of nodes) {
-            let result = await destroyCuiElement(node);
-            if (result) {
-                let element = node as Element;
-                let children = node.hasChildNodes() ? element.querySelectorAll(this.#queryString) : null;
-                if (is(children)) {
-                    // @ts-ignore children is defined
-                    this._log.debug("Additional nodes to remove: " + children.length)
-                    // @ts-ignore children is defined
-                    await this.handleDestroyChildren(children);
-                }
+            await destroyCuiElement(node);
+            let element = node as Element;
+            let children = node.hasChildNodes() ? element.querySelectorAll(this.#queryString) : null;
+            if (is(children)) {
+                // @ts-ignore children is defined
+                this._log.debug("Additional nodes to remove: " + children.length)
+                // @ts-ignore children is defined
+                await this.handleDestroyChildren(children);
             }
+
         }
         return true;
     }

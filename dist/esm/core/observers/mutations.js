@@ -141,10 +141,7 @@ export class CuiMutationObserver {
     handleAddedNodes(nodes) {
         return __awaiter(this, void 0, void 0, function* () {
             for (let node of nodes) {
-                let mainresult = yield this.handleAddedNode(node);
-                if (!mainresult) {
-                    return false;
-                }
+                yield this.handleAddedNode(node);
                 let element = node;
                 let children = element.hasChildNodes() ? element.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
                 if (is(children)) {
@@ -168,23 +165,22 @@ export class CuiMutationObserver {
     }
     handleAddedNode(node) {
         return __awaiter(this, void 0, void 0, function* () {
-            let matchingComponents = yield getMatchingComponents(node, __classPrivateFieldGet(this, _components));
+            let matchingComponents = [];
+            matchingComponents = getMatchingComponents(node, __classPrivateFieldGet(this, _components));
             return createCuiElement(node, matchingComponents, __classPrivateFieldGet(this, _utils));
         });
     }
     handleRemovedNodes(nodes) {
         return __awaiter(this, void 0, void 0, function* () {
             for (let node of nodes) {
-                let result = yield destroyCuiElement(node);
-                if (result) {
-                    let element = node;
-                    let children = node.hasChildNodes() ? element.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
-                    if (is(children)) {
-                        // @ts-ignore children is defined
-                        this._log.debug("Additional nodes to remove: " + children.length);
-                        // @ts-ignore children is defined
-                        yield this.handleDestroyChildren(children);
-                    }
+                yield destroyCuiElement(node);
+                let element = node;
+                let children = node.hasChildNodes() ? element.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
+                if (is(children)) {
+                    // @ts-ignore children is defined
+                    this._log.debug("Additional nodes to remove: " + children.length);
+                    // @ts-ignore children is defined
+                    yield this.handleDestroyChildren(children);
                 }
             }
             return true;

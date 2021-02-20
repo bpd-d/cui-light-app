@@ -47,7 +47,7 @@ export class CuiInitializer {
         }
         try {
             this.#window[appPrefix] = new CuiInstance(settings, setup.plugins ?? [], setup.components ?? [])
-            this.#window[appPrefix].init();
+            await this.#window[appPrefix].init();
         } catch (e) {
             console.error(e);
             result.message = "An error occured during initialization";

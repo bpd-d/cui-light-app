@@ -4,9 +4,9 @@ import { CuiUtils } from "../models/utils";
 import { is, generateCUID, are, enumerateObject, parseAttribute } from "./functions";
 import { CUID_ATTRIBUTE } from "./statics";
 
-export async function getMatchingComponents(node: any, components: ICuiComponent[]): Promise<ICuiComponent[]> {
+export function getMatchingComponents(node: any, components: ICuiComponent[]): ICuiComponent[] {
     return components.filter(component => {
-        return node.hasAttribute(component.attribute);
+        return node.hasAttribute && node.hasAttribute(component.attribute);
     })
 }
 

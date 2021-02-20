@@ -1,6 +1,6 @@
 import { ICuiComponent, CuiHTMLElement } from "../models/interfaces";
 import { CuiUtils } from "../models/utils";
-export declare function getMatchingComponents(node: any, components: ICuiComponent[]): Promise<ICuiComponent[]>;
+export declare function getMatchingComponents(node: any, components: ICuiComponent[]): ICuiComponent[];
 export declare function createCuiElement(node: any, components: ICuiComponent[], utils: CuiUtils): Promise<boolean>;
 export declare function destroyCuiElement(node: any): Promise<boolean>;
 export declare function addCuiArgument<T extends object>(element: HTMLElement, cuiArg: string, args: T): boolean;

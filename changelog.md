@@ -1,5 +1,7 @@
 # bpd cUI Light changelog
 
+# [0.3.8] 2021-02-20
+* [Fixed] Mutation observer fixes
 # [0.3.7] 2021-02-20
 * [Changed] cUI element creation process
 * [Fixed] Cleanup in Event bus

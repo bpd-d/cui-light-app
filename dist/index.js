@@ -967,10 +967,8 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
 
 
 function getMatchingComponents(node, components) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return components.filter(component => {
-            return node.hasAttribute(component.attribute);
-        });
+    return components.filter(component => {
+        return node.hasAttribute && node.hasAttribute(component.attribute);
     });
 }
 function createCuiElement(node, components, utils) {
@@ -1212,10 +1210,7 @@ class mutations_CuiMutationObserver {
     handleAddedNodes(nodes) {
         return mutations_awaiter(this, void 0, void 0, function* () {
             for (let node of nodes) {
-                let mainresult = yield this.handleAddedNode(node);
-                if (!mainresult) {
-                    return false;
-                }
+                yield this.handleAddedNode(node);
                 let element = node;
                 let children = element.hasChildNodes() ? element.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
                 if (is(children)) {
@@ -1239,23 +1234,22 @@ class mutations_CuiMutationObserver {
     }
     handleAddedNode(node) {
         return mutations_awaiter(this, void 0, void 0, function* () {
-            let matchingComponents = yield getMatchingComponents(node, __classPrivateFieldGet(this, _components));
+            let matchingComponents = [];
+            matchingComponents = getMatchingComponents(node, __classPrivateFieldGet(this, _components));
             return createCuiElement(node, matchingComponents, __classPrivateFieldGet(this, _utils));
         });
     }
     handleRemovedNodes(nodes) {
         return mutations_awaiter(this, void 0, void 0, function* () {
             for (let node of nodes) {
-                let result = yield destroyCuiElement(node);
-                if (result) {
-                    let element = node;
-                    let children = node.hasChildNodes() ? element.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
-                    if (is(children)) {
-                        // @ts-ignore children is defined
-                        this._log.debug("Additional nodes to remove: " + children.length);
-                        // @ts-ignore children is defined
-                        yield this.handleDestroyChildren(children);
-                    }
+                yield destroyCuiElement(node);
+                let element = node;
+                let children = node.hasChildNodes() ? element.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
+                if (is(children)) {
+                    // @ts-ignore children is defined
+                    this._log.debug("Additional nodes to remove: " + children.length);
+                    // @ts-ignore children is defined
+                    yield this.handleDestroyChildren(children);
                 }
             }
             return true;
@@ -3399,7 +3393,7 @@ class instance_CuiInstance {
                 //@ts-ignore initElements already checked
                 for (let element of initElements) {
                     try {
-                        let matchingComponents = yield getMatchingComponents(element, instance_classPrivateFieldGet(this, instance_components));
+                        let matchingComponents = getMatchingComponents(element, instance_classPrivateFieldGet(this, instance_components));
                         promises.push(createCuiElement(element, matchingComponents, instance_classPrivateFieldGet(this, instance_utils)));
                     }
                     catch (e) {
@@ -3703,7 +3697,7 @@ class initializer_CuiInitializer {
             }
             try {
                 initializer_classPrivateFieldGet(this, _window)[appPrefix] = new instance_CuiInstance(settings, (_a = setup.plugins) !== null && _a !== void 0 ? _a : [], (_b = setup.components) !== null && _b !== void 0 ? _b : []);
-                initializer_classPrivateFieldGet(this, _window)[appPrefix].init();
+                yield initializer_classPrivateFieldGet(this, _window)[appPrefix].init();
             }
             catch (e) {
                 console.error(e);
@@ -12483,7 +12477,7 @@ init_isInitialized = new WeakMap();
 
 // CONCATENATED MODULE: ./src/index.ts
 
-const CUI_LIGHT_VERSION = "0.3.7";
+const CUI_LIGHT_VERSION = "0.3.8";
 
 window.cuiInit = new init_CuiInit();
 

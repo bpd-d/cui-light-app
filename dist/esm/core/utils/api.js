@@ -11,10 +11,8 @@ import { RegisterElementError } from "../models/errors";
 import { generateCUID, are, enumerateObject, parseAttribute } from "./functions";
 import { CUID_ATTRIBUTE } from "./statics";
 export function getMatchingComponents(node, components) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return components.filter(component => {
-            return node.hasAttribute(component.attribute);
-        });
+    return components.filter(component => {
+        return node.hasAttribute && node.hasAttribute(component.attribute);
     });
 }
 export function createCuiElement(node, components, utils) {

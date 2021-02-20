@@ -55,7 +55,7 @@ export class CuiInitializer {
             }
             try {
                 __classPrivateFieldGet(this, _window)[appPrefix] = new CuiInstance(settings, (_a = setup.plugins) !== null && _a !== void 0 ? _a : [], (_b = setup.components) !== null && _b !== void 0 ? _b : []);
-                __classPrivateFieldGet(this, _window)[appPrefix].init();
+                yield __classPrivateFieldGet(this, _window)[appPrefix].init();
             }
             catch (e) {
                 console.error(e);
