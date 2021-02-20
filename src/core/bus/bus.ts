@@ -1,10 +1,10 @@
-import { ICuiEventBus, CuiEventReceiver, ICuiLogger, ICuiEventEmitHandler, CuiContext, CuiElement, CuiEventObj } from "../models/interfaces";
-import { is, are, generateRandomString, enumerateObject, mapObject } from "../utils/functions";
+import { ICuiEventBus, CuiEventReceiver, ICuiLogger, CuiElement, CuiEventObj } from "../models/interfaces";
+import { is, are, generateRandomString, enumerateObject } from "../utils/functions";
 import { ArgumentError } from "../models/errors";
 import { CuiLoggerFactory } from "../factories/logger";
 import { CuiEventEmitHandlerFactory, TaskedEventEmitHandler } from "./handlers";
 import { CuiCallbackExecutor } from "./executors";
-import { CuiBusExtStatistics, ICuiEventBusQueueSetup } from "./interfaces";
+import { CuiBusExtStatistics, ICuiEventBusQueueSetup, ICuiEventEmitHandler } from "./interfaces";
 
 interface ICuiBusMapping {
     [name: string]: number;

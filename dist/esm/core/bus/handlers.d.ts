@@ -1,4 +1,5 @@
-import { ICuiEventEmitHandler, ICuiCallbackExecutor, CuiEventReceiver } from "../models/interfaces";
+import { CuiEventReceiver } from "../models/interfaces";
+import { ICuiCallbackExecutor, ICuiEventEmitHandler } from "./interfaces";
 interface EmitHandlerData {
     events: CuiEventReceiver;
     cuid: string | null;
@@ -13,13 +14,13 @@ declare class EmitHandlerBase {
 export declare class SimpleEventEmitHandler extends EmitHandlerBase implements ICuiEventEmitHandler {
     #private;
     constructor(executor: ICuiCallbackExecutor);
-    handle(events: CuiEventReceiver, cuid: string, args: any[]): Promise<void>;
+    handle(events: CuiEventReceiver, cuid: string, args: any[]): Promise<boolean>;
     private perform;
 }
 export declare class TaskedEventEmitHandler extends EmitHandlerBase implements ICuiEventEmitHandler {
     #private;
     constructor(executor: ICuiCallbackExecutor);
-    handle(events: CuiEventReceiver, cuid: string | null, args: any[]): Promise<void>;
+    handle(events: CuiEventReceiver, cuid: string | null, args: any[]): Promise<boolean>;
     private perform;
 }
 export declare class CuiEventEmitHandlerFactory {

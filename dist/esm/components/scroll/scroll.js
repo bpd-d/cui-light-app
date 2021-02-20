@@ -93,8 +93,9 @@ export class CuiScrollHandler extends CuiHandler {
         ev.preventDefault();
     }
     setTargets() {
-        __classPrivateFieldSet(this, _target, document.querySelector(this.args.target));
+        __classPrivateFieldSet(this, _target, is(this.args.target) ? document.querySelector(this.args.target) : null);
         if (is(__classPrivateFieldGet(this, _target))) {
+            // @ts-ignore target is set
             __classPrivateFieldSet(this, _parent, is(this.args.parent) ? document.querySelector(this.args.parent) : __classPrivateFieldGet(this, _target).parentElement);
         }
     }

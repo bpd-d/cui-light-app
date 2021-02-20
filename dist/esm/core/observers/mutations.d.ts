@@ -25,10 +25,13 @@ export declare class CuiMutationObserver implements ICuiMutionObserver {
     start(): ICuiMutionObserver;
     stop(): ICuiMutionObserver;
     private mutationCallback;
+    private handeComponentUpdate;
     private handleChildListMutation;
     private handleAddedNodes;
+    private handleAddedChildren;
+    private handleAddedNode;
     private handleRemovedNodes;
-    private destroySingleElement;
+    private handleDestroyChildren;
 }
 export declare class CuiComponentMutationHandler implements ICuiComponentMutationObserver {
     #private;

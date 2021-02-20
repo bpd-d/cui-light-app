@@ -1,3 +1,5 @@
+import { CuiEventReceiver } from "../models/interfaces";
+
 export interface CuiBusExtStatisticsItem {
     name: string;
     emits: number;
@@ -15,4 +17,12 @@ export interface ICuiEventBusQueueSetup {
     handler: "tasked" | string;
     eventsDef: string[];
     priority: number;
+}
+
+export interface ICuiEventEmitHandler {
+    handle(receiver: CuiEventReceiver, cuid: string | null, args: any[]): Promise<boolean>;
+}
+
+export interface ICuiCallbackExecutor {
+    execute(callback: any, args: any[]): Promise<boolean>;
 }

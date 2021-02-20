@@ -1,10 +1,16 @@
-import { ICuiCallbackExecutor } from "../models/interfaces"
+import { ICuiCallbackExecutor } from "./interfaces";
+
 
 export class CuiCallbackExecutor implements ICuiCallbackExecutor {
-    async execute(callback: any, args: any[]): Promise<void> {
-        args = args ?? []
+    async execute(callback: any, args: any[]): Promise<boolean> {
+        args = args ?? [];
+        try {
+            callback(...args)
+            return true;
+        } catch (e) {
 
-        callback(...args)
-        return;
+        }
+
+        return false;
     }
 }

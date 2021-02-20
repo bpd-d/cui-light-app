@@ -1,6 +1,7 @@
-import { ICuiEventEmitHandler, ICuiLogger, ICuiCallbackExecutor, CuiEventReceiver } from "../models/interfaces";
+import { ICuiLogger, CuiEventReceiver } from "../models/interfaces";
 import { is } from "../utils/functions";
 import { CuiLoggerFactory } from "../factories/logger";
+import { ICuiCallbackExecutor, ICuiEventEmitHandler } from "./interfaces";
 
 interface EmitHandlerData {
     events: CuiEventReceiver;
@@ -29,10 +30,10 @@ export class SimpleEventEmitHandler extends EmitHandlerBase implements ICuiEvent
         this.#log = CuiLoggerFactory.get("SimpleEventEmitHandler");
     }
 
-    async handle(events: CuiEventReceiver, cuid: string, args: any[]): Promise<void> {
+    async handle(events: CuiEventReceiver, cuid: string, args: any[]): Promise<boolean> {
         if (!is(events)) {
             this.#log.warning("No events provided")
-            return
+            return false;
         }
         this.queue.push({
             events: events,
@@ -48,7 +49,7 @@ export class SimpleEventEmitHandler extends EmitHandlerBase implements ICuiEvent
                 this.isBusy = false;
             }
         }
-        return;
+        return true;
     }
 
     private async perform() {
@@ -76,9 +77,9 @@ export class TaskedEventEmitHandler extends EmitHandlerBase implements ICuiEvent
         this.#executor = executor;
     }
 
-    async handle(events: CuiEventReceiver, cuid: string | null, args: any[]): Promise<void> {
+    async handle(events: CuiEventReceiver, cuid: string | null, args: any[]): Promise<boolean> {
         if (!is(events)) {
-            return
+            return false;
         }
         this.queue.push({
             events: events,
@@ -87,18 +88,19 @@ export class TaskedEventEmitHandler extends EmitHandlerBase implements ICuiEvent
         })
         if (!this.isBusy) {
             this.isBusy = true;
-            this.perform();
+            await this.perform();
             if (this.queue.length > 0) {
-                this.perform();
+                await this.perform();
             }
+
             this.isBusy = false;
         }
-        return;
+        return true;
     }
 
-    private async perform(): Promise<void[]> {
+    private async perform(): Promise<boolean[]> {
         let task = this.queue.shift();
-        let promises: Promise<void>[] = []
+        let promises: Promise<boolean>[] = []
         if (!task) {
             return Promise.all(promises);
         }

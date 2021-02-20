@@ -1,5 +1,5 @@
-import { ICuiEventBus, ICuiEventEmitHandler, CuiElement } from "../models/interfaces";
-import { CuiBusExtStatistics, ICuiEventBusQueueSetup } from "./interfaces";
+import { ICuiEventBus, CuiElement } from "../models/interfaces";
+import { CuiBusExtStatistics, ICuiEventBusQueueSetup, ICuiEventEmitHandler } from "./interfaces";
 export declare class CuiEventBus implements ICuiEventBus {
     #private;
     constructor(emitHandler: ICuiEventEmitHandler, name?: string);

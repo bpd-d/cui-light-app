@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -13,7 +22,8 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _observer, _options, _element, _components, _attributes, _utils, _queryString, _isObserving, _observer_1, _element_1, _disabled, _options_1;
 import { CuiLoggerFactory } from "../factories/logger";
-import { is, are, registerCuiElement, joinAttributesForQuery, parseAttribute } from "../utils/functions";
+import { is, are, joinAttributesForQuery, parseAttribute } from "../utils/functions";
+import { createCuiElement, destroyCuiElement, getMatchingComponents, updateComponent } from "../utils/api";
 export class CuiMutationObserver {
     constructor(element, utils) {
         _observer.set(this, void 0);
@@ -79,16 +89,12 @@ export class CuiMutationObserver {
             switch (mutation.type) {
                 case 'attributes':
                     const item = mutation.target;
-                    if (are(mutation.attributeName, item)) {
-                        // @ts-ignore - attribute name is checked
-                        if (are(item.$handlers, item.$handlers[mutation.attributeName])) {
-                            // @ts-ignore - attribute name is checked
-                            item.$handlers[mutation.attributeName].refresh(parseAttribute(item, mutation.attributeName));
-                        }
-                    }
-                    else {
+                    if (!are(mutation.attributeName, item)) {
                         this._log.error("Mutation attribute doesn't not exisist");
+                        break;
                     }
+                    // @ts-ignore attribute is defined
+                    this.handeComponentUpdate(mutation.attributeName, item);
                     break;
                 case 'childList':
                     this.handleChildListMutation(mutation);
@@ -102,59 +108,96 @@ export class CuiMutationObserver {
             }
         });
     }
+    handeComponentUpdate(attributeName, item) {
+        let args = parseAttribute(item, attributeName);
+        updateComponent(item, attributeName, args)
+            .then((result) => {
+            this._log.debug("Component: " + attributeName + " updated with: " + result, "handeComponentUpdate");
+        })
+            .catch((e) => {
+            this._log.exception(e);
+        });
+    }
     handleChildListMutation(mutation) {
         const addedLen = mutation.addedNodes.length;
         const removedLen = mutation.removedNodes.length;
         if (addedLen > 0) {
             this._log.debug("Registering added nodes: " + addedLen);
-            this.handleAddedNodes(mutation.addedNodes);
+            this.handleAddedNodes(mutation.addedNodes).then((result) => {
+                this._log.debug("Added nodes: " + addedLen + " with status: " + result);
+            }).catch((e) => {
+                this._log.exception(e);
+            });
         }
         else if (removedLen > 0) {
             this._log.debug("Removing nodes: " + removedLen);
-            this.handleRemovedNodes(mutation.removedNodes);
+            this.handleRemovedNodes(mutation.removedNodes).then((result) => {
+                this._log.debug("Removed nodes: " + removedLen + " with status: " + result);
+            }).catch((e) => {
+                this._log.exception(e);
+            });
         }
     }
     handleAddedNodes(nodes) {
-        nodes.forEach((node) => {
-            try {
-                registerCuiElement(node, __classPrivateFieldGet(this, _components), __classPrivateFieldGet(this, _attributes), __classPrivateFieldGet(this, _utils));
-                let childrens = node.hasChildNodes() ? node.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
-                if (is(childrens)) {
-                    childrens.forEach((child) => {
-                        registerCuiElement(child, __classPrivateFieldGet(this, _components), __classPrivateFieldGet(this, _attributes), __classPrivateFieldGet(this, _utils));
-                    });
+        return __awaiter(this, void 0, void 0, function* () {
+            for (let node of nodes) {
+                let mainresult = yield this.handleAddedNode(node);
+                if (!mainresult) {
+                    return false;
+                }
+                let element = node;
+                let children = element.hasChildNodes() ? element.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
+                if (is(children)) {
+                    // @ts-ignore children is defined
+                    this._log.debug("Additional nodes to add: " + children.length);
+                    // @ts-ignore children is defined
+                    yield this.handleAddedChildren(children);
                 }
             }
-            catch (e) {
-                this._log.exception(e);
+            return true;
+        });
+    }
+    handleAddedChildren(nodes) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let result = [];
+            for (let node of nodes) {
+                result.push(yield this.handleAddedNode(node));
             }
+            return result;
+        });
+    }
+    handleAddedNode(node) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let matchingComponents = yield getMatchingComponents(node, __classPrivateFieldGet(this, _components));
+            return createCuiElement(node, matchingComponents, __classPrivateFieldGet(this, _utils));
         });
     }
     handleRemovedNodes(nodes) {
-        nodes.forEach((node) => {
-            this.destroySingleElement(node);
-            let childrens = node.hasChildNodes() ? node.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
-            if (is(childrens)) {
-                childrens.forEach((child) => {
-                    this.destroySingleElement(child);
-                });
-            }
-        });
-    }
-    destroySingleElement(node) {
-        let element = node;
-        if (element.$handlers) {
-            for (let name in element.$handlers) {
-                if (element.$handlers.hasOwnProperty(name)) {
-                    try {
-                        element.$handlers[name].destroy();
-                    }
-                    catch (e) {
-                        this._log.exception(e, 'remove - ' + name);
+        return __awaiter(this, void 0, void 0, function* () {
+            for (let node of nodes) {
+                let result = yield destroyCuiElement(node);
+                if (result) {
+                    let element = node;
+                    let children = node.hasChildNodes() ? element.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
+                    if (is(children)) {
+                        // @ts-ignore children is defined
+                        this._log.debug("Additional nodes to remove: " + children.length);
+                        // @ts-ignore children is defined
+                        yield this.handleDestroyChildren(children);
                     }
                 }
             }
-        }
+            return true;
+        });
+    }
+    handleDestroyChildren(nodes) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let result = [];
+            for (let child of nodes) {
+                result.push(yield destroyCuiElement(child));
+            }
+            return result;
+        });
     }
 }
 _observer = new WeakMap(), _options = new WeakMap(), _element = new WeakMap(), _components = new WeakMap(), _attributes = new WeakMap(), _utils = new WeakMap(), _queryString = new WeakMap();

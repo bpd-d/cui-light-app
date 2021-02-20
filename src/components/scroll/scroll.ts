@@ -106,8 +106,9 @@ export class CuiScrollHandler extends CuiHandler<CuiScrollArgs> {
     }
 
     private setTargets(): void {
-        this.#target = document.querySelector(this.args.target) as HTMLElement;
+        this.#target = is(this.args.target) ? document.querySelector(this.args.target) as HTMLElement : null;
         if (is(this.#target)) {
+            // @ts-ignore target is set
             this.#parent = is(this.args.parent) ? document.querySelector(this.args.parent) : this.#target.parentElement;
         }
     }

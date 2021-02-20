@@ -1,7 +1,8 @@
-import { ICuiLogger, ICuiComponent, ICuiPluginManager, CuiElement } from "../models/interfaces";
+import { ICuiLogger, ICuiComponent, ICuiPluginManager, CuiElement, CuiHTMLElement } from "../models/interfaces";
 import { CuiLoggerFactory } from "../factories/logger";
-import { is, are, registerCuiElement, joinAttributesForQuery, parseAttribute } from "../utils/functions";
+import { is, are, joinAttributesForQuery, parseAttribute } from "../utils/functions";
 import { CuiUtils } from "../models/utils";
+import { createCuiElement, destroyCuiElement, getMatchingComponents, updateComponent } from "../utils/api";
 
 export interface ICuiMutionObserver {
     // setOptions(options: MutationObserverInit): ICuiMutionObserver;
@@ -94,16 +95,13 @@ export class CuiMutationObserver implements ICuiMutionObserver {
         mutations.forEach((mutation: MutationRecord) => {
             switch (mutation.type) {
                 case 'attributes':
-                    const item = mutation.target as any;
-                    if (are(mutation.attributeName, item)) {
-                        // @ts-ignore - attribute name is checked
-                        if (are(item.$handlers, item.$handlers[mutation.attributeName])) {
-                            // @ts-ignore - attribute name is checked
-                            item.$handlers[mutation.attributeName].refresh(parseAttribute(item, mutation.attributeName));
-                        }
-                    } else {
+                    const item = mutation.target as CuiHTMLElement;
+                    if (!are(mutation.attributeName, item)) {
                         this._log.error("Mutation attribute doesn't not exisist");
+                        break;
                     }
+                    // @ts-ignore attribute is defined
+                    this.handeComponentUpdate(mutation.attributeName, item);
                     break;
 
                 case 'childList':
@@ -119,59 +117,92 @@ export class CuiMutationObserver implements ICuiMutionObserver {
         })
     }
 
+    private handeComponentUpdate(attributeName: string, item: CuiHTMLElement) {
+        let args = parseAttribute(item, attributeName);
+        updateComponent(item, attributeName, args)
+            .then((result) => {
+                this._log.debug("Component: " + attributeName + " updated with: " + result, "handeComponentUpdate")
+            })
+            .catch((e) => {
+                this._log.exception(e);
+            })
+    }
+
     private handleChildListMutation(mutation: MutationRecord) {
         const addedLen = mutation.addedNodes.length;
         const removedLen = mutation.removedNodes.length;
         if (addedLen > 0) {
             this._log.debug("Registering added nodes: " + addedLen)
-            this.handleAddedNodes(mutation.addedNodes);
+            this.handleAddedNodes(mutation.addedNodes).then((result) => {
+                this._log.debug("Added nodes: " + addedLen + " with status: " + result)
+            }).catch((e) => {
+                this._log.exception(e);
+            });
         } else if (removedLen > 0) {
             this._log.debug("Removing nodes: " + removedLen);
-            this.handleRemovedNodes(mutation.removedNodes);
-        }
-    }
-
-    private handleAddedNodes(nodes: NodeList) {
-        nodes.forEach((node: any) => {
-            try {
-                registerCuiElement(node, this.#components, this.#attributes, this.#utils);
-                let childrens = node.hasChildNodes() ? node.querySelectorAll(this.#queryString) : null;
-                if (is(childrens)) {
-                    childrens.forEach((child: any) => {
-                        registerCuiElement(child, this.#components, this.#attributes, this.#utils);
-                    })
-                }
-            } catch (e) {
+            this.handleRemovedNodes(mutation.removedNodes).then((result) => {
+                this._log.debug("Removed nodes: " + removedLen + " with status: " + result)
+            }).catch((e) => {
                 this._log.exception(e);
-            }
-        })
+            });
+        }
     }
 
-    private handleRemovedNodes(nodes: NodeList) {
-        nodes.forEach((node: any) => {
-            this.destroySingleElement(node);
-            let childrens = node.hasChildNodes() ? node.querySelectorAll(this.#queryString) : null;
-            if (is(childrens)) {
-                childrens.forEach((child: any) => {
-                    this.destroySingleElement(child);
-                })
+    private async handleAddedNodes(nodes: NodeList): Promise<boolean> {
+        for (let node of nodes) {
+            let mainresult = await this.handleAddedNode(node);
+            if (!mainresult) {
+                return false;
             }
-        })
+            let element = node as Element
+            let children = element.hasChildNodes() ? element.querySelectorAll(this.#queryString) : null;
+            if (is(children)) {
+                // @ts-ignore children is defined
+                this._log.debug("Additional nodes to add: " + children.length);
+                // @ts-ignore children is defined
+                await this.handleAddedChildren(children);
+            }
+        }
+        return true;
     }
 
-    private destroySingleElement(node: any) {
-        let element = node as CuiElement;
-        if (element.$handlers) {
-            for (let name in element.$handlers) {
-                if (element.$handlers.hasOwnProperty(name)) {
-                    try {
-                        element.$handlers[name].destroy();
-                    } catch (e) {
-                        this._log.exception(e, 'remove - ' + name)
-                    }
+
+    private async handleAddedChildren(nodes: NodeList): Promise<boolean[]> {
+        let result: boolean[] = [];
+        for (let node of nodes) {
+            result.push(await this.handleAddedNode(node));
+        }
+        return result;
+    }
+
+    private async handleAddedNode(node: any): Promise<boolean> {
+        let matchingComponents = await getMatchingComponents(node, this.#components)
+        return createCuiElement(node, matchingComponents, this.#utils);
+    }
+
+    private async handleRemovedNodes(nodes: NodeList): Promise<boolean> {
+        for (let node of nodes) {
+            let result = await destroyCuiElement(node);
+            if (result) {
+                let element = node as Element;
+                let children = node.hasChildNodes() ? element.querySelectorAll(this.#queryString) : null;
+                if (is(children)) {
+                    // @ts-ignore children is defined
+                    this._log.debug("Additional nodes to remove: " + children.length)
+                    // @ts-ignore children is defined
+                    await this.handleDestroyChildren(children);
                 }
             }
         }
+        return true;
+    }
+
+    private async handleDestroyChildren(nodes: NodeList): Promise<boolean[]> {
+        let result = [];
+        for (let child of nodes) {
+            result.push(await destroyCuiElement(child));
+        }
+        return result;
     }
 }
 

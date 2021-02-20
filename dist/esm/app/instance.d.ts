@@ -6,7 +6,7 @@ import { CollectionManager } from "./managers/collection";
 export declare class CuiInstance {
     #private;
     constructor(setup: CuiSetupInit, plugins: ICuiPlugin[], components: ICuiComponent[]);
-    init(): CuiInstance;
+    init(): Promise<CuiInstance>;
     finish(): void;
     get(selector: string): ElementManager | undefined;
     collection(selector: string): CollectionManager | undefined;
@@ -18,5 +18,11 @@ export declare class CuiInstance {
     detachAll(event: string): void;
     emit(event: string, element: Element | string, ...args: any[]): void;
     getPlugin(name: string): ICuiPlugin | undefined;
-    createCuiElement<T extends object>(element: HTMLElement, arg: string, data: T): boolean;
+    /**
+     * Creates cUI element outside of cUI root scope
+     * @param element
+     * @param arg
+     * @param data
+     */
+    createCuiElement<T extends object>(element: HTMLElement, arg: string, data: T): Promise<boolean>;
 }

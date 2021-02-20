@@ -1,5 +1,5 @@
 import { CuiSetupInit } from "../core/models/setup";
-import { is, joinAttributesForQuery, are, registerCuiElement, addCuiArgument } from "../core/utils/functions";
+import { is, joinAttributesForQuery, are } from "../core/utils/functions";
 import { STATICS, EVENTS, CSS_VARIABLES } from "../core/utils/statics";
 import { ICuiLogger, ICuiPlugin, ICuiComponent, ICuiPluginManager, CuiElement } from "../core/models/interfaces";
 import { ICuiMutionObserver, CuiMutationObserver } from "../core/observers/mutations";
@@ -9,6 +9,7 @@ import { CuiInstanceInitError } from "../core/models/errors";
 import { ElementManager } from "./managers/element";
 import { CollectionManager } from "./managers/collection";
 import { CuiPluginManager } from "./managers/plugins";
+import { addCuiArgument, createCuiElement, getMatchingComponents } from "../core/utils/api";
 
 
 export class CuiInstance {
@@ -31,25 +32,28 @@ export class CuiInstance {
         this.#mutatedAttributes = [];
     }
 
-    init(): CuiInstance {
+    async init(): Promise<CuiInstance> {
         this.#log.debug("Instance started", "init")
         // Init elements
         if (!is(window.MutationObserver)) {
             throw new CuiInstanceInitError("Mutation observer does not exists");
         }
         this.#mutatedAttributes = this.#components.map(x => { return x.attribute }); // MUTATED_ATTRIBUTES; 
-        const initElements = is(this.#mutatedAttributes) ? this.#rootElement.querySelectorAll(joinAttributesForQuery(this.#mutatedAttributes)) : null
+        const initElements = is(this.#mutatedAttributes) ? this.#rootElement.querySelectorAll(joinAttributesForQuery(this.#mutatedAttributes)) : null;
         if (is(initElements)) {
             //@ts-ignore initElements already checked
             this.#log.debug(`Initiating ${initElements.length} elements`)
-            try {
-                //@ts-ignore initElements already checked
-                initElements.forEach((item: any) => {
-                    registerCuiElement(item, this.#components, this.#mutatedAttributes, this.#utils);
-                })
-            } catch (e) {
-                this.#log.exception(e);
+            let promises = [];
+            //@ts-ignore initElements already checked
+            for (let element of initElements) {
+                try {
+                    let matchingComponents = await getMatchingComponents(element, this.#components)
+                    promises.push(createCuiElement(element, matchingComponents, this.#utils));
+                } catch (e) {
+                    this.#log.exception(e);
+                }
             }
+            await Promise.all(promises);
         }
         this.#log.debug("Init plugins", "init")
         // Init plugins
@@ -159,15 +163,27 @@ export class CuiInstance {
         return this.#plugins.get(name);
     }
 
-    createCuiElement<T extends object>(element: HTMLElement, arg: string, data: T): boolean {
+
+    /**
+     * Creates cUI element outside of cUI root scope
+     * @param element 
+     * @param arg 
+     * @param data 
+     */
+    async createCuiElement<T extends object>(element: HTMLElement, arg: string, data: T): Promise<boolean> {
         if (!is(arg) || !this.#mutatedAttributes.includes(arg)) {
             this.#log.error("Element cannot be created: Unknown attribute")
             return false;
         }
-        if (!addCuiArgument(element, arg, data)) {
-            this.#log.error("Element cannot be created: Missing data")
+        let component = this.#components.find(component => component.attribute === arg);
+
+        if (!component)
             return false;
+
+        if (addCuiArgument(element, arg, data)) {
+            return createCuiElement(element, [component], this.#utils);
         }
-        return true;
+
+        return false;
     }
 }

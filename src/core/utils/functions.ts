@@ -1,8 +1,7 @@
 import { CuiLightMode, CuiWindowSize } from "./types";
-import { ArgumentError, RegisterElementError } from "../models/errors";
-import { ICuiComponent, CuiElement } from "../models/interfaces";
-import { CuiUtils } from "../models/utils";
-import { COMPONENTS_COUNTER, CUID_ATTRIBUTE } from "./statics";
+import { ArgumentError } from "../models/errors";
+import { CuiElement } from "../models/interfaces";
+import { COMPONENTS_COUNTER } from "./statics";
 
 /**
  * Checks if value is defined an is not null
@@ -82,14 +81,14 @@ export function getMatchingAttribute(element: any, attributes: string[]): string
     return attr;
 }
 
-export function getMatchingAttributes(element: any, attributes: string[]): string[] {
-    if (!element || !is(element.hasAttribute)) {
-        return [];
-    }
-    return attributes.filter(a => {
-        return element.hasAttribute(a);
-    });
-}
+// export function getMatchingAttributes(element: any, attributes: string[]): string[] {
+//     if (!element || !is(element.hasAttribute)) {
+//         return [];
+//     }
+//     return attributes.filter(a => {
+//         return element.hasAttribute(a);
+//     });
+// }
 
 export function getRangeValue(value: number, min: number, max: number) {
     if (value < min) {
@@ -226,11 +225,9 @@ export function parseAttributeString(attribute: string | null): any {
             //@ts-ignore - null already checked
             attribute.split(';').forEach(val => {
                 let sp = splitColon(val);
-                //let sp = val.split(':')
-                let len = sp.length;
                 let tag = undefined;
                 let value = "";
-                if (len < 2) {
+                if (sp.length < 2) {
                     return;
                 }
                 tag = sp[0].trim();
@@ -396,59 +393,7 @@ export function getRandomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/**
- * Registers Element as Cui element, initializes handlers, sets component style to document header and sets $cuid
- * @param {any} node - document node
- * @param {ICuiComponent[]} components -supported components array
- * @param {string[]} attributes - supported attributes array
- * @param {CuiUtils} utils - Cui Utils instance
- */
-export function registerCuiElement(node: any, components: ICuiComponent[], attributes: string[], utils: CuiUtils) {
-    let element = node as CuiElement;
-    element.$handlers = {};
-    let matching: string[] = getMatchingAttributes(node, attributes)
-    if (is(matching)) {
-        element.$cuid = node.hasAttribute(CUID_ATTRIBUTE) ? node.getAttribute(CUID_ATTRIBUTE) : generateCUID(node.tagName)
-        node.setAttribute(CUID_ATTRIBUTE, element.$cuid);
-        matching.forEach(match => {
-            let component = components.find(c => { return c.attribute === match });
-            if (!is(component)) {
-                return;
-            }
-            try {
-                //@ts-ignore - component already checked agains undefined
-                utils.styleAppender.append(component.getStyle());
-                //@ts-ignore - component already checked agains undefined
-                let handler = component.get(node, utils);
-                //@ts-ignore - component already checked agains undefined
-                element.$handlers[component.attribute] = handler;
-                //@ts-ignore - component already checked agains undefined
-                element.$handlers[component.attribute].handle(parseAttribute(node, component.attribute));
-            } catch (e) {
-                let attr = matching ? matching.join(", ") : "";
-                throw new RegisterElementError(`An error occured during [${attr}] initialization: ${e.message}`);
-            }
 
-        })
-
-    }
-}
-
-export function addCuiArgument<T extends object>(element: HTMLElement, cuiArg: string, args: T): boolean {
-    if (!are(cuiArg, args, element)) {
-        return false;
-    }
-    if (element.hasAttribute(cuiArg)) {
-        return false;
-    }
-    let argArr: string[] = [];
-    enumerateObject(args, (arg: string, value: string) => {
-        argArr.push(`${arg}: ${value}`);
-    })
-    element.setAttribute(cuiArg, argArr.join("; "));
-    return true;
-
-}
 
 export function* counter() {
     let idx = 0;
@@ -458,6 +403,10 @@ export function* counter() {
             idx = 0
         }
     }
+}
+
+export function all<T>(array: T[], condition: (t: T) => boolean) {
+    return array.find((t: T) => !condition(t)) === null;
 }
 
 export function getHandlerExtendingOrNull<T>(target: CuiElement, fName: string): T | null {

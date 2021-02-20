@@ -31,6 +31,9 @@ export interface ICuiComponentHandler {
     refresh(args: any): void;
     destroy(): void;
 }
+export interface ICuiElementHandlers {
+    [id: string]: ICuiComponentHandler;
+}
 export interface ICuiOpenable {
     open(args?: any): Promise<boolean>;
 }
@@ -74,18 +77,12 @@ export interface ICuiEventBus {
     isSubscribing(name: string, id: string, cui?: CuiElement): boolean;
     detachByCuid(event: string, cuid: string): void;
 }
-export interface ICuiCallbackExecutor {
-    execute(callback: any, args: any[]): Promise<void>;
-}
 export interface CuiEventObj {
     callback: any;
     $cuid: string | null;
 }
 export interface CuiEventReceiver {
     [id: string]: CuiEventObj;
-}
-export interface ICuiEventEmitHandler {
-    handle(receiver: CuiEventReceiver, cuid: string | null, args: any[]): Promise<void>;
 }
 export interface CuiContext {
     getId(): string;
@@ -119,6 +116,8 @@ export interface CuiHandlers {
 export interface CuiElement {
     $cuid: string | null;
     $handlers?: CuiHandlers;
+}
+export interface CuiHTMLElement extends HTMLElement, CuiElement {
 }
 export interface ICuiObserver {
     observe(target: Element): void;

@@ -1,5 +1,5 @@
-import { ArgumentError, RegisterElementError } from "../models/errors";
-import { COMPONENTS_COUNTER, CUID_ATTRIBUTE } from "./statics";
+import { ArgumentError } from "../models/errors";
+import { COMPONENTS_COUNTER } from "./statics";
 /**
  * Checks if value is defined an is not null
  * Additionally with type check it can check value if it is not empty string or collection or object
@@ -73,14 +73,14 @@ export function getMatchingAttribute(element, attributes) {
     }
     return attr;
 }
-export function getMatchingAttributes(element, attributes) {
-    if (!element || !is(element.hasAttribute)) {
-        return [];
-    }
-    return attributes.filter(a => {
-        return element.hasAttribute(a);
-    });
-}
+// export function getMatchingAttributes(element: any, attributes: string[]): string[] {
+//     if (!element || !is(element.hasAttribute)) {
+//         return [];
+//     }
+//     return attributes.filter(a => {
+//         return element.hasAttribute(a);
+//     });
+// }
 export function getRangeValue(value, min, max) {
     if (value < min) {
         return min;
@@ -207,11 +207,9 @@ export function parseAttributeString(attribute) {
             //@ts-ignore - null already checked
             attribute.split(';').forEach(val => {
                 let sp = splitColon(val);
-                //let sp = val.split(':')
-                let len = sp.length;
                 let tag = undefined;
                 let value = "";
-                if (len < 2) {
+                if (sp.length < 2) {
                     return;
                 }
                 tag = sp[0].trim();
@@ -357,56 +355,6 @@ export function getRandomInt(min, max) {
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-/**
- * Registers Element as Cui element, initializes handlers, sets component style to document header and sets $cuid
- * @param {any} node - document node
- * @param {ICuiComponent[]} components -supported components array
- * @param {string[]} attributes - supported attributes array
- * @param {CuiUtils} utils - Cui Utils instance
- */
-export function registerCuiElement(node, components, attributes, utils) {
-    let element = node;
-    element.$handlers = {};
-    let matching = getMatchingAttributes(node, attributes);
-    if (is(matching)) {
-        element.$cuid = node.hasAttribute(CUID_ATTRIBUTE) ? node.getAttribute(CUID_ATTRIBUTE) : generateCUID(node.tagName);
-        node.setAttribute(CUID_ATTRIBUTE, element.$cuid);
-        matching.forEach(match => {
-            let component = components.find(c => { return c.attribute === match; });
-            if (!is(component)) {
-                return;
-            }
-            try {
-                //@ts-ignore - component already checked agains undefined
-                utils.styleAppender.append(component.getStyle());
-                //@ts-ignore - component already checked agains undefined
-                let handler = component.get(node, utils);
-                //@ts-ignore - component already checked agains undefined
-                element.$handlers[component.attribute] = handler;
-                //@ts-ignore - component already checked agains undefined
-                element.$handlers[component.attribute].handle(parseAttribute(node, component.attribute));
-            }
-            catch (e) {
-                let attr = matching ? matching.join(", ") : "";
-                throw new RegisterElementError(`An error occured during [${attr}] initialization: ${e.message}`);
-            }
-        });
-    }
-}
-export function addCuiArgument(element, cuiArg, args) {
-    if (!are(cuiArg, args, element)) {
-        return false;
-    }
-    if (element.hasAttribute(cuiArg)) {
-        return false;
-    }
-    let argArr = [];
-    enumerateObject(args, (arg, value) => {
-        argArr.push(`${arg}: ${value}`);
-    });
-    element.setAttribute(cuiArg, argArr.join("; "));
-    return true;
-}
 export function* counter() {
     let idx = 0;
     while (true) {
@@ -415,6 +363,9 @@ export function* counter() {
             idx = 0;
         }
     }
+}
+export function all(array, condition) {
+    return array.find((t) => !condition(t)) === null;
 }
 export function getHandlerExtendingOrNull(target, fName) {
     if (!is(target.$handlers)) {

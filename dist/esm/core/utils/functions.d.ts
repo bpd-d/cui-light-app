@@ -1,6 +1,5 @@
 import { CuiLightMode, CuiWindowSize } from "./types";
-import { ICuiComponent, CuiElement } from "../models/interfaces";
-import { CuiUtils } from "../models/utils";
+import { CuiElement } from "../models/interfaces";
 /**
  * Checks if value is defined an is not null
  * Additionally with type check it can check value if it is not empty string or collection or object
@@ -26,7 +25,6 @@ export declare function sleep(timeout: number): Promise<boolean>;
  */
 export declare function createElementFromString(htmlString: string): Element | null;
 export declare function getMatchingAttribute(element: any, attributes: string[]): string | null;
-export declare function getMatchingAttributes(element: any, attributes: string[]): string[];
 export declare function getRangeValue(value: number, min: number, max: number): number;
 export declare function getRangeValueOrDefault(value: number | undefined, min: number, max: number, def: number): number;
 export declare function increaseValue(value: number, amount: number): number;
@@ -126,16 +124,8 @@ export declare function generateRandomString(): string;
  * @returns random integer
  */
 export declare function getRandomInt(min: number, max: number): number;
-/**
- * Registers Element as Cui element, initializes handlers, sets component style to document header and sets $cuid
- * @param {any} node - document node
- * @param {ICuiComponent[]} components -supported components array
- * @param {string[]} attributes - supported attributes array
- * @param {CuiUtils} utils - Cui Utils instance
- */
-export declare function registerCuiElement(node: any, components: ICuiComponent[], attributes: string[], utils: CuiUtils): void;
-export declare function addCuiArgument<T extends object>(element: HTMLElement, cuiArg: string, args: T): boolean;
 export declare function counter(): Generator<number, void, unknown>;
+export declare function all<T>(array: T[], condition: (t: T) => boolean): boolean;
 export declare function getHandlerExtendingOrNull<T>(target: CuiElement, fName: string): T | null;
 /**
  * Checks whether property exists on the object and it is a function

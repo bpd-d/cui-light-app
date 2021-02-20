@@ -11,8 +11,13 @@ export class CuiCallbackExecutor {
     execute(callback, args) {
         return __awaiter(this, void 0, void 0, function* () {
             args = args !== null && args !== void 0 ? args : [];
-            callback(...args);
-            return;
+            try {
+                callback(...args);
+                return true;
+            }
+            catch (e) {
+            }
+            return false;
         });
     }
 }

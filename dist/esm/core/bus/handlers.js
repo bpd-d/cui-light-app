@@ -44,7 +44,7 @@ export class SimpleEventEmitHandler extends EmitHandlerBase {
         return __awaiter(this, void 0, void 0, function* () {
             if (!is(events)) {
                 __classPrivateFieldGet(this, _log).warning("No events provided");
-                return;
+                return false;
             }
             this.queue.push({
                 events: events,
@@ -60,7 +60,7 @@ export class SimpleEventEmitHandler extends EmitHandlerBase {
                     this.isBusy = false;
                 }
             }
-            return;
+            return true;
         });
     }
     perform() {
@@ -92,7 +92,7 @@ export class TaskedEventEmitHandler extends EmitHandlerBase {
     handle(events, cuid, args) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!is(events)) {
-                return;
+                return false;
             }
             this.queue.push({
                 events: events,
@@ -101,13 +101,13 @@ export class TaskedEventEmitHandler extends EmitHandlerBase {
             });
             if (!this.isBusy) {
                 this.isBusy = true;
-                this.perform();
+                yield this.perform();
                 if (this.queue.length > 0) {
-                    this.perform();
+                    yield this.perform();
                 }
                 this.isBusy = false;
             }
-            return;
+            return true;
         });
     }
     perform() {
