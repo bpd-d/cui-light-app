@@ -14,23 +14,20 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _plugins;
 import { CuiSetup } from "./setup";
 import { CuiInteractionsFactory } from "../factories/interactions";
-import { CuiCacheManager } from "../managers/cache";
 import { CuiEventBusFactory } from "../bus/bus";
 import { are, getName, is, replacePrefix } from "../utils/functions";
 import { CLASSES } from "../utils/statics";
 import { CuiDocumentStyleAppender } from "../styles/appender";
 import { CuiInstanceColorHandler } from "../handlers/colors";
 import { CSSVariableError } from "./errors";
-import { CuiDevelopmentToolManager } from "../managers/development";
 export class CuiUtils {
     constructor(initialSetup, plugins) {
         _plugins.set(this, void 0);
         this.setup = new CuiSetup().fromInit(initialSetup);
         this.interactions = CuiInteractionsFactory.get(initialSetup.interaction, this.onInteractionError.bind(this));
-        this.cache = new CuiCacheManager(this.setup.cacheSize);
+        // this.cache = new CuiCacheManager(this.setup.cacheSize);
         this.bus = CuiEventBusFactory.get(initialSetup.busSetup);
         this.colors = new CuiInstanceColorHandler(this.interactions);
-        this.development = new CuiDevelopmentToolManager(initialSetup.development);
         this.styleAppender = new CuiDocumentStyleAppender(this.interactions);
         __classPrivateFieldSet(this, _plugins, plugins !== null && plugins !== void 0 ? plugins : []);
     }

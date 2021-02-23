@@ -13,7 +13,7 @@ export declare class CuiInstance {
     select(selector: string): Element | null;
     all(selector: string): Element[] | undefined;
     getUtils(): CuiUtils;
-    on(event: string, callback: any, element?: CuiElement): void;
+    on(event: string, callback: any, element?: CuiElement): string | null;
     detach(event: string, id: string): void;
     detachAll(event: string): void;
     emit(event: string, element: Element | string, ...args: any[]): void;

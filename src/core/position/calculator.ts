@@ -1,5 +1,5 @@
-import { CuiLoggerFactory } from "../factories/logger";
-import { ICuiLogger } from "../models/interfaces";
+import { CuiDevtoolFactory } from "../development/factory";
+import { ICuiDevelopmentTool } from "../development/interfaces";
 import { is } from "../utils/functions";
 import { CuiBasePositionEvaluator } from "./evaluator";
 import { ElementBox, ICuiPositionCalculator, ICuiPositionEvaluator } from "./interfaces";
@@ -8,12 +8,12 @@ export class CuiBasePositionCalculator implements ICuiPositionCalculator {
     #static: string;
     #preferred: string;
     #evaluator: ICuiPositionEvaluator;
-    #log: ICuiLogger;
+    #log: ICuiDevelopmentTool;
     constructor(evaluator?: ICuiPositionEvaluator) {
         this.#preferred = "top-center";
         this.#static = "";
         this.#evaluator = evaluator ?? new CuiBasePositionEvaluator();
-        this.#log = CuiLoggerFactory.get("CuiBasePositionCalculator");
+        this.#log = CuiDevtoolFactory.get("CuiBasePositionCalculator");
     }
 
     setMargin(value: number): void {

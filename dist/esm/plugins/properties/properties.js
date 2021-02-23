@@ -13,20 +13,22 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _log;
 import { CuiColor } from "../../core/models/colors";
-import { CuiLoggerFactory } from "../../core/factories/logger";
 import { is } from "../../core/utils/functions";
 import { CuiPropertiesHandler } from "./handler";
+import { CuiDevtoolFactory } from "../../core/development/factory";
 export class CuiCSSVariablesPlugin {
     constructor(keySetup) {
         this.name = 'css-variables-plugin';
         _log.set(this, void 0);
         this.description = "CuiCSSVariablesPlugin";
         this.setup = keySetup;
-        __classPrivateFieldSet(this, _log, CuiLoggerFactory.get("CuiCSSVariablesPlugin"));
+        //@ts-ignore
+        __classPrivateFieldSet(this, _log, null);
         this.handler = undefined;
     }
     init(utils) {
         this.handler = new CuiPropertiesHandler(utils);
+        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get("CuiCSSVariablesPlugin"));
         utils.bus.on("csschange", this.onCssChange.bind(this));
     }
     destroy() {

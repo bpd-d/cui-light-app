@@ -1,7 +1,8 @@
 import { CuiWindowSize } from "../../core/utils/types";
-import { calcWindowSize, calcWindowSize2 } from "../../core/utils/functions";
+import { calcWindowSize } from "../../core/utils/functions";
 import { ICuiEventBus } from "../../core/models/interfaces";
 import { EVENTS } from "../../core/utils/statics";
+import { EventBase } from "src/core/models/events";
 
 export interface ICuiResizable {
     resize(data: CuiResizeData): Promise<boolean>;
@@ -14,12 +15,11 @@ export interface ICuiResizableObserver {
     disconnect(): void;
 }
 
-export interface CuiResizeData {
+export interface CuiResizeData extends EventBase {
     current: CuiWindowSize;
     previous: CuiWindowSize;
     width: number;
     height: number;
-    timestamp: number;
 }
 
 export class CuiResizeObserver implements ICuiResizableObserver {
@@ -84,14 +84,16 @@ export class CuiResizeObserver implements ICuiResizableObserver {
         const diff = window.innerWidth - this.#prevYValue;
 
         if (Math.abs(diff) >= this.#threshold) {
-            const currentSize = calcWindowSize2(window.innerWidth);
+            const currentSize = calcWindowSize(window.innerWidth);
             if (currentSize !== this.#previousSize) {
                 const resizeData: CuiResizeData = {
                     current: currentSize,
                     previous: this.#previousSize,
                     width: window.innerWidth,
                     height: window.innerHeight,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    name: EVENTS.RESIZE,
+                    source: "CuiResizeObserver"
                 };
                 this.#bus.emit(EVENTS.RESIZE, "", resizeData)
                 this.pushUpdateToItems(resizeData);

@@ -12,7 +12,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _handleId, _utils, _log;
-import { CuiLoggerFactory } from "../../core/factories/logger";
+import { CuiDevtoolFactory } from "../../core/development/factory";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAlertFactory } from "./handler";
 export class CuiAlertsPlugin {
@@ -24,9 +24,11 @@ export class CuiAlertsPlugin {
         this.description = "CuiAlertsPlugin";
         __classPrivateFieldSet(this, _handleId, null);
         __classPrivateFieldSet(this, _utils, undefined);
-        __classPrivateFieldSet(this, _log, CuiLoggerFactory.get("CuiAlertsPlugin"));
+        //@ts-ignore
+        __classPrivateFieldSet(this, _log, null);
     }
     init(utils) {
+        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get("CuiAlertsPlugin"));
         __classPrivateFieldSet(this, _utils, utils);
         this.detach();
         __classPrivateFieldSet(this, _handleId, __classPrivateFieldGet(this, _utils).bus.on(EVENTS.ALERT, this.onAlert.bind(this), { $cuid: this.name }));

@@ -144,7 +144,7 @@ export class CuiMoveEventListener {
             moveX: ev.movementX,
             moveY: ev.movementY,
             target: ev.target,
-            event: ev
+            event: ev,
         });
     }
     publishTouchEvent(type, ev) {

@@ -6,6 +6,7 @@ export declare class CuiMoveObserver {
     detach(): void;
     isAttached(): boolean;
     private onMove;
+    private pushMoveEvent;
     private onMoveLock;
     private getGestureDiff;
     private calculateGesture;

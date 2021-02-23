@@ -2,31 +2,28 @@ import { IUIInteractionProvider, ICuiEventBus, ICuiManager, CuiCachable } from "
 import { CuiSetup, CuiSetupInit } from "./setup";
 import { CuiLightMode } from "../utils/types";
 import { CuiInteractionsFactory } from "../factories/interactions";
-import { CuiCacheManager } from "../managers/cache";
 import { CuiEventBusFactory } from "../bus/bus";
 import { are, getName, is, replacePrefix } from "../utils/functions";
 import { CLASSES } from "../utils/statics";
 import { ICuiDocumentStyleAppender, CuiDocumentStyleAppender } from "../styles/appender";
 import { CuiInstanceColorHandler } from "../handlers/colors";
 import { CSSVariableError } from "./errors";
-import { CuiDevelopmentToolManager } from "../managers/development";
 
 export class CuiUtils {
     interactions: IUIInteractionProvider;
     bus: ICuiEventBus;
     setup: CuiSetup;
-    cache: ICuiManager<CuiCachable>;
+    // cache: ICuiManager<CuiCachable>;
     colors: CuiInstanceColorHandler;
     styleAppender: ICuiDocumentStyleAppender;
-    development: CuiDevelopmentToolManager;
     #plugins: string[];
     constructor(initialSetup: CuiSetupInit, plugins?: string[]) {
         this.setup = new CuiSetup().fromInit(initialSetup);
         this.interactions = CuiInteractionsFactory.get(initialSetup.interaction, this.onInteractionError.bind(this));
-        this.cache = new CuiCacheManager(this.setup.cacheSize);
+        // this.cache = new CuiCacheManager(this.setup.cacheSize);
         this.bus = CuiEventBusFactory.get(initialSetup.busSetup);
         this.colors = new CuiInstanceColorHandler(this.interactions);
-        this.development = new CuiDevelopmentToolManager(initialSetup.development);
+
         this.styleAppender = new CuiDocumentStyleAppender(this.interactions);
         this.#plugins = plugins ?? [];
     }

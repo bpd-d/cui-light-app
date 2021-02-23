@@ -1,7 +1,7 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable, ICuiSwitchable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
-import { ICuiMoveEvent } from "../../core/listeners/move";
+import { ICuiMoveData } from "../../core/listeners/move";
 export declare class CuiSliderArgs implements ICuiParsable {
     #private;
     targets: string;
@@ -31,7 +31,7 @@ export declare class CuiSliderHandler extends CuiMutableHandler<CuiSliderArgs> i
      * Move listener callback
      * @param data move listener data
      */
-    onMove(data: ICuiMoveEvent): void;
+    onMove(data: ICuiMoveData): void;
     adjustMoveRatio(ratio: number): number;
     /**
      * Api method to switch childrens

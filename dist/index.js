@@ -338,6 +338,10 @@ const EVENTS = {
 const OBSERVABLE_SCROLL = "SCROLL";
 const OBSERVABLE_INTERSECTION = "INTERSECTION";
 const COMPONENTS_COUNTER = counter();
+const SCREEN_SIZE_SMALL = 640;
+const SCREEN_SIZE_MEDIUM = 960;
+const SCREEN_SIZE_LARGE = 1200;
+const SCREEN_SIZE_XLARGE = 1600;
 
 // CONCATENATED MODULE: ./src/core/utils/functions.ts
 
@@ -496,29 +500,17 @@ function are(...attributes) {
     return true;
 }
 function calcWindowSize(width) {
-    if (width <= 640) {
-        return 'small';
-    }
-    else if (width > 640 && width <= 960) {
-        return "medium";
-    }
-    else if (width > 960 && width <= 1200) {
-        return "large";
-    }
-    return 'xlarge';
-}
-function calcWindowSize2(width) {
     let size = "none";
-    if (width >= 640) {
+    if (width >= SCREEN_SIZE_SMALL) {
         size = 'small';
     }
-    if (width >= 960) {
+    if (width >= SCREEN_SIZE_MEDIUM) {
         size = "medium";
     }
-    if (width >= 1200) {
+    if (width >= SCREEN_SIZE_LARGE) {
         size = "large";
     }
-    if (width >= 1600) {
+    if (width >= SCREEN_SIZE_XLARGE) {
         size = 'xlarge';
     }
     return size;
@@ -707,7 +699,7 @@ function* counter() {
     }
 }
 function functions_all(array, condition) {
-    return array.find((t) => !condition(t)) === null;
+    return array && array.length > 0 && array.find((t) => !condition(t)) === undefined;
 }
 function getHandlerExtendingOrNull(target, fName) {
     if (!is(target.$handlers)) {
@@ -893,66 +885,6 @@ class CuiSetupInit {
     }
 }
 
-// CONCATENATED MODULE: ./src/core/utils/logger.ts
-class CuiLogger {
-    constructor(name, level) {
-        this.level = level;
-        this.component = name;
-        this.id = "-";
-    }
-    setLevel(level) {
-        this.level = level;
-    }
-    setId(id) {
-        this.id = id;
-    }
-    debug(message, functionName) {
-        if (this.level === 'debug') {
-            console.log(this.prepString(message, "debug", functionName));
-        }
-    }
-    error(message, functionName) {
-        if (this.level === 'error' || this.level === 'debug' || this.level === 'warning')
-            console.error(this.prepString(message, "error", functionName));
-    }
-    warning(message, functionName) {
-        if (this.level === 'warning' || this.level === 'debug')
-            console.warn(this.prepString(message, "warning", functionName));
-    }
-    exception(e, functionName) {
-        console.error(this.prepString(`An exception occured: ${e.name}: ${e.message}`, "exception", functionName));
-        if (this.level === 'debug')
-            console.error(e.stack);
-    }
-    performance(callback, functionName) {
-        if (this.level !== 'debug') {
-            return;
-        }
-        let start = Date.now();
-        callback();
-        console.log(this.prepString(`Performance measure: ${Date.now() - start}ms`, "performance", functionName));
-    }
-    prepString(message, level, functionName) {
-        return `[${new Date().toLocaleString()}][${level}][${this.component}][${functionName !== null && functionName !== void 0 ? functionName : '-'}][${this.id}][${message}]`;
-    }
-}
-
-// CONCATENATED MODULE: ./src/core/factories/logger.ts
-
-
-/**
- *
- */
-class logger_CuiLoggerFactory {
-    /**
-     * Gets new instance of component focused logger
-     * @param name - component name
-     */
-    static get(name, logLevel) {
-        return new CuiLogger(name, logLevel !== null && logLevel !== void 0 ? logLevel : STATICS.logLevel);
-    }
-}
-
 // CONCATENATED MODULE: ./src/core/utils/api.ts
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -1066,6 +998,102 @@ function destroyComponent(node, component) {
     });
 }
 
+// CONCATENATED MODULE: ./src/core/development/console.ts
+var __classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _cuid, _name, _level;
+
+class console_CuiConsoleDevelopementTool {
+    constructor(name, logLevel) {
+        _cuid.set(this, void 0);
+        _name.set(this, void 0);
+        _level.set(this, void 0);
+        __classPrivateFieldSet(this, _name, name);
+        __classPrivateFieldSet(this, _cuid, '-');
+        __classPrivateFieldSet(this, _level, logLevel !== null && logLevel !== void 0 ? logLevel : STATICS.logLevel);
+    }
+    registerElement(element, cuid, component) {
+        __classPrivateFieldSet(this, _cuid, cuid);
+        console.log(this.prepString("Register element: " + cuid, 'debug', component));
+    }
+    unregisterElement(cuid, component) {
+        __classPrivateFieldSet(this, _cuid, '-');
+        console.log(this.prepString("Unregister element: " + cuid, 'debug', component));
+    }
+    setProperty(cuid, component, name, t) {
+        //throw new Error("Method not implemented.");
+    }
+    pushState(cuid, component, type, message, functionName) {
+        this.logByType(type, message, functionName);
+    }
+    log(type, message, functionName) {
+        this.logByType(type, message, functionName);
+    }
+    debug(message, functionName) {
+        if (__classPrivateFieldGet(this, _level) === 'debug') {
+            console.log(this.prepString(message, "debug", functionName));
+        }
+    }
+    warning(message, functionName) {
+        if (__classPrivateFieldGet(this, _level) === 'warning' || __classPrivateFieldGet(this, _level) === 'debug')
+            console.warn(this.prepString(message, "warning", functionName));
+    }
+    error(message, functionName) {
+        if (__classPrivateFieldGet(this, _level) === 'error' || __classPrivateFieldGet(this, _level) === 'debug' || __classPrivateFieldGet(this, _level) === 'warning')
+            console.error(this.prepString(message, "error", functionName));
+    }
+    exception(e, functionName) {
+        console.error(this.prepString(`An exception occured: ${e.name}: ${e.message}`, "exception", functionName));
+        if (__classPrivateFieldGet(this, _level) === 'debug')
+            console.error(e.stack);
+    }
+    prepString(message, level, functionName) {
+        return `[${new Date().toLocaleString()}][${level}][${__classPrivateFieldGet(this, _name)}][${functionName !== null && functionName !== void 0 ? functionName : '-'}][${__classPrivateFieldGet(this, _cuid)}][${message}]`;
+    }
+    logByType(type, message, functionName) {
+        switch (type) {
+            case 'debug':
+                this.debug(message, functionName);
+                break;
+            case 'warning':
+                this.warning(message, functionName);
+                break;
+            case 'error':
+                this.error(message, functionName);
+                break;
+        }
+    }
+}
+_cuid = new WeakMap(), _name = new WeakMap(), _level = new WeakMap();
+
+// CONCATENATED MODULE: ./src/core/development/factory.ts
+
+
+class factory_CuiConsoleDevToolFactory {
+    get(name) {
+        return new console_CuiConsoleDevelopementTool(name);
+    }
+}
+class factory_CuiDevtoolFactory {
+    static get(name) {
+        if (!STATICS.devTool) {
+            STATICS.devTool = new factory_CuiConsoleDevToolFactory();
+        }
+        return STATICS.devTool.get(name);
+    }
+}
+
 // CONCATENATED MODULE: ./src/core/observers/mutations.ts
 var mutations_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -1076,14 +1104,14 @@ var mutations_awaiter = (undefined && undefined.__awaiter) || function (thisArg,
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+var mutations_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
     }
     privateMap.set(receiver, value);
     return value;
 };
-var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+var mutations_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to get private field on non-instance");
     }
@@ -1102,54 +1130,54 @@ class mutations_CuiMutationObserver {
         _attributes.set(this, void 0);
         _utils.set(this, void 0);
         _queryString.set(this, void 0);
-        __classPrivateFieldSet(this, _observer, undefined);
+        mutations_classPrivateFieldSet(this, _observer, undefined);
         this.plugins = undefined;
-        __classPrivateFieldSet(this, _options, undefined);
-        __classPrivateFieldSet(this, _element, element);
-        this._log = logger_CuiLoggerFactory.get('CuiMutationObserver');
-        __classPrivateFieldSet(this, _components, []);
-        __classPrivateFieldSet(this, _attributes, []);
-        __classPrivateFieldSet(this, _utils, utils);
-        __classPrivateFieldSet(this, _queryString, "");
+        mutations_classPrivateFieldSet(this, _options, undefined);
+        mutations_classPrivateFieldSet(this, _element, element);
+        this._log = factory_CuiDevtoolFactory.get('CuiMutationObserver');
+        mutations_classPrivateFieldSet(this, _components, []);
+        mutations_classPrivateFieldSet(this, _attributes, []);
+        mutations_classPrivateFieldSet(this, _utils, utils);
+        mutations_classPrivateFieldSet(this, _queryString, "");
     }
     setPlugins(plugins) {
         this.plugins = plugins;
         return this;
     }
     setComponents(components) {
-        __classPrivateFieldSet(this, _components, components);
+        mutations_classPrivateFieldSet(this, _components, components);
         return this;
     }
     setAttributes(attributes) {
-        __classPrivateFieldSet(this, _options, {
+        mutations_classPrivateFieldSet(this, _options, {
             attributes: true,
             subtree: true,
             childList: true,
             attributeFilter: attributes
         });
-        __classPrivateFieldSet(this, _attributes, attributes);
-        __classPrivateFieldSet(this, _queryString, joinAttributesForQuery(attributes));
+        mutations_classPrivateFieldSet(this, _attributes, attributes);
+        mutations_classPrivateFieldSet(this, _queryString, joinAttributesForQuery(attributes));
         return this;
     }
     start() {
         this._log.debug("Starting");
-        if (!__classPrivateFieldGet(this, _options)) {
+        if (!mutations_classPrivateFieldGet(this, _options)) {
             this._log.error("Cannot start - options are not defined");
             return this;
         }
-        __classPrivateFieldSet(this, _observer, new MutationObserver(this.mutationCallback.bind(this)));
-        __classPrivateFieldGet(this, _observer).observe(__classPrivateFieldGet(this, _element), __classPrivateFieldGet(this, _options));
+        mutations_classPrivateFieldSet(this, _observer, new MutationObserver(this.mutationCallback.bind(this)));
+        mutations_classPrivateFieldGet(this, _observer).observe(mutations_classPrivateFieldGet(this, _element), mutations_classPrivateFieldGet(this, _options));
         this._log.debug("Started");
         return this;
     }
     stop() {
         this._log.debug("Stopping");
-        if (!__classPrivateFieldGet(this, _observer)) {
+        if (!mutations_classPrivateFieldGet(this, _observer)) {
             this._log.debug("Observer not available");
             return this;
         }
-        __classPrivateFieldGet(this, _observer).disconnect();
-        __classPrivateFieldSet(this, _observer, undefined);
+        mutations_classPrivateFieldGet(this, _observer).disconnect();
+        mutations_classPrivateFieldSet(this, _observer, undefined);
         this._log.debug("Stopped");
         return this;
     }
@@ -1212,7 +1240,7 @@ class mutations_CuiMutationObserver {
             for (let node of nodes) {
                 yield this.handleAddedNode(node);
                 let element = node;
-                let children = element.hasChildNodes() ? element.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
+                let children = element.hasChildNodes() ? element.querySelectorAll(mutations_classPrivateFieldGet(this, _queryString)) : null;
                 if (is(children)) {
                     // @ts-ignore children is defined
                     this._log.debug("Additional nodes to add: " + children.length);
@@ -1235,8 +1263,8 @@ class mutations_CuiMutationObserver {
     handleAddedNode(node) {
         return mutations_awaiter(this, void 0, void 0, function* () {
             let matchingComponents = [];
-            matchingComponents = getMatchingComponents(node, __classPrivateFieldGet(this, _components));
-            return createCuiElement(node, matchingComponents, __classPrivateFieldGet(this, _utils));
+            matchingComponents = getMatchingComponents(node, mutations_classPrivateFieldGet(this, _components));
+            return createCuiElement(node, matchingComponents, mutations_classPrivateFieldGet(this, _utils));
         });
     }
     handleRemovedNodes(nodes) {
@@ -1244,7 +1272,7 @@ class mutations_CuiMutationObserver {
             for (let node of nodes) {
                 yield destroyCuiElement(node);
                 let element = node;
-                let children = node.hasChildNodes() ? element.querySelectorAll(__classPrivateFieldGet(this, _queryString)) : null;
+                let children = node.hasChildNodes() ? element.querySelectorAll(mutations_classPrivateFieldGet(this, _queryString)) : null;
                 if (is(children)) {
                     // @ts-ignore children is defined
                     this._log.debug("Additional nodes to remove: " + children.length);
@@ -1276,36 +1304,36 @@ class CuiComponentMutationHandler {
             childList: true,
             subtree: true
         });
-        __classPrivateFieldSet(this, _observer_1, undefined);
-        __classPrivateFieldSet(this, _disabled, false);
-        __classPrivateFieldSet(this, _isObserving, false);
-        __classPrivateFieldSet(this, _element_1, target);
+        mutations_classPrivateFieldSet(this, _observer_1, undefined);
+        mutations_classPrivateFieldSet(this, _disabled, false);
+        mutations_classPrivateFieldSet(this, _isObserving, false);
+        mutations_classPrivateFieldSet(this, _element_1, target);
     }
     observe() {
-        if (!__classPrivateFieldGet(this, _isObserving) && !__classPrivateFieldGet(this, _disabled) && __classPrivateFieldGet(this, _observer_1)) {
-            __classPrivateFieldGet(this, _observer_1).observe(__classPrivateFieldGet(this, _element_1), __classPrivateFieldGet(this, _options_1));
-            __classPrivateFieldSet(this, _isObserving, true);
+        if (!mutations_classPrivateFieldGet(this, _isObserving) && !mutations_classPrivateFieldGet(this, _disabled) && mutations_classPrivateFieldGet(this, _observer_1)) {
+            mutations_classPrivateFieldGet(this, _observer_1).observe(mutations_classPrivateFieldGet(this, _element_1), mutations_classPrivateFieldGet(this, _options_1));
+            mutations_classPrivateFieldSet(this, _isObserving, true);
         }
     }
     unobserve() {
-        if (__classPrivateFieldGet(this, _isObserving) && __classPrivateFieldGet(this, _observer_1)) {
-            __classPrivateFieldGet(this, _observer_1).disconnect();
-            __classPrivateFieldSet(this, _isObserving, false);
+        if (mutations_classPrivateFieldGet(this, _isObserving) && mutations_classPrivateFieldGet(this, _observer_1)) {
+            mutations_classPrivateFieldGet(this, _observer_1).disconnect();
+            mutations_classPrivateFieldSet(this, _isObserving, false);
         }
     }
     isObserving() {
-        return __classPrivateFieldGet(this, _isObserving);
+        return mutations_classPrivateFieldGet(this, _isObserving);
     }
     disable(flag) {
-        __classPrivateFieldSet(this, _disabled, flag);
-        if (__classPrivateFieldGet(this, _disabled)) {
+        mutations_classPrivateFieldSet(this, _disabled, flag);
+        if (mutations_classPrivateFieldGet(this, _disabled)) {
             this.unobserve();
         }
     }
     onMutation(callback) {
-        if (__classPrivateFieldGet(this, _isObserving))
+        if (mutations_classPrivateFieldGet(this, _isObserving))
             this.unobserve();
-        __classPrivateFieldSet(this, _observer_1, new MutationObserver(callback));
+        mutations_classPrivateFieldSet(this, _observer_1, new MutationObserver(callback));
     }
 }
 _isObserving = new WeakMap(), _observer_1 = new WeakMap(), _element_1 = new WeakMap(), _disabled = new WeakMap(), _options_1 = new WeakMap();
@@ -1453,164 +1481,6 @@ class interactions_CuiInteractionsFactory {
     }
 }
 
-// CONCATENATED MODULE: ./src/core/utils/dictionary.ts
-var dictionary_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var dictionary_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _keys, _values;
-
-
-class dictionary_CuiDictionary {
-    constructor(init) {
-        _keys.set(this, void 0);
-        _values.set(this, void 0);
-        dictionary_classPrivateFieldSet(this, _keys, []);
-        dictionary_classPrivateFieldSet(this, _values, []);
-        if (init) {
-            init.forEach(x => {
-                if (!is(x.key)) {
-                    dictionary_classPrivateFieldSet(this, _keys, []);
-                    dictionary_classPrivateFieldSet(this, _values, []);
-                    throw new ArgumentError("Key is empty");
-                }
-                this.add(x.key, x.value);
-            });
-        }
-    }
-    add(key, value) {
-        this.throwOnEmptyKey(key);
-        if (this.containsKey(key))
-            throw new Error("Key already exists");
-        dictionary_classPrivateFieldGet(this, _keys).push(key);
-        dictionary_classPrivateFieldGet(this, _values).push(value);
-    }
-    remove(key) {
-        if (!is(key)) {
-            return;
-        }
-        let index = dictionary_classPrivateFieldGet(this, _keys).indexOf(key);
-        if (index >= 0) {
-            dictionary_classPrivateFieldGet(this, _keys).splice(index, 1);
-            dictionary_classPrivateFieldGet(this, _values).splice(index, 1);
-        }
-    }
-    get(key) {
-        this.throwOnEmptyKey(key);
-        let index = this.indexOf(key);
-        if (index < 0) {
-            return undefined;
-        }
-        return dictionary_classPrivateFieldGet(this, _values)[index];
-    }
-    containsKey(key) {
-        return is(key) && this.indexOf(key) >= 0;
-    }
-    keys() {
-        return dictionary_classPrivateFieldGet(this, _keys);
-    }
-    values() {
-        return dictionary_classPrivateFieldGet(this, _values);
-    }
-    indexOf(key) {
-        return is(key) ? dictionary_classPrivateFieldGet(this, _keys).indexOf(key) : -1;
-    }
-    update(key, value) {
-        this.throwOnEmptyKey(key);
-        let index = this.indexOf(key);
-        if (index < 0) {
-            throw new ItemNotFoundError(`Item with key [${key}] not found`);
-        }
-        dictionary_classPrivateFieldGet(this, _values)[index] = value;
-    }
-    clear() {
-        dictionary_classPrivateFieldSet(this, _values, []);
-        dictionary_classPrivateFieldSet(this, _keys, []);
-    }
-    throwOnEmptyKey(key) {
-        if (!is(key)) {
-            throw new ArgumentError("Key is empty");
-        }
-    }
-}
-_keys = new WeakMap(), _values = new WeakMap();
-
-// CONCATENATED MODULE: ./src/core/managers/cache.ts
-var cache_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var cache_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _cache, _maxSize;
-
-
-class cache_CuiCacheManager {
-    constructor(maxSize) {
-        _cache.set(this, void 0);
-        _maxSize.set(this, void 0);
-        cache_classPrivateFieldSet(this, _cache, new dictionary_CuiDictionary());
-        cache_classPrivateFieldSet(this, _maxSize, maxSize !== null && maxSize !== void 0 ? maxSize : 500);
-    }
-    put(key, element) {
-        if (!is(key))
-            return;
-        if (this.has(key)) {
-            cache_classPrivateFieldGet(this, _cache).update(key, element);
-            return;
-        }
-        this.clean();
-        cache_classPrivateFieldGet(this, _cache).add(key, element);
-    }
-    get(key) {
-        if (!this.has(key))
-            return undefined;
-        let item = cache_classPrivateFieldGet(this, _cache).get(key);
-        if (item && item.refresh()) {
-            return item;
-        }
-        cache_classPrivateFieldGet(this, _cache).remove(key);
-        return undefined;
-    }
-    has(key) {
-        return is(key) ? cache_classPrivateFieldGet(this, _cache).containsKey(key) : false;
-    }
-    remove(key) {
-        if (!is(key))
-            return false;
-        if (this.has(key)) {
-            cache_classPrivateFieldGet(this, _cache).remove(key);
-            return true;
-        }
-        return false;
-    }
-    clear() {
-        cache_classPrivateFieldGet(this, _cache).clear();
-    }
-    clean() {
-        if (cache_classPrivateFieldGet(this, _cache).keys().length >= cache_classPrivateFieldGet(this, _maxSize)) {
-            cache_classPrivateFieldGet(this, _cache).remove(cache_classPrivateFieldGet(this, _cache).keys()[0]);
-        }
-    }
-}
-_cache = new WeakMap(), _maxSize = new WeakMap();
-
 // CONCATENATED MODULE: ./src/core/bus/handlers.ts
 var handlers_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -1652,7 +1522,7 @@ class handlers_SimpleEventEmitHandler extends handlers_EmitHandlerBase {
         _log.set(this, void 0);
         _executor.set(this, void 0);
         handlers_classPrivateFieldSet(this, _executor, executor);
-        handlers_classPrivateFieldSet(this, _log, logger_CuiLoggerFactory.get("SimpleEventEmitHandler"));
+        handlers_classPrivateFieldSet(this, _log, factory_CuiDevtoolFactory.get("SimpleEventEmitHandler"));
     }
     handle(events, cuid, args) {
         return handlers_awaiter(this, void 0, void 0, function* () {
@@ -1800,7 +1670,7 @@ var bus_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) |
     }
     return privateMap.get(receiver);
 };
-var _events, bus_log, _eventHandler, _name, _events_1, _log_1, _buses, _last, _isOn, _statistics;
+var _events, bus_log, _eventHandler, bus_name, _events_1, _log_1, _buses, _last, _isOn, _statistics;
 
 
 
@@ -1811,11 +1681,11 @@ class bus_CuiEventBus {
         _events.set(this, void 0);
         bus_log.set(this, void 0);
         _eventHandler.set(this, void 0);
-        _name.set(this, void 0);
+        bus_name.set(this, void 0);
         bus_classPrivateFieldSet(this, _events, {});
         bus_classPrivateFieldSet(this, _eventHandler, emitHandler);
-        bus_classPrivateFieldSet(this, _name, name !== null && name !== void 0 ? name : "CuiEventBus");
-        bus_classPrivateFieldSet(this, bus_log, logger_CuiLoggerFactory.get(bus_classPrivateFieldGet(this, _name)));
+        bus_classPrivateFieldSet(this, bus_name, name !== null && name !== void 0 ? name : "CuiEventBus");
+        bus_classPrivateFieldSet(this, bus_log, factory_CuiDevtoolFactory.get(bus_classPrivateFieldGet(this, bus_name)));
     }
     /**
      * Attaches event to event bus
@@ -1830,7 +1700,7 @@ class bus_CuiEventBus {
             throw new ArgumentError("Missing argument");
         }
         // When context is not provided (e.g. anonymous function) then generate random
-        let id = bus_classPrivateFieldGet(this, _name) + "-" + generateRandomString();
+        let id = bus_classPrivateFieldGet(this, bus_name) + "-" + generateRandomString();
         if (!bus_classPrivateFieldGet(this, _events)[name]) {
             bus_classPrivateFieldGet(this, _events)[name] = {};
         }
@@ -1933,14 +1803,14 @@ class bus_CuiEventBus {
         return is(cui) ? cui.$cuid : null;
     }
 }
-_events = new WeakMap(), bus_log = new WeakMap(), _eventHandler = new WeakMap(), _name = new WeakMap();
+_events = new WeakMap(), bus_log = new WeakMap(), _eventHandler = new WeakMap(), bus_name = new WeakMap();
 class bus_CuiEventExtBus {
     constructor(setup) {
         _events_1.set(this, void 0);
         _log_1.set(this, void 0);
         _buses.set(this, void 0);
         _last.set(this, void 0);
-        bus_classPrivateFieldSet(this, _log_1, logger_CuiLoggerFactory.get("CuiEventBus"));
+        bus_classPrivateFieldSet(this, _log_1, factory_CuiDevtoolFactory.get("CuiEventBus"));
         bus_classPrivateFieldSet(this, _buses, []);
         bus_classPrivateFieldSet(this, _events_1, {});
         bus_classPrivateFieldSet(this, _last, 0);
@@ -2198,66 +2068,6 @@ class colors_CuiInstanceColorHandler {
 }
 _root = new WeakMap(), _interactions = new WeakMap(), _LIGHTEN_FACTOR = new WeakMap(), _DARKEN_FACTOR = new WeakMap();
 
-// CONCATENATED MODULE: ./src/core/managers/development.ts
-var development_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var development_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _tool;
-
-class development_CuiDevelopmentToolManager {
-    constructor(tool) {
-        _tool.set(this, void 0);
-        development_classPrivateFieldSet(this, _tool, tool);
-    }
-    pushState(cuid, component, type, message, functionName) {
-        this.checkAndCall(() => {
-            // @ts-ignore - tool already checked
-            development_classPrivateFieldGet(this, _tool).pushState(cuid, component, type, message, functionName);
-        });
-    }
-    registerElement(element, cuid, component) {
-        this.checkAndCall(() => {
-            // @ts-ignore - tool already checked
-            development_classPrivateFieldGet(this, _tool).registerElement(element, cuid, component);
-        });
-    }
-    unregisterElement(cuid, component) {
-        this.checkAndCall(() => {
-            // @ts-ignore - tool already checked
-            development_classPrivateFieldGet(this, _tool).unregisterElement(cuid, component);
-        });
-    }
-    setProperty(cuid, component, name, t) {
-        this.checkAndCall(() => {
-            // @ts-ignore - tool already checked
-            development_classPrivateFieldGet(this, _tool).setProperty(cuid, component, name, t);
-        });
-    }
-    log(type, message, functionName) {
-        this.checkAndCall(() => {
-            // @ts-ignore - tool already checked
-            development_classPrivateFieldGet(this, _tool).log(type, message, functionName);
-        });
-    }
-    checkAndCall(callback) {
-        if (!is(development_classPrivateFieldGet(this, _tool))) {
-            return;
-        }
-        callback();
-    }
-}
-_tool = new WeakMap();
-
 // CONCATENATED MODULE: ./src/core/models/utils.ts
 var utils_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
@@ -2281,17 +2091,14 @@ var _plugins;
 
 
 
-
-
 class utils_CuiUtils {
     constructor(initialSetup, plugins) {
         _plugins.set(this, void 0);
         this.setup = new CuiSetup().fromInit(initialSetup);
         this.interactions = interactions_CuiInteractionsFactory.get(initialSetup.interaction, this.onInteractionError.bind(this));
-        this.cache = new cache_CuiCacheManager(this.setup.cacheSize);
+        // this.cache = new CuiCacheManager(this.setup.cacheSize);
         this.bus = bus_CuiEventBusFactory.get(initialSetup.busSetup);
         this.colors = new colors_CuiInstanceColorHandler(this.interactions);
-        this.development = new development_CuiDevelopmentToolManager(initialSetup.development);
         this.styleAppender = new appender_CuiDocumentStyleAppender(this.interactions);
         utils_classPrivateFieldSet(this, _plugins, plugins !== null && plugins !== void 0 ? plugins : []);
     }
@@ -2700,7 +2507,7 @@ class element_ElementManager {
         _actionsHelper.set(this, void 0);
         element_classPrivateFieldSet(this, _elements, elements);
         element_classPrivateFieldSet(this, _isLocked, false);
-        element_classPrivateFieldSet(this, _logger, logger_CuiLoggerFactory.get("ElementManager"));
+        element_classPrivateFieldSet(this, _logger, factory_CuiDevtoolFactory.get("ElementManager"));
         element_classPrivateFieldSet(this, element_utils, utils);
         element_classPrivateFieldSet(this, _cDt, Date.now());
         element_classPrivateFieldSet(this, _actionsHelper, new helpers_CuiActionsHelper(utils.interactions));
@@ -3060,7 +2867,7 @@ class collection_CollectionManagerHelper {
         _toggleClass.set(this, void 0);
         collection_interactions.set(this, void 0);
         collection_classPrivateFieldSet(this, collection_interactions, interactions);
-        collection_classPrivateFieldSet(this, collection_log, logger_CuiLoggerFactory.get('CollectionManager'));
+        collection_classPrivateFieldSet(this, collection_log, factory_CuiDevtoolFactory.get('CollectionManager'));
         collection_classPrivateFieldSet(this, collection_elements, []);
         collection_classPrivateFieldSet(this, collection_isLocked, false);
         collection_classPrivateFieldSet(this, _toggleClass, "");
@@ -3184,7 +2991,7 @@ class collection_CollectionManager {
         managers_collection_log.set(this, void 0);
         collection_cDt.set(this, void 0);
         _helper.set(this, void 0);
-        managers_collection_classPrivateFieldSet(this, managers_collection_log, logger_CuiLoggerFactory.get('CollectionManager'));
+        managers_collection_classPrivateFieldSet(this, managers_collection_log, factory_CuiDevtoolFactory.get('CollectionManager'));
         managers_collection_classPrivateFieldSet(this, _helper, new collection_CollectionManagerHelper(interactions));
         managers_collection_classPrivateFieldGet(this, _helper).setElements(elements);
         managers_collection_classPrivateFieldSet(this, collection_cDt, Date.now());
@@ -3286,7 +3093,7 @@ class plugins_CuiPluginManager {
         _mutated.set(this, void 0);
         plugins_log.set(this, void 0);
         plugins_classPrivateFieldSet(this, plugins_plugins, plugins !== null && plugins !== void 0 ? plugins : []);
-        plugins_classPrivateFieldSet(this, plugins_log, logger_CuiLoggerFactory.get("CuiPluginManager"));
+        plugins_classPrivateFieldSet(this, plugins_log, factory_CuiDevtoolFactory.get("CuiPluginManager"));
         plugins_classPrivateFieldSet(this, _mutated, []);
     }
     init(utils) {
@@ -3369,10 +3176,12 @@ class instance_CuiInstance {
         _mutatedAttributes.set(this, void 0);
         STATICS.prefix = setup.prefix;
         STATICS.logLevel = setup.logLevel;
-        instance_classPrivateFieldSet(this, instance_log, logger_CuiLoggerFactory.get('CuiInstance'));
+        if (setup.development)
+            STATICS.devTool = setup.development;
         instance_classPrivateFieldSet(this, instance_plugins, new plugins_CuiPluginManager(plugins));
         instance_classPrivateFieldSet(this, instance_components, components !== null && components !== void 0 ? components : []);
         instance_classPrivateFieldSet(this, instance_utils, new utils_CuiUtils(setup, plugins.map(plugin => { return plugin.name; })));
+        instance_classPrivateFieldSet(this, instance_log, factory_CuiDevtoolFactory.get("CuiInstance"));
         instance_classPrivateFieldSet(this, _rootElement, setup.root);
         instance_classPrivateFieldSet(this, _mutationObserver, undefined);
         instance_classPrivateFieldSet(this, _mutatedAttributes, []);
@@ -3460,8 +3269,9 @@ class instance_CuiInstance {
     on(event, callback, element) {
         if (!are(event, callback)) {
             instance_classPrivateFieldGet(this, instance_log).error("Incorrect arguments", "on");
+            return null;
         }
-        instance_classPrivateFieldGet(this, instance_utils).bus.on(event, callback, element);
+        return instance_classPrivateFieldGet(this, instance_utils).bus.on(event, callback, element);
     }
     detach(event, id) {
         if (!are(event, id)) {
@@ -3805,12 +3615,12 @@ base_interactions = new WeakMap();
 class base_CuiComponentBase {
     constructor(componentName, element, utils) {
         _emittedEvents.set(this, void 0);
-        this._log = logger_CuiLoggerFactory.get(componentName);
+        this._log = factory_CuiDevtoolFactory.get(componentName);
         this.utils = utils;
         this.element = element;
         this.cuid = element.$cuid;
         this.isLocked = false;
-        this._log.setId(this.cuid);
+        // this._log.setId(this.cuid);
         this.activeClassName = getActiveClass(utils.setup.prefix);
         this.helper = new base_ComponentHelper(utils.interactions);
         base_classPrivateFieldSet(this, _emittedEvents, []);
@@ -3868,31 +3678,24 @@ class base_CuiComponentBase {
         });
     }
     registerInDebug() {
-        this.utils.development.registerElement(this.element, this.cuid, this.componentName);
+        this._log.registerElement(this.element, this.cuid, this.componentName);
     }
     removeFromDebug() {
-        this.utils.development.unregisterElement(this.cuid, this.componentName);
+        this._log.unregisterElement(this.cuid, this.componentName);
     }
     setDebugProperty(name, value) {
-        this.utils.development.setProperty(this.cuid, this.componentName, name, value);
     }
     logInfo(message, functionName) {
         this._log.debug(message, functionName);
-        this.utils.development.pushState(this.cuid, this.componentName, "info", message, functionName);
     }
     logWarning(message, functionName) {
         this._log.warning(message, functionName);
-        this.utils.development.pushState(this.cuid, this.componentName, "warning", message, functionName);
-    }
-    pushDebugState(type, message, functionName) {
-        this.utils.development.pushState(this.cuid, this.componentName, type, message, functionName);
     }
     logError(message, functionName, error) {
         this._log.error(message, functionName);
         if (error) {
             this._log.exception(error, functionName);
         }
-        this.utils.development.pushState(this.cuid, this.componentName, "error", message, functionName);
     }
 }
 _emittedEvents = new WeakMap();
@@ -3907,7 +3710,7 @@ class base_CuiHandlerBase extends base_CuiComponentBase {
         base_classPrivateFieldSet(this, _attribute, attribute);
     }
     handle(args) {
-        this.logInfo("Init", 'handle');
+        this.registerInDebug();
         if (this.isInitialized) {
             this.logWarning("Trying to initialize component again", 'handle');
             return;
@@ -3916,7 +3719,7 @@ class base_CuiHandlerBase extends base_CuiComponentBase {
         if (!this.element.classList.contains(base_classPrivateFieldGet(this, _attribute))) {
             this.element.classList.add(base_classPrivateFieldGet(this, _attribute));
         }
-        this.registerInDebug();
+        this.logInfo("Init", 'handle');
         this.onHandle();
         this.isInitialized = true;
     }
@@ -3928,7 +3731,7 @@ class base_CuiHandlerBase extends base_CuiComponentBase {
         }
         this.prevArgs = clone(this.args);
         this.args.parse(args);
-        this.pushDebugState("info", "Component update", 'refresh');
+        this._log.debug("Component update", 'refresh');
         this.onRefresh();
     }
     destroy() {
@@ -5681,7 +5484,7 @@ class calculator_CuiBasePositionCalculator {
         calculator_classPrivateFieldSet(this, _preferred, "top-center");
         calculator_classPrivateFieldSet(this, _static, "");
         calculator_classPrivateFieldSet(this, _evaluator, evaluator !== null && evaluator !== void 0 ? evaluator : new evaluator_CuiBasePositionEvaluator());
-        calculator_classPrivateFieldSet(this, calculator_log, logger_CuiLoggerFactory.get("CuiBasePositionCalculator"));
+        calculator_classPrivateFieldSet(this, calculator_log, factory_CuiDevtoolFactory.get("CuiBasePositionCalculator"));
     }
     setMargin(value) {
         calculator_classPrivateFieldGet(this, _evaluator).setMargin(value);
@@ -6264,7 +6067,7 @@ class move_CuiMoveEventListener {
             moveX: ev.movementX,
             moveY: ev.movementY,
             target: ev.target,
-            event: ev
+            event: ev,
         });
     }
     publishTouchEvent(type, ev) {
@@ -7739,7 +7542,7 @@ class resize_CuiResizeHandler extends CuiHandler {
         resize_classPrivateFieldSet(this, resize_eventId, this.utils.bus.on(EVENTS.RESIZE, this.resize.bind(this)));
         resize_classPrivateFieldGet(this, _intersectionObserver).connect();
         resize_classPrivateFieldGet(this, _intersectionObserver).observe(this.element);
-        resize_classPrivateFieldSet(this, _currentSize, calcWindowSize2(window.innerWidth));
+        resize_classPrivateFieldSet(this, _currentSize, calcWindowSize(window.innerWidth));
         resize_classPrivateFieldSet(this, _isIntersecting, this.isInViewport(this.element));
         this.setNewValue();
         this.updateElement();
@@ -10368,9 +10171,11 @@ class alert_CuiAlertsPlugin {
         this.description = "CuiAlertsPlugin";
         alert_classPrivateFieldSet(this, _handleId, null);
         alert_classPrivateFieldSet(this, alert_utils, undefined);
-        alert_classPrivateFieldSet(this, alert_log, logger_CuiLoggerFactory.get("CuiAlertsPlugin"));
+        //@ts-ignore
+        alert_classPrivateFieldSet(this, alert_log, null);
     }
     init(utils) {
+        alert_classPrivateFieldSet(this, alert_log, factory_CuiDevtoolFactory.get("CuiAlertsPlugin"));
         alert_classPrivateFieldSet(this, alert_utils, utils);
         this.detach();
         alert_classPrivateFieldSet(this, _handleId, alert_classPrivateFieldGet(this, alert_utils).bus.on(EVENTS.ALERT, this.onAlert.bind(this), { $cuid: this.name }));
@@ -10568,12 +10373,12 @@ var listener_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldG
     }
     return privateMap.get(receiver);
 };
-var listener_callback, listener_keys, listener_inProgress, _singleEmit, listener_isAttached, _onKeyDownBound, _onKeyUpBound;
+var listener_callback, _keys, listener_inProgress, _singleEmit, listener_isAttached, _onKeyDownBound, _onKeyUpBound;
 
 class listener_CuiKeyPressListener {
     constructor(singleEmit, keys) {
         listener_callback.set(this, void 0);
-        listener_keys.set(this, void 0);
+        _keys.set(this, void 0);
         listener_inProgress.set(this, void 0);
         _singleEmit.set(this, void 0);
         listener_isAttached.set(this, void 0);
@@ -10583,7 +10388,7 @@ class listener_CuiKeyPressListener {
         listener_classPrivateFieldSet(this, _singleEmit, true);
         listener_classPrivateFieldSet(this, listener_isAttached, false);
         listener_classPrivateFieldSet(this, listener_callback, undefined);
-        listener_classPrivateFieldSet(this, listener_keys, keys !== null && keys !== void 0 ? keys : []);
+        listener_classPrivateFieldSet(this, _keys, keys !== null && keys !== void 0 ? keys : []);
         listener_classPrivateFieldSet(this, _onKeyDownBound, this.onKeyDown.bind(this));
         listener_classPrivateFieldSet(this, _onKeyUpBound, this.onKeyUp.bind(this));
     }
@@ -10616,7 +10421,7 @@ class listener_CuiKeyPressListener {
         }
         listener_classPrivateFieldSet(this, listener_inProgress, true);
         try {
-            if ((!is(listener_classPrivateFieldGet(this, listener_keys)) || listener_classPrivateFieldGet(this, listener_keys).includes(ev.code)) && listener_classPrivateFieldGet(this, listener_callback)) {
+            if ((!is(listener_classPrivateFieldGet(this, _keys)) || listener_classPrivateFieldGet(this, _keys).includes(ev.code)) && listener_classPrivateFieldGet(this, listener_callback)) {
                 listener_classPrivateFieldGet(this, listener_callback).call(this, ev);
             }
         }
@@ -10632,7 +10437,7 @@ class listener_CuiKeyPressListener {
         listener_classPrivateFieldSet(this, listener_inProgress, false);
     }
 }
-listener_callback = new WeakMap(), listener_keys = new WeakMap(), listener_inProgress = new WeakMap(), _singleEmit = new WeakMap(), listener_isAttached = new WeakMap(), _onKeyDownBound = new WeakMap(), _onKeyUpBound = new WeakMap();
+listener_callback = new WeakMap(), _keys = new WeakMap(), listener_inProgress = new WeakMap(), _singleEmit = new WeakMap(), listener_isAttached = new WeakMap(), _onKeyDownBound = new WeakMap(), _onKeyUpBound = new WeakMap();
 
 // CONCATENATED MODULE: ./src/plugins/keys/observer.ts
 var observer_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -10668,6 +10473,8 @@ class observer_CuiKeysObserver {
     onKeyDown(ev) {
         observer_classPrivateFieldGet(this, observer_bus).emit(EVENTS.KEYDOWN, null, {
             timestamp: Date.now(),
+            name: EVENTS.KEYDOWN,
+            source: "CuiKeysObserver",
             event: ev
         });
     }
@@ -10900,13 +10707,13 @@ class observer_CuiMoveObserver {
                 break;
             case "move":
                 if (move_observer_classPrivateFieldGet(this, _firstEvent) && !move_observer_classPrivateFieldGet(this, _wasFirstEventSend)) {
-                    move_observer_classPrivateFieldGet(this, move_observer_bus).emit(EVENTS.GLOBAL_MOVE, null, move_observer_classPrivateFieldGet(this, _firstEvent));
+                    this.pushMoveEvent(move_observer_classPrivateFieldGet(this, _firstEvent));
                     move_observer_classPrivateFieldSet(this, _wasFirstEventSend, true);
                 }
-                move_observer_classPrivateFieldGet(this, move_observer_bus).emit(EVENTS.GLOBAL_MOVE, null, data);
+                this.pushMoveEvent(data);
                 break;
             case "up":
-                move_observer_classPrivateFieldGet(this, move_observer_bus).emit(EVENTS.GLOBAL_MOVE, null, data);
+                this.pushMoveEvent(data);
                 if (move_observer_classPrivateFieldGet(this, _firstEvent)) {
                     if (move_observer_classPrivateFieldGet(this, _gesturesEnabled)) {
                         const { diffX, diffY } = this.getGestureDiff(move_observer_classPrivateFieldGet(this, _firstEvent), data);
@@ -10917,6 +10724,14 @@ class observer_CuiMoveObserver {
                 }
                 break;
         }
+    }
+    pushMoveEvent(data) {
+        move_observer_classPrivateFieldGet(this, move_observer_bus).emit(EVENTS.GLOBAL_MOVE, null, {
+            data,
+            source: "CuiMoveObserver",
+            timestamp: Date.now(),
+            name: EVENTS.GLOBAL_MOVE
+        });
     }
     onMoveLock(flag) {
         move_observer_classPrivateFieldSet(this, observer_isLocked, flag);
@@ -10948,7 +10763,9 @@ class observer_CuiMoveObserver {
         move_observer_classPrivateFieldGet(this, move_observer_bus).emit(eventName, null, {
             timespstamp: Date.now(),
             changeX: diffX,
-            changeY: diffY
+            changeY: diffY,
+            name: eventName,
+            source: "CuiMoveObserver"
         });
     }
     getGestureEventName(type) {
@@ -11066,7 +10883,7 @@ function getActionsList(actions, onClose) {
                 action.callback();
             }
             catch (e) {
-                const log = logger_CuiLoggerFactory.get("Notifications");
+                const log = factory_CuiDevtoolFactory.get("Notifications");
                 log.exception(e, "OnActionClick");
             }
             finally {
@@ -11102,7 +10919,7 @@ var notification_classPrivateFieldGet = (undefined && undefined.__classPrivateFi
     }
     return privateMap.get(receiver);
 };
-var notification_utils, _container, notification_handleId, notification_cache, _holder, notification_actionsHelper, notification_timeout;
+var notification_utils, _container, notification_handleId, _cache, _holder, notification_actionsHelper, notification_timeout;
 
 
 
@@ -11131,7 +10948,7 @@ class notification_CuiNotificationPlugin {
         notification_utils.set(this, void 0);
         _container.set(this, void 0);
         notification_handleId.set(this, void 0);
-        notification_cache.set(this, void 0);
+        _cache.set(this, void 0);
         _holder.set(this, void 0);
         notification_actionsHelper.set(this, void 0);
         notification_timeout.set(this, void 0);
@@ -11139,7 +10956,7 @@ class notification_CuiNotificationPlugin {
         notification_classPrivateFieldSet(this, _container, null);
         notification_classPrivateFieldSet(this, notification_utils, undefined);
         notification_classPrivateFieldSet(this, notification_handleId, null);
-        notification_classPrivateFieldSet(this, notification_cache, {});
+        notification_classPrivateFieldSet(this, _cache, {});
         notification_classPrivateFieldSet(this, _holder, {});
         notification_classPrivateFieldSet(this, notification_actionsHelper, undefined);
         notification_classPrivateFieldSet(this, notification_timeout, (_a = setup.timeout) !== null && _a !== void 0 ? _a : 5000);
@@ -11166,7 +10983,7 @@ class notification_CuiNotificationPlugin {
             return;
         }
         // Create element
-        getNotification(data, notification_classPrivateFieldGet(this, notification_utils), notification_classPrivateFieldGet(this, notification_cache), () => {
+        getNotification(data, notification_classPrivateFieldGet(this, notification_utils), notification_classPrivateFieldGet(this, _cache), () => {
             this.onNotificationClose(data, false, true);
         }).then(notificationEl => {
             if (!notificationEl) {
@@ -11185,8 +11002,8 @@ class notification_CuiNotificationPlugin {
                 timeoutId: timeoutId
             };
             // Call open
-            this.act(notificationEl, notification_classPrivateFieldGet(this, notification_cache).NOTIFICATION_ANIMATION_IN).then(() => {
-                notificationEl.classList.add(notification_classPrivateFieldGet(this, notification_cache).NOTIFICATION_ACTIVE_CLS);
+            this.act(notificationEl, notification_classPrivateFieldGet(this, _cache).NOTIFICATION_ANIMATION_IN).then(() => {
+                notificationEl.classList.add(notification_classPrivateFieldGet(this, _cache).NOTIFICATION_ACTIVE_CLS);
             });
         });
     }
@@ -11221,7 +11038,7 @@ class notification_CuiNotificationPlugin {
         if (!fromTimeout) {
             clearTimeout(holder.timeoutId);
         }
-        this.act(holder.element, notification_classPrivateFieldGet(this, notification_cache).NOTIFICATION_ANIMATION_OUT).then(() => {
+        this.act(holder.element, notification_classPrivateFieldGet(this, _cache).NOTIFICATION_ANIMATION_OUT).then(() => {
             // @ts-ignore utils is defined
             notification_classPrivateFieldGet(this, notification_utils).bus.emit(EVENTS.NOTIFIED, null, Object.assign(Object.assign({}, notification), { dissmissed: dissmissed }));
             holder.element.remove();
@@ -11236,7 +11053,7 @@ class notification_CuiNotificationPlugin {
         }
     }
     createCache(prefix) {
-        notification_classPrivateFieldSet(this, notification_cache, {
+        notification_classPrivateFieldSet(this, _cache, {
             "NOTIFICATION_CLS": replacePrefix(NOTIFICATION_CLS, prefix),
             "NOTIFICATION_HEADER_CLS": replacePrefix(NOTIFICATION_HEADER_CLS, prefix),
             "NOTIFICATION_TITLE_CLS": replacePrefix(NOTIFICATION_TITLE_CLS, prefix),
@@ -11261,7 +11078,7 @@ class notification_CuiNotificationPlugin {
         });
     }
 }
-notification_utils = new WeakMap(), _container = new WeakMap(), notification_handleId = new WeakMap(), notification_cache = new WeakMap(), _holder = new WeakMap(), notification_actionsHelper = new WeakMap(), notification_timeout = new WeakMap();
+notification_utils = new WeakMap(), _container = new WeakMap(), notification_handleId = new WeakMap(), _cache = new WeakMap(), _holder = new WeakMap(), notification_actionsHelper = new WeakMap(), notification_timeout = new WeakMap();
 
 // CONCATENATED MODULE: ./src/plugins/print/print.ts
 var print_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -11898,11 +11715,13 @@ class properties_CuiCSSVariablesPlugin {
         properties_log.set(this, void 0);
         this.description = "CuiCSSVariablesPlugin";
         this.setup = keySetup;
-        properties_classPrivateFieldSet(this, properties_log, logger_CuiLoggerFactory.get("CuiCSSVariablesPlugin"));
+        //@ts-ignore
+        properties_classPrivateFieldSet(this, properties_log, null);
         this.handler = undefined;
     }
     init(utils) {
         this.handler = new handler_CuiPropertiesHandler(utils);
+        properties_classPrivateFieldSet(this, properties_log, factory_CuiDevtoolFactory.get("CuiCSSVariablesPlugin"));
         utils.bus.on("csschange", this.onCssChange.bind(this));
     }
     destroy() {
@@ -12165,14 +11984,16 @@ class observer_CuiResizeObserver {
         resize_observer_classPrivateFieldSet(this, observer_inProgress, true);
         const diff = window.innerWidth - resize_observer_classPrivateFieldGet(this, _prevYValue);
         if (Math.abs(diff) >= resize_observer_classPrivateFieldGet(this, observer_threshold)) {
-            const currentSize = calcWindowSize2(window.innerWidth);
+            const currentSize = calcWindowSize(window.innerWidth);
             if (currentSize !== resize_observer_classPrivateFieldGet(this, _previousSize)) {
                 const resizeData = {
                     current: currentSize,
                     previous: resize_observer_classPrivateFieldGet(this, _previousSize),
                     width: window.innerWidth,
                     height: window.innerHeight,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    name: EVENTS.RESIZE,
+                    source: "CuiResizeObserver"
                 };
                 resize_observer_classPrivateFieldGet(this, resize_observer_bus).emit(EVENTS.RESIZE, "", resizeData);
                 this.pushUpdateToItems(resizeData);
@@ -12477,7 +12298,7 @@ init_isInitialized = new WeakMap();
 
 // CONCATENATED MODULE: ./src/index.ts
 
-const CUI_LIGHT_VERSION = "0.3.8";
+const CUI_LIGHT_VERSION = "0.3.9";
 
 window.cuiInit = new init_CuiInit();
 

@@ -21,8 +21,8 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _log, _executor, _executor_1;
+import { CuiDevtoolFactory } from "../development/factory";
 import { is } from "../utils/functions";
-import { CuiLoggerFactory } from "../factories/logger";
 class EmitHandlerBase {
     constructor() {
         this.queue = [];
@@ -38,7 +38,7 @@ export class SimpleEventEmitHandler extends EmitHandlerBase {
         _log.set(this, void 0);
         _executor.set(this, void 0);
         __classPrivateFieldSet(this, _executor, executor);
-        __classPrivateFieldSet(this, _log, CuiLoggerFactory.get("SimpleEventEmitHandler"));
+        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get("SimpleEventEmitHandler"));
     }
     handle(events, cuid, args) {
         return __awaiter(this, void 0, void 0, function* () {

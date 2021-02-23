@@ -1,6 +1,6 @@
 import { ICuiEventListener } from "../models/interfaces";
 export declare type CuiMoveEventState = "down" | "up" | "move";
-export interface ICuiMoveEvent {
+export interface ICuiMoveData {
     x: number;
     y: number;
     moveX: number;
@@ -9,10 +9,10 @@ export interface ICuiMoveEvent {
     target: EventTarget | null;
     event: MouseEvent | TouchEvent;
 }
-export declare class CuiMoveEventListener implements ICuiEventListener<ICuiMoveEvent> {
+export declare class CuiMoveEventListener implements ICuiEventListener<ICuiMoveData> {
     #private;
     constructor(element?: HTMLElement);
-    setCallback(callback: (t: ICuiMoveEvent) => void): void;
+    setCallback(callback: (t: ICuiMoveData) => void): void;
     setTarget(element: Element): void;
     isInProgress(): boolean;
     preventDefault(flag: boolean): void;

@@ -1,11 +1,11 @@
-import { CuiMoveEventListener, ICuiMoveEvent } from "../../listeners/move";
+import { CuiMoveEventListener, ICuiMoveData } from "../../listeners/move";
 
 export class CuiDragHandler {
     #root: Element;
     #moveHandler: CuiMoveEventListener;
-    #onDragStart: ((data: ICuiMoveEvent) => boolean) | undefined;
-    #onDragOver: ((data: ICuiMoveEvent) => void) | undefined;
-    #onDragEnd: ((data: ICuiMoveEvent) => void) | undefined;
+    #onDragStart: ((data: ICuiMoveData) => boolean) | undefined;
+    #onDragOver: ((data: ICuiMoveData) => void) | undefined;
+    #onDragEnd: ((data: ICuiMoveData) => void) | undefined;
     #timeout: number;
     #isTracking: boolean;
     #timeoutId: any;
@@ -28,15 +28,15 @@ export class CuiDragHandler {
         this.#timeout = timeout;
     }
 
-    onDragStart(callback: (data: ICuiMoveEvent) => boolean) {
+    onDragStart(callback: (data: ICuiMoveData) => boolean) {
         this.#onDragStart = callback;
     }
 
-    onDragOver(callback: (data: ICuiMoveEvent) => void) {
+    onDragOver(callback: (data: ICuiMoveData) => void) {
         this.#onDragOver = callback;
     }
 
-    onDragEnd(callback: (data: ICuiMoveEvent) => void) {
+    onDragEnd(callback: (data: ICuiMoveData) => void) {
         this.#onDragEnd = callback;
     }
 
@@ -48,7 +48,7 @@ export class CuiDragHandler {
         this.#moveHandler.detach();
     }
 
-    private onMove(data: ICuiMoveEvent) {
+    private onMove(data: ICuiMoveData) {
         switch (data.type) {
             case "down":
                 if (this.#isTracking) {

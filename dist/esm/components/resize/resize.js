@@ -14,7 +14,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _prefix, _eventId, _intersectionObserver, _currentSize, _currentValue, _lastValue, _currentAction, _isIntersecting, _timeoutToken;
 import { CuiHandler } from "../../core/handlers/base";
 import { EVENTS } from "../../core/utils/statics";
-import { calcWindowSize2, getIntOrDefault, getStringOrDefault, is } from "../../core/utils/functions";
+import { calcWindowSize, getIntOrDefault, getStringOrDefault, is } from "../../core/utils/functions";
 import { CuiIntersectionObserver } from "../../core/observers/intersection";
 import { CuiActionsFatory } from "../../core/utils/actions";
 export class CuiResizeArgs {
@@ -74,7 +74,7 @@ export class CuiResizeHandler extends CuiHandler {
         __classPrivateFieldSet(this, _eventId, this.utils.bus.on(EVENTS.RESIZE, this.resize.bind(this)));
         __classPrivateFieldGet(this, _intersectionObserver).connect();
         __classPrivateFieldGet(this, _intersectionObserver).observe(this.element);
-        __classPrivateFieldSet(this, _currentSize, calcWindowSize2(window.innerWidth));
+        __classPrivateFieldSet(this, _currentSize, calcWindowSize(window.innerWidth));
         __classPrivateFieldSet(this, _isIntersecting, this.isInViewport(this.element));
         this.setNewValue();
         this.updateElement();

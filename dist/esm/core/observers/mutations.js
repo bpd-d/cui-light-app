@@ -21,9 +21,9 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _observer, _options, _element, _components, _attributes, _utils, _queryString, _isObserving, _observer_1, _element_1, _disabled, _options_1;
-import { CuiLoggerFactory } from "../factories/logger";
 import { is, are, joinAttributesForQuery, parseAttribute } from "../utils/functions";
 import { createCuiElement, destroyCuiElement, getMatchingComponents, updateComponent } from "../utils/api";
+import { CuiDevtoolFactory } from "../development/factory";
 export class CuiMutationObserver {
     constructor(element, utils) {
         _observer.set(this, void 0);
@@ -37,7 +37,7 @@ export class CuiMutationObserver {
         this.plugins = undefined;
         __classPrivateFieldSet(this, _options, undefined);
         __classPrivateFieldSet(this, _element, element);
-        this._log = CuiLoggerFactory.get('CuiMutationObserver');
+        this._log = CuiDevtoolFactory.get('CuiMutationObserver');
         __classPrivateFieldSet(this, _components, []);
         __classPrivateFieldSet(this, _attributes, []);
         __classPrivateFieldSet(this, _utils, utils);

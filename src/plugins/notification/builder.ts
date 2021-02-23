@@ -3,7 +3,7 @@ import { ElementBuilder } from "../../core/builders/element";
 import { CuiUtils } from "../../core/models/utils";
 import { are, is } from "../../core/utils/functions";
 import { CuiNotificationType, ICuiNotification, ICuiNotificationAction } from "./interfaces";
-import { CuiLoggerFactory } from "../../core/factories/logger";
+import { CuiDevtoolFactory } from "../../core/development/factory";
 
 
 
@@ -55,7 +55,7 @@ function getActionsList(actions: ICuiNotificationAction[], onClose: () => void):
             try {
                 action.callback();
             } catch (e) {
-                const log = CuiLoggerFactory.get("Notifications");
+                const log = CuiDevtoolFactory.get("Notifications");
                 log.exception(e, "OnActionClick");
             } finally {
                 onClose();

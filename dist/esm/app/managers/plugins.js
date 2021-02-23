@@ -21,7 +21,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _plugins, _mutated, _log;
-import { CuiLoggerFactory } from "../../core/factories/logger";
+import { CuiDevtoolFactory } from "../../core/development/factory";
 import { is } from "../../core/utils/functions";
 export class CuiPluginManager {
     constructor(plugins) {
@@ -29,7 +29,7 @@ export class CuiPluginManager {
         _mutated.set(this, void 0);
         _log.set(this, void 0);
         __classPrivateFieldSet(this, _plugins, plugins !== null && plugins !== void 0 ? plugins : []);
-        __classPrivateFieldSet(this, _log, CuiLoggerFactory.get("CuiPluginManager"));
+        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get("CuiPluginManager"));
         __classPrivateFieldSet(this, _mutated, []);
     }
     init(utils) {

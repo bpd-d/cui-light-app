@@ -24,13 +24,13 @@ var _log, _mutationObserver, _utils, _plugins, _components, _rootElement, _mutat
 import { is, joinAttributesForQuery, are } from "../core/utils/functions";
 import { STATICS, EVENTS, CSS_VARIABLES } from "../core/utils/statics";
 import { CuiMutationObserver } from "../core/observers/mutations";
-import { CuiLoggerFactory } from "../core/factories/logger";
 import { CuiUtils } from "../core/models/utils";
 import { CuiInstanceInitError } from "../core/models/errors";
 import { ElementManager } from "./managers/element";
 import { CollectionManager } from "./managers/collection";
 import { CuiPluginManager } from "./managers/plugins";
 import { addCuiArgument, createCuiElement, getMatchingComponents } from "../core/utils/api";
+import { CuiDevtoolFactory } from "../core/development/factory";
 export class CuiInstance {
     constructor(setup, plugins, components) {
         _log.set(this, void 0);
@@ -42,10 +42,12 @@ export class CuiInstance {
         _mutatedAttributes.set(this, void 0);
         STATICS.prefix = setup.prefix;
         STATICS.logLevel = setup.logLevel;
-        __classPrivateFieldSet(this, _log, CuiLoggerFactory.get('CuiInstance'));
+        if (setup.development)
+            STATICS.devTool = setup.development;
         __classPrivateFieldSet(this, _plugins, new CuiPluginManager(plugins));
         __classPrivateFieldSet(this, _components, components !== null && components !== void 0 ? components : []);
         __classPrivateFieldSet(this, _utils, new CuiUtils(setup, plugins.map(plugin => { return plugin.name; })));
+        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get("CuiInstance"));
         __classPrivateFieldSet(this, _rootElement, setup.root);
         __classPrivateFieldSet(this, _mutationObserver, undefined);
         __classPrivateFieldSet(this, _mutatedAttributes, []);
@@ -133,8 +135,9 @@ export class CuiInstance {
     on(event, callback, element) {
         if (!are(event, callback)) {
             __classPrivateFieldGet(this, _log).error("Incorrect arguments", "on");
+            return null;
         }
-        __classPrivateFieldGet(this, _utils).bus.on(event, callback, element);
+        return __classPrivateFieldGet(this, _utils).bus.on(event, callback, element);
     }
     detach(event, id) {
         if (!are(event, id)) {

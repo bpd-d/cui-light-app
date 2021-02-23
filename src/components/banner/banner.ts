@@ -1,7 +1,7 @@
 import { AnimationDefinition, SWIPE_ANIMATIONS_DEFINITIONS } from "../../core/animation/definitions";
 import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
 import { CuiSwipeAnimationEngine } from "../../core/animation/engine";
-import { ICuiMoveEvent } from "../../core/listeners/move";
+import { ICuiMoveData } from "../../core/listeners/move";
 import { AriaAttributes } from "../../core/utils/aria";
 import { boolStringOrDefault, getIntOrDefault, getStringOrDefault, replacePrefix } from "../../core/utils/functions";
 import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
@@ -115,7 +115,7 @@ export class CuiBannerHandler extends CuiInteractableHandler<CuiBannerArgs> {
         return true;
     }
 
-    onMove(data: ICuiMoveEvent) {
+    onMove(data: ICuiMoveData) {
         if (this.isLocked) {
             return;
         }

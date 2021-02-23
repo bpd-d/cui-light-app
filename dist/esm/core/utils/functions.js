@@ -1,5 +1,5 @@
 import { ArgumentError } from "../models/errors";
-import { COMPONENTS_COUNTER } from "./statics";
+import { COMPONENTS_COUNTER, SCREEN_SIZE_LARGE, SCREEN_SIZE_MEDIUM, SCREEN_SIZE_SMALL, SCREEN_SIZE_XLARGE } from "./statics";
 /**
  * Checks if value is defined an is not null
  * Additionally with type check it can check value if it is not empty string or collection or object
@@ -154,29 +154,17 @@ export function are(...attributes) {
     return true;
 }
 export function calcWindowSize(width) {
-    if (width <= 640) {
-        return 'small';
-    }
-    else if (width > 640 && width <= 960) {
-        return "medium";
-    }
-    else if (width > 960 && width <= 1200) {
-        return "large";
-    }
-    return 'xlarge';
-}
-export function calcWindowSize2(width) {
     let size = "none";
-    if (width >= 640) {
+    if (width >= SCREEN_SIZE_SMALL) {
         size = 'small';
     }
-    if (width >= 960) {
+    if (width >= SCREEN_SIZE_MEDIUM) {
         size = "medium";
     }
-    if (width >= 1200) {
+    if (width >= SCREEN_SIZE_LARGE) {
         size = "large";
     }
-    if (width >= 1600) {
+    if (width >= SCREEN_SIZE_XLARGE) {
         size = 'xlarge';
     }
     return size;
@@ -365,7 +353,7 @@ export function* counter() {
     }
 }
 export function all(array, condition) {
-    return array.find((t) => !condition(t)) === null;
+    return array && array.length > 0 && array.find((t) => !condition(t)) === undefined;
 }
 export function getHandlerExtendingOrNull(target, fName) {
     if (!is(target.$handlers)) {

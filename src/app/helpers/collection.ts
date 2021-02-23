@@ -1,17 +1,18 @@
 import { CLASSES } from "../../core/utils/statics";
-import { ICuiLogger, IUIInteractionProvider } from "../../core/models/interfaces";
-import { CuiLoggerFactory } from "../../core/factories/logger";
+import { IUIInteractionProvider } from "../../core/models/interfaces";
 import { is } from "../../core/utils/functions";
+import { ICuiDevelopmentTool } from "../../core/development/interfaces";
+import { CuiDevtoolFactory } from "../../core/development/factory";
 
 export class CollectionManagerHelper {
     #elements: Element[];
-    #log: ICuiLogger;
+    #log: ICuiDevelopmentTool;
     #isLocked: boolean;
     #toggleClass: string;
     #interactions: IUIInteractionProvider;
     constructor(interactions: IUIInteractionProvider) {
         this.#interactions = interactions;
-        this.#log = CuiLoggerFactory.get('CollectionManager');
+        this.#log = CuiDevtoolFactory.get('CollectionManager');
         this.#elements = [];
         this.#isLocked = false;
         this.#toggleClass = "";

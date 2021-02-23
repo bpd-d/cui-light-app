@@ -1,5 +1,6 @@
 import { CuiLogLevel } from "./types";
 import { CuiColorPair } from "../models/colors";
+import { ICuiDevelopmentToolFactory } from "../development/interfaces";
 export declare const CUID_ATTRIBUTE = "cuid";
 export declare const CLASSES: {
     dark: string;
@@ -56,6 +57,7 @@ export declare const CSS_VARIABLES: any;
 export declare class STATICS {
     static logLevel: CuiLogLevel;
     static prefix: string;
+    static devTool: ICuiDevelopmentToolFactory;
 }
 export declare const EVENTS: {
     INSTANCE_INITIALIZED: string;
@@ -100,3 +102,7 @@ export declare const EVENTS: {
 export declare const OBSERVABLE_SCROLL = "SCROLL";
 export declare const OBSERVABLE_INTERSECTION = "INTERSECTION";
 export declare const COMPONENTS_COUNTER: Generator<number, void, unknown>;
+export declare const SCREEN_SIZE_SMALL = 640;
+export declare const SCREEN_SIZE_MEDIUM = 960;
+export declare const SCREEN_SIZE_LARGE = 1200;
+export declare const SCREEN_SIZE_XLARGE = 1600;

@@ -170,3 +170,7 @@ export const EVENTS = {
 export const OBSERVABLE_SCROLL = "SCROLL";
 export const OBSERVABLE_INTERSECTION = "INTERSECTION";
 export const COMPONENTS_COUNTER = counter();
+export const SCREEN_SIZE_SMALL = 640;
+export const SCREEN_SIZE_MEDIUM = 960;
+export const SCREEN_SIZE_LARGE = 1200;
+export const SCREEN_SIZE_XLARGE = 1600;

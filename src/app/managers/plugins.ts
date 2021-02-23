@@ -1,6 +1,7 @@
-import { ICuiPlugin, ICuiLogger, ICuiMutiationPlugin, ICuiPluginManager } from "../../core/models/interfaces";
+import { CuiDevtoolFactory } from "../../core/development/factory";
+import { ICuiDevelopmentTool } from "../../core/development/interfaces";
+import { ICuiPlugin, ICuiMutiationPlugin, ICuiPluginManager } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiLoggerFactory } from "../../core/factories/logger";
 import { is } from "../../core/utils/functions";
 
 
@@ -8,10 +9,10 @@ import { is } from "../../core/utils/functions";
 export class CuiPluginManager implements ICuiPluginManager {
     #plugins: ICuiPlugin[];
     #mutated: ICuiMutiationPlugin[];
-    #log: ICuiLogger;
+    #log: ICuiDevelopmentTool;
     constructor(plugins: ICuiPlugin[]) {
         this.#plugins = plugins ?? [];
-        this.#log = CuiLoggerFactory.get("CuiPluginManager")
+        this.#log = CuiDevtoolFactory.get("CuiPluginManager");
         this.#mutated = [];
     }
 

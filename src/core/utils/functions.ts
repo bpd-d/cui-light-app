@@ -1,7 +1,7 @@
 import { CuiLightMode, CuiWindowSize } from "./types";
 import { ArgumentError } from "../models/errors";
 import { CuiElement } from "../models/interfaces";
-import { COMPONENTS_COUNTER } from "./statics";
+import { COMPONENTS_COUNTER, SCREEN_SIZE_LARGE, SCREEN_SIZE_MEDIUM, SCREEN_SIZE_SMALL, SCREEN_SIZE_XLARGE } from "./statics";
 
 /**
  * Checks if value is defined an is not null
@@ -172,29 +172,18 @@ export function are(...attributes: any[]): boolean {
 }
 
 export function calcWindowSize(width: number): CuiWindowSize {
-    if (width <= 640) {
-        return 'small';
-    } else if (width > 640 && width <= 960) {
-        return "medium"
-    } else if (width > 960 && width <= 1200) {
-        return "large"
-    }
-    return 'xlarge';
-}
-
-export function calcWindowSize2(width: number): CuiWindowSize {
     let size: CuiWindowSize = "none";
-    if (width >= 640) {
+    if (width >= SCREEN_SIZE_SMALL) {
         size = 'small';
     }
-    if (width >= 960) {
+    if (width >= SCREEN_SIZE_MEDIUM) {
         size = "medium";
     }
-    if (width >= 1200) {
+    if (width >= SCREEN_SIZE_LARGE) {
         size = "large"
     }
 
-    if (width >= 1600) {
+    if (width >= SCREEN_SIZE_XLARGE) {
         size = 'xlarge';
     }
     return size;
@@ -406,7 +395,7 @@ export function* counter() {
 }
 
 export function all<T>(array: T[], condition: (t: T) => boolean) {
-    return array.find((t: T) => !condition(t)) === null;
+    return array && array.length > 0 && array.find((t: T) => !condition(t)) === undefined;
 }
 
 export function getHandlerExtendingOrNull<T>(target: CuiElement, fName: string): T | null {

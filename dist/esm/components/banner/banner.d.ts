@@ -1,5 +1,5 @@
 import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
-import { ICuiMoveEvent } from "../../core/listeners/move";
+import { ICuiMoveData } from "../../core/listeners/move";
 import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 export declare class CuiBannerArgs implements ICuiParsable, CuiInteractableArgs {
@@ -30,6 +30,6 @@ export declare class CuiBannerHandler extends CuiInteractableHandler<CuiBannerAr
     onAfterOpen(): void;
     onAfterClose(): void;
     onBeforeClose(): boolean;
-    onMove(data: ICuiMoveEvent): void;
+    onMove(data: ICuiMoveData): void;
     onSwipeFinish(element: Element | undefined, reverted: boolean, error: boolean): void;
 }

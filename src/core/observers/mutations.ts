@@ -1,8 +1,9 @@
-import { ICuiLogger, ICuiComponent, ICuiPluginManager, CuiElement, CuiHTMLElement } from "../models/interfaces";
-import { CuiLoggerFactory } from "../factories/logger";
+import { ICuiComponent, ICuiPluginManager, CuiHTMLElement } from "../models/interfaces";
 import { is, are, joinAttributesForQuery, parseAttribute } from "../utils/functions";
 import { CuiUtils } from "../models/utils";
 import { createCuiElement, destroyCuiElement, getMatchingComponents, updateComponent } from "../utils/api";
+import { ICuiDevelopmentTool } from "../development/interfaces";
+import { CuiDevtoolFactory } from "../development/factory";
 
 export interface ICuiMutionObserver {
     // setOptions(options: MutationObserverInit): ICuiMutionObserver;
@@ -23,7 +24,7 @@ export interface ICuiComponentMutationObserver {
 
 
 export class CuiMutationObserver implements ICuiMutionObserver {
-    _log: ICuiLogger;
+    _log: ICuiDevelopmentTool;
     #observer: MutationObserver | undefined;
     #options: MutationObserverInit | undefined;
     #element: HTMLElement;
@@ -37,7 +38,7 @@ export class CuiMutationObserver implements ICuiMutionObserver {
         this.plugins = undefined;
         this.#options = undefined;
         this.#element = element
-        this._log = CuiLoggerFactory.get('CuiMutationObserver')
+        this._log = CuiDevtoolFactory.get('CuiMutationObserver')
         this.#components = [];
         this.#attributes = [];
         this.#utils = utils;

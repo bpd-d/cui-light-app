@@ -1,7 +1,7 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
-import { ICuiMoveEvent } from "../../core/listeners/move";
+import { ICuiMoveData } from "../../core/listeners/move";
 export declare class CuiFloatArgs implements CuiInteractableArgs, ICuiParsable {
     #private;
     escClose: boolean;
@@ -29,11 +29,11 @@ export declare class CuiFloatHandler extends CuiInteractableHandler<CuiFloatArgs
     onAfterOpen(): void;
     onAfterClose(): void;
     onBeforeClose(): boolean;
-    onMove(ev: ICuiMoveEvent): void;
-    onMouseDown(ev: ICuiMoveEvent): void;
-    onMouseMove(ev: ICuiMoveEvent): void;
-    onMouseUp(ev: ICuiMoveEvent): void;
-    peform(ev: ICuiMoveEvent, callback: (element: HTMLElement, x: number, y: number, diffX: number, diffY: number) => void): void;
+    onMove(ev: ICuiMoveData): void;
+    onMouseDown(ev: ICuiMoveData): void;
+    onMouseMove(ev: ICuiMoveData): void;
+    onMouseUp(ev: ICuiMoveData): void;
+    peform(ev: ICuiMoveData, callback: (element: HTMLElement, x: number, y: number, diffX: number, diffY: number) => void): void;
     resize(element: HTMLElement, x: number, y: number, diffX: number, diffY: number): void;
     move(element: HTMLElement, x: number, y: number, diffX: number, diffY: number): void;
     fitsWindow(top: number, left: number, width: number, height: number): boolean;

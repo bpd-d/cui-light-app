@@ -59,13 +59,13 @@ export class CuiMoveObserver {
                 break;
             case "move":
                 if (__classPrivateFieldGet(this, _firstEvent) && !__classPrivateFieldGet(this, _wasFirstEventSend)) {
-                    __classPrivateFieldGet(this, _bus).emit(EVENTS.GLOBAL_MOVE, null, __classPrivateFieldGet(this, _firstEvent));
+                    this.pushMoveEvent(__classPrivateFieldGet(this, _firstEvent));
                     __classPrivateFieldSet(this, _wasFirstEventSend, true);
                 }
-                __classPrivateFieldGet(this, _bus).emit(EVENTS.GLOBAL_MOVE, null, data);
+                this.pushMoveEvent(data);
                 break;
             case "up":
-                __classPrivateFieldGet(this, _bus).emit(EVENTS.GLOBAL_MOVE, null, data);
+                this.pushMoveEvent(data);
                 if (__classPrivateFieldGet(this, _firstEvent)) {
                     if (__classPrivateFieldGet(this, _gesturesEnabled)) {
                         const { diffX, diffY } = this.getGestureDiff(__classPrivateFieldGet(this, _firstEvent), data);
@@ -76,6 +76,14 @@ export class CuiMoveObserver {
                 }
                 break;
         }
+    }
+    pushMoveEvent(data) {
+        __classPrivateFieldGet(this, _bus).emit(EVENTS.GLOBAL_MOVE, null, {
+            data,
+            source: "CuiMoveObserver",
+            timestamp: Date.now(),
+            name: EVENTS.GLOBAL_MOVE
+        });
     }
     onMoveLock(flag) {
         __classPrivateFieldSet(this, _isLocked, flag);
@@ -107,7 +115,9 @@ export class CuiMoveObserver {
         __classPrivateFieldGet(this, _bus).emit(eventName, null, {
             timespstamp: Date.now(),
             changeX: diffX,
-            changeY: diffY
+            changeY: diffY,
+            name: eventName,
+            source: "CuiMoveObserver"
         });
     }
     getGestureEventName(type) {

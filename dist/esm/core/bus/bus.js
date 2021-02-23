@@ -23,9 +23,9 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _events, _log, _eventHandler, _name, _events_1, _log_1, _buses, _last, _isOn, _statistics;
 import { is, are, generateRandomString, enumerateObject } from "../utils/functions";
 import { ArgumentError } from "../models/errors";
-import { CuiLoggerFactory } from "../factories/logger";
 import { CuiEventEmitHandlerFactory, TaskedEventEmitHandler } from "./handlers";
 import { CuiCallbackExecutor } from "./executors";
+import { CuiDevtoolFactory } from "../development/factory";
 export class CuiEventBus {
     constructor(emitHandler, name) {
         _events.set(this, void 0);
@@ -35,7 +35,7 @@ export class CuiEventBus {
         __classPrivateFieldSet(this, _events, {});
         __classPrivateFieldSet(this, _eventHandler, emitHandler);
         __classPrivateFieldSet(this, _name, name !== null && name !== void 0 ? name : "CuiEventBus");
-        __classPrivateFieldSet(this, _log, CuiLoggerFactory.get(__classPrivateFieldGet(this, _name)));
+        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get(__classPrivateFieldGet(this, _name)));
     }
     /**
      * Attaches event to event bus
@@ -160,7 +160,7 @@ export class CuiEventExtBus {
         _log_1.set(this, void 0);
         _buses.set(this, void 0);
         _last.set(this, void 0);
-        __classPrivateFieldSet(this, _log_1, CuiLoggerFactory.get("CuiEventBus"));
+        __classPrivateFieldSet(this, _log_1, CuiDevtoolFactory.get("CuiEventBus"));
         __classPrivateFieldSet(this, _buses, []);
         __classPrivateFieldSet(this, _events_1, {});
         __classPrivateFieldSet(this, _last, 0);

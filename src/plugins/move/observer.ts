@@ -1,4 +1,4 @@
-import { CuiMoveEventListener, ICuiMoveEvent } from "../../core/listeners/move";
+import { CuiMoveEventListener, ICuiMoveData } from "../../core/listeners/move";
 import { ICuiEventBus } from "../../core/models/interfaces";
 import { EVENTS } from "../../core/utils/statics";
 
@@ -10,7 +10,7 @@ export class CuiMoveObserver {
     #moveListener: CuiMoveEventListener;
     #isLocked: boolean;
     #eventId: string | null;
-    #firstEvent: ICuiMoveEvent | undefined;
+    #firstEvent: ICuiMoveData | undefined;
     #wasFirstEventSend: boolean;
     #gesturesEnabled: boolean;
     constructor(bus: ICuiEventBus, gestures: boolean) {
@@ -43,7 +43,7 @@ export class CuiMoveObserver {
         return this.#moveListener.isAttached();
     }
 
-    private onMove(data: ICuiMoveEvent) {
+    private onMove(data: ICuiMoveData) {
         if (this.#isLocked) {
             return;
         }
@@ -54,13 +54,13 @@ export class CuiMoveObserver {
                 break;
             case "move":
                 if (this.#firstEvent && !this.#wasFirstEventSend) {
-                    this.#bus.emit(EVENTS.GLOBAL_MOVE, null, this.#firstEvent);
+                    this.pushMoveEvent(this.#firstEvent)
                     this.#wasFirstEventSend = true;
                 }
-                this.#bus.emit(EVENTS.GLOBAL_MOVE, null, data);
+                this.pushMoveEvent(data)
                 break;
             case "up":
-                this.#bus.emit(EVENTS.GLOBAL_MOVE, null, data);
+                this.pushMoveEvent(data)
                 if (this.#firstEvent) {
                     if (this.#gesturesEnabled) {
                         const { diffX, diffY } = this.getGestureDiff(this.#firstEvent, data);
@@ -74,11 +74,20 @@ export class CuiMoveObserver {
 
     }
 
+    private pushMoveEvent(data: ICuiMoveData) {
+        this.#bus.emit(EVENTS.GLOBAL_MOVE, null, {
+            data,
+            source: "CuiMoveObserver",
+            timestamp: Date.now(),
+            name: EVENTS.GLOBAL_MOVE
+        });
+    }
+
     private onMoveLock(flag: boolean) {
         this.#isLocked = flag;
     }
 
-    private getGestureDiff(firstEvent: ICuiMoveEvent, lastEvent: ICuiMoveEvent) {
+    private getGestureDiff(firstEvent: ICuiMoveData, lastEvent: ICuiMoveData) {
         return {
             diffX: lastEvent.x - firstEvent.x,
             diffY: lastEvent.y - firstEvent.y
@@ -107,7 +116,9 @@ export class CuiMoveObserver {
         this.#bus.emit(eventName, null, {
             timespstamp: Date.now(),
             changeX: diffX,
-            changeY: diffY
+            changeY: diffY,
+            name: eventName,
+            source: "CuiMoveObserver"
         })
 
     }

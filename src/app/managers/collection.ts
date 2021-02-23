@@ -1,14 +1,15 @@
-import { IUIInteractionProvider, ICuiLogger, CuiCachable } from "../../core/models/interfaces";
-import { CuiLoggerFactory } from "../../core/factories/logger";
+import { CuiDevtoolFactory } from "../../core/development/factory";
+import { ICuiDevelopmentTool } from "../../core/development/interfaces";
+import { IUIInteractionProvider, CuiCachable } from "../../core/models/interfaces";
 import { CollectionManagerHelper } from "../helpers/collection";
 
 export class CollectionManager implements CuiCachable {
-    #log: ICuiLogger;
+    #log: ICuiDevelopmentTool;
     #cDt: number;
     #helper: CollectionManagerHelper;
 
     constructor(elements: Element[], interactions: IUIInteractionProvider) {
-        this.#log = CuiLoggerFactory.get('CollectionManager');
+        this.#log = CuiDevtoolFactory.get('CollectionManager');
         this.#helper = new CollectionManagerHelper(interactions);
         this.#helper.setElements(elements);
         this.#cDt = Date.now();

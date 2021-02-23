@@ -1,22 +1,23 @@
 import { is, are } from "../../core/utils/functions";
-import { ICuiLogger, CuiCachable, CuiElement } from "../../core/models/interfaces";
-import { CuiLoggerFactory } from "../../core/factories/logger";
+import { CuiCachable, CuiElement } from "../../core/models/interfaces";
 import { CLASSES } from "../../core/utils/statics";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiActionsHelper } from "../../core/helpers/helpers";
 import { CuiClassAction } from "../../core/utils/actions";
+import { ICuiDevelopmentTool } from "../../core/development/interfaces";
+import { CuiDevtoolFactory } from "../../core/development/factory";
 
 export class ElementManager implements CuiCachable {
     #elements: Element[];
     #isLocked: boolean;
-    #logger: ICuiLogger;
+    #logger: ICuiDevelopmentTool;
     #cDt: number;
     #utils: CuiUtils;
     #actionsHelper: CuiActionsHelper;
     constructor(elements: Element[], utils: CuiUtils) {
         this.#elements = elements;
         this.#isLocked = false;
-        this.#logger = CuiLoggerFactory.get("ElementManager");
+        this.#logger = CuiDevtoolFactory.get("ElementManager");
         this.#utils = utils;
         this.#cDt = Date.now();
         this.#actionsHelper = new CuiActionsHelper(utils.interactions);

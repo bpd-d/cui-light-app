@@ -1,9 +1,10 @@
-import { ICuiLogger, ICuiPlugin } from "../../core/models/interfaces";
+import { ICuiPlugin } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiColor } from "../../core/models/colors";
-import { CuiLoggerFactory } from "../../core/factories/logger";
 import { is } from "../../core/utils/functions";
 import { CuiPropertiesHandler } from "./handler";
+import { ICuiDevelopmentTool } from "../../core/development/interfaces";
+import { CuiDevtoolFactory } from "../../core/development/factory";
 export interface CssChangeEvent {
     method: string,
     arg: any
@@ -17,17 +18,19 @@ export class CuiCSSVariablesPlugin implements ICuiPlugin {
     name: string = 'css-variables-plugin';
     setup: CuiCSSVariablesPluginSetup;
     handler: CuiPropertiesHandler | undefined;
-    #log: ICuiLogger;
+    #log: ICuiDevelopmentTool;
     constructor(keySetup: CuiCSSVariablesPluginSetup) {
         this.description = "CuiCSSVariablesPlugin";
         this.setup = keySetup;
-        this.#log = CuiLoggerFactory.get("CuiCSSVariablesPlugin");
+        //@ts-ignore
+        this.#log = null;
         this.handler = undefined;
 
     }
 
     init(utils: CuiUtils): void {
         this.handler = new CuiPropertiesHandler(utils);
+        this.#log = CuiDevtoolFactory.get("CuiCSSVariablesPlugin");
         utils.bus.on("csschange", this.onCssChange.bind(this))
     }
 

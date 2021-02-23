@@ -5,7 +5,7 @@ import { CuiDragHandler } from "../../core/handlers/drag/drag";
 import { ICuiElementDetector } from "../../core/handlers/drag/interfaces";
 import { CuiSwipeAnimationEngine, PropsTypes } from "../../core/animation/engine";
 import { AnimationProperty } from "../../core/animation/interfaces";
-import { ICuiMoveEvent } from "../../core/listeners/move";
+import { ICuiMoveData } from "../../core/listeners/move";
 import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { getIntOrDefault, replacePrefix, is, are } from "../../core/utils/functions";
@@ -133,7 +133,7 @@ export class CuiSortableHandler extends CuiHandler<CuiSortableArgs> {
         }
     }
 
-    private onDragStart(data: ICuiMoveEvent): boolean {
+    private onDragStart(data: ICuiMoveData): boolean {
         this.#currentIdx = this.getPressedElementIdx(data.target as Node);
         this.#currentTarget = this.#currentIdx > -1 ? this.#targets[this.#currentIdx] as HTMLElement : null;
         if (!is(this.#currentTarget)) {
@@ -149,12 +149,12 @@ export class CuiSortableHandler extends CuiHandler<CuiSortableArgs> {
         return true;
     }
 
-    private onDragOver(data: ICuiMoveEvent): void {
+    private onDragOver(data: ICuiMoveData): void {
         this.move(data);
         data.event.preventDefault();
     }
 
-    private onDragEnd(data: ICuiMoveEvent): void {
+    private onDragEnd(data: ICuiMoveData): void {
         if (!is(this.#preview)) {
             return;
         }
@@ -170,7 +170,7 @@ export class CuiSortableHandler extends CuiHandler<CuiSortableArgs> {
         });
     }
 
-    private startMovementPrep(data: ICuiMoveEvent) {
+    private startMovementPrep(data: ICuiMoveData) {
         this.mutate(() => {
             this.createPreview();
             if (is(this.#currentTarget))
@@ -197,7 +197,7 @@ export class CuiSortableHandler extends CuiHandler<CuiSortableArgs> {
         })
     }
 
-    private move(data: ICuiMoveEvent) {
+    private move(data: ICuiMoveData) {
         this.mutate(() => {
             this.setPreviewPosition(data);
             this.setCurrentPosition(data);
@@ -226,7 +226,7 @@ export class CuiSortableHandler extends CuiHandler<CuiSortableArgs> {
         }
     }
 
-    private setPreviewPosition(data: ICuiMoveEvent) {
+    private setPreviewPosition(data: ICuiMoveData) {
         if (!is(this.#preview)) {
             return;
         }
@@ -236,7 +236,7 @@ export class CuiSortableHandler extends CuiHandler<CuiSortableArgs> {
         this.#preview.style.left = `${data.x}px`;
     }
 
-    private setCurrentPosition(data: ICuiMoveEvent) {
+    private setCurrentPosition(data: ICuiMoveData) {
         if (!this.#currentTarget) {
             return;
         }

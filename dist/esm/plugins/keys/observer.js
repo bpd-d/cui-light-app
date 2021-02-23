@@ -31,6 +31,8 @@ export class CuiKeysObserver {
     onKeyDown(ev) {
         __classPrivateFieldGet(this, _bus).emit(EVENTS.KEYDOWN, null, {
             timestamp: Date.now(),
+            name: EVENTS.KEYDOWN,
+            source: "CuiKeysObserver",
             event: ev
         });
     }

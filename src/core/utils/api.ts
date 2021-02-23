@@ -1,7 +1,7 @@
 import { RegisterElementError } from "../models/errors";
-import { ICuiComponent, CuiElement, CuiHTMLElement } from "../models/interfaces";
+import { ICuiComponent, CuiHTMLElement } from "../models/interfaces";
 import { CuiUtils } from "../models/utils";
-import { is, generateCUID, are, enumerateObject, parseAttribute } from "./functions";
+import { generateCUID, are, enumerateObject, parseAttribute } from "./functions";
 import { CUID_ATTRIBUTE } from "./statics";
 
 export function getMatchingComponents(node: any, components: ICuiComponent[]): ICuiComponent[] {

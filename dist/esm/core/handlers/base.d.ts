@@ -1,7 +1,8 @@
-import { ICuiLogger, IUIInteractionProvider, CuiContext, ICuiComponentHandler, ICuiParsable, ICuiOpenable, ICuiClosable, CuiDevelopmentStateType } from "../models/interfaces";
+import { IUIInteractionProvider, CuiContext, ICuiComponentHandler, ICuiParsable, ICuiOpenable, ICuiClosable } from "../models/interfaces";
 import { CuiUtils } from "../models/utils";
 import { CuiActionsHelper } from "../helpers/helpers";
 import { ICuiComponentAction } from "../utils/actions";
+import { ICuiDevelopmentTool } from "../development/interfaces";
 export interface CuiChildMutation {
     removed: Node[];
     added: Node[];
@@ -21,7 +22,7 @@ export declare class ComponentHelper {
 }
 export declare class CuiComponentBase implements CuiContext {
     #private;
-    _log: ICuiLogger;
+    _log: ICuiDevelopmentTool;
     utils: CuiUtils;
     element: HTMLElement;
     cuid: string;
@@ -54,7 +55,6 @@ export declare class CuiComponentBase implements CuiContext {
     setDebugProperty<T>(name: string, value: T): void;
     logInfo(message: string, functionName?: string): void;
     logWarning(message: string, functionName?: string): void;
-    pushDebugState(type: CuiDevelopmentStateType, message: string, functionName?: string): void;
     logError(message: string, functionName?: string, error?: Error): void;
 }
 export declare abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponentBase implements ICuiComponentHandler {

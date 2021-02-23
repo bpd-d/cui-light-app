@@ -1,19 +1,20 @@
 import { CuiSetupInit } from "../core/models/setup";
 import { is, joinAttributesForQuery, are } from "../core/utils/functions";
 import { STATICS, EVENTS, CSS_VARIABLES } from "../core/utils/statics";
-import { ICuiLogger, ICuiPlugin, ICuiComponent, ICuiPluginManager, CuiElement } from "../core/models/interfaces";
+import { ICuiPlugin, ICuiComponent, ICuiPluginManager, CuiElement } from "../core/models/interfaces";
 import { ICuiMutionObserver, CuiMutationObserver } from "../core/observers/mutations";
-import { CuiLoggerFactory } from "../core/factories/logger";
 import { CuiUtils } from "../core/models/utils";
 import { CuiInstanceInitError } from "../core/models/errors";
 import { ElementManager } from "./managers/element";
 import { CollectionManager } from "./managers/collection";
 import { CuiPluginManager } from "./managers/plugins";
 import { addCuiArgument, createCuiElement, getMatchingComponents } from "../core/utils/api";
+import { CuiDevtoolFactory } from "../core/development/factory";
+import { ICuiDevelopmentTool } from "../core/development/interfaces";
 
 
 export class CuiInstance {
-    #log: ICuiLogger;
+    #log: ICuiDevelopmentTool;
     #mutationObserver: ICuiMutionObserver | undefined;
     #utils: CuiUtils;
     #plugins: ICuiPluginManager;
@@ -23,10 +24,12 @@ export class CuiInstance {
     constructor(setup: CuiSetupInit, plugins: ICuiPlugin[], components: ICuiComponent[]) {
         STATICS.prefix = setup.prefix;
         STATICS.logLevel = setup.logLevel;
-        this.#log = CuiLoggerFactory.get('CuiInstance')
+        if (setup.development)
+            STATICS.devTool = setup.development;
         this.#plugins = new CuiPluginManager(plugins);
         this.#components = components ?? [];
         this.#utils = new CuiUtils(setup, plugins.map(plugin => { return plugin.name; }));
+        this.#log = CuiDevtoolFactory.get("CuiInstance");
         this.#rootElement = setup.root;
         this.#mutationObserver = undefined;
         this.#mutatedAttributes = [];
@@ -119,11 +122,12 @@ export class CuiInstance {
         return this.#utils;
     }
 
-    on(event: string, callback: any, element?: CuiElement): void {
+    on(event: string, callback: any, element?: CuiElement): string | null {
         if (!are(event, callback)) {
             this.#log.error("Incorrect arguments", "on")
+            return null;
         }
-        this.#utils.bus.on(event, callback, element);
+        return this.#utils.bus.on(event, callback, element);
     }
 
     detach(event: string, id: string): void {

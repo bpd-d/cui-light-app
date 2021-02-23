@@ -3,7 +3,7 @@ import { CuiUtils } from "../../core/models/utils";
 import { replacePrefix, isStringTrue, is, getIntOrDefault, getStringOrDefault } from "../../core/utils/functions";
 import { AriaAttributes } from "../../core/utils/aria";
 import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
-import { CuiMoveEventListener, ICuiMoveEvent } from "../../core/listeners/move";
+import { CuiMoveEventListener, ICuiMoveData } from "../../core/listeners/move";
 import { BasePositionCalculator, BaseResizeCalculator, ICuiFloatPositionCalculator, ICuiFloatResizeCalculator } from "./helpers";
 import { CLASSES, EVENTS } from "../../core/utils/statics";
 
@@ -125,7 +125,7 @@ export class CuiFloatHandler extends CuiInteractableHandler<CuiFloatArgs> {
         return true;
     }
 
-    onMove(ev: ICuiMoveEvent) {
+    onMove(ev: ICuiMoveData) {
         switch (ev.type) {
             case 'down':
                 this.onMouseDown(ev);
@@ -140,7 +140,7 @@ export class CuiFloatHandler extends CuiInteractableHandler<CuiFloatArgs> {
     }
 
 
-    onMouseDown(ev: ICuiMoveEvent) {
+    onMouseDown(ev: ICuiMoveData) {
         if (ev.target === this.#moveBtn) {
             this.#isMoving = true;
             ev.event.preventDefault();
@@ -156,7 +156,7 @@ export class CuiFloatHandler extends CuiInteractableHandler<CuiFloatArgs> {
         this.utils.bus.emit(EVENTS.MOVE_LOCK, null, true);
     }
 
-    onMouseMove(ev: ICuiMoveEvent) {
+    onMouseMove(ev: ICuiMoveData) {
         if (this.#isMoving) {
             this.peform(ev, this.move)
         } else if (this.#isResizing) {
@@ -165,7 +165,7 @@ export class CuiFloatHandler extends CuiInteractableHandler<CuiFloatArgs> {
     }
 
 
-    onMouseUp(ev: ICuiMoveEvent) {
+    onMouseUp(ev: ICuiMoveData) {
         this.#isMoving = false;
         this.#isResizing = false;
         this.helper.removeClassesAs(document.body, CLASSES.swipingOn);
@@ -174,7 +174,7 @@ export class CuiFloatHandler extends CuiInteractableHandler<CuiFloatArgs> {
 
     }
 
-    peform(ev: ICuiMoveEvent, callback: (element: HTMLElement, x: number, y: number, diffX: number, diffY: number) => void) {
+    peform(ev: ICuiMoveData, callback: (element: HTMLElement, x: number, y: number, diffX: number, diffY: number) => void) {
         this.mutate(() => {
             if (is(callback))
                 callback(this.element as HTMLElement, ev.x, ev.y, (ev.x - this.#prevX), (ev.y - this.#prevY));

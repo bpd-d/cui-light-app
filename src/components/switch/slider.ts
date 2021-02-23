@@ -2,7 +2,7 @@ import { ICuiComponent, ICuiComponentHandler, ICuiParsable, ICuiSwitchable } fro
 import { CuiUtils } from "../../core/models/utils";
 import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
 import { ICuiTask, CuiTaskRunner } from "../../core/utils/task";
-import { ICuiMoveEvent } from "../../core/listeners/move";
+import { ICuiMoveData } from "../../core/listeners/move";
 import { CuiSwipeAnimationEngine } from "../../core/animation/engine";
 import { AnimationDefinition, SWIPE_ANIMATIONS_DEFINITIONS } from "../../core/animation/definitions";
 import { getStringOrDefault, getIntOrDefault, boolStringOrDefault, calculateNextIndex, is, getChildrenHeight, isInRange } from "../../core/utils/functions";
@@ -148,7 +148,7 @@ export class CuiSliderHandler extends CuiMutableHandler<CuiSliderArgs> implement
      * Move listener callback
      * @param data move listener data
      */
-    onMove(data: ICuiMoveEvent) {
+    onMove(data: ICuiMoveData) {
         if (this.isLocked || !this.#animationDef) {
             return;
         }

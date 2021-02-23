@@ -12,7 +12,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _static, _preferred, _evaluator, _log;
-import { CuiLoggerFactory } from "../factories/logger";
+import { CuiDevtoolFactory } from "../development/factory";
 import { is } from "../utils/functions";
 import { CuiBasePositionEvaluator } from "./evaluator";
 export class CuiBasePositionCalculator {
@@ -24,7 +24,7 @@ export class CuiBasePositionCalculator {
         __classPrivateFieldSet(this, _preferred, "top-center");
         __classPrivateFieldSet(this, _static, "");
         __classPrivateFieldSet(this, _evaluator, evaluator !== null && evaluator !== void 0 ? evaluator : new CuiBasePositionEvaluator());
-        __classPrivateFieldSet(this, _log, CuiLoggerFactory.get("CuiBasePositionCalculator"));
+        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get("CuiBasePositionCalculator"));
     }
     setMargin(value) {
         __classPrivateFieldGet(this, _evaluator).setMargin(value);

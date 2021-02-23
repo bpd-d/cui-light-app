@@ -1,6 +1,7 @@
-import { ICuiLogger, CuiEventReceiver } from "../models/interfaces";
+import { CuiDevtoolFactory } from "../development/factory";
+import { ICuiDevelopmentTool } from "../development/interfaces";
+import { CuiEventReceiver } from "../models/interfaces";
 import { is } from "../utils/functions";
-import { CuiLoggerFactory } from "../factories/logger";
 import { ICuiCallbackExecutor, ICuiEventEmitHandler } from "./interfaces";
 
 interface EmitHandlerData {
@@ -22,12 +23,12 @@ class EmitHandlerBase {
 }
 
 export class SimpleEventEmitHandler extends EmitHandlerBase implements ICuiEventEmitHandler {
-    #log: ICuiLogger;
+    #log: ICuiDevelopmentTool;
     #executor: ICuiCallbackExecutor;
     constructor(executor: ICuiCallbackExecutor) {
         super();
         this.#executor = executor;
-        this.#log = CuiLoggerFactory.get("SimpleEventEmitHandler");
+        this.#log = CuiDevtoolFactory.get("SimpleEventEmitHandler");
     }
 
     async handle(events: CuiEventReceiver, cuid: string, args: any[]): Promise<boolean> {

@@ -1,5 +1,8 @@
 # bpd cUI Light changelog
 
+# [0.3.9] 2021-02-22
+* [Fixed] Instance method **on** now returns event id
+* [Changed] Logger has been removed - introduced devtool
 # [0.3.8] 2021-02-20
 * [Fixed] Mutation observer fixes
 # [0.3.7] 2021-02-20

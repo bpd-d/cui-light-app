@@ -12,7 +12,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _items, _promises, _prevYValue, _inProgress, _previousSize, _threshold, _bus, _listenerBoundCall;
-import { calcWindowSize, calcWindowSize2 } from "../../core/utils/functions";
+import { calcWindowSize } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
 export class CuiResizeObserver {
     constructor(bus, threshold) {
@@ -69,14 +69,16 @@ export class CuiResizeObserver {
         __classPrivateFieldSet(this, _inProgress, true);
         const diff = window.innerWidth - __classPrivateFieldGet(this, _prevYValue);
         if (Math.abs(diff) >= __classPrivateFieldGet(this, _threshold)) {
-            const currentSize = calcWindowSize2(window.innerWidth);
+            const currentSize = calcWindowSize(window.innerWidth);
             if (currentSize !== __classPrivateFieldGet(this, _previousSize)) {
                 const resizeData = {
                     current: currentSize,
                     previous: __classPrivateFieldGet(this, _previousSize),
                     width: window.innerWidth,
                     height: window.innerHeight,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    name: EVENTS.RESIZE,
+                    source: "CuiResizeObserver"
                 };
                 __classPrivateFieldGet(this, _bus).emit(EVENTS.RESIZE, "", resizeData);
                 this.pushUpdateToItems(resizeData);

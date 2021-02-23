@@ -1,6 +1,6 @@
 import { ICuiEventBusQueueSetup } from "../bus/interfaces";
+import { ICuiDevelopmentToolFactory } from "../development/interfaces";
 import { CuiLogLevel, CuiInteractionsType } from "../utils/types";
-import { ICuiDevelopmentTool } from "./interfaces";
 interface CuiSetupCommon {
     prefix?: string;
     logLevel?: CuiLogLevel;
@@ -41,7 +41,7 @@ export declare class CuiSetupInit implements CuiSetupCommon {
     scrollThreshold: number;
     resizeThreshold: number;
     busSetup?: ICuiEventBusQueueSetup[];
-    development: ICuiDevelopmentTool | undefined;
+    development: ICuiDevelopmentToolFactory | undefined;
     root: HTMLElement;
     constructor();
 }

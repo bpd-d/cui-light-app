@@ -1,5 +1,4 @@
-import { ICuiLogger, IUIInteractionProvider, CuiContext, ICuiComponentHandler, ICuiParsable, ICuiOpenable, ICuiClosable, CuiDevelopmentStateType, KeyDownEvent } from "../models/interfaces";
-import { CuiLoggerFactory } from "../factories/logger";
+import { IUIInteractionProvider, CuiContext, ICuiComponentHandler, ICuiParsable, ICuiOpenable, ICuiClosable, KeyDownEvent } from "../models/interfaces";
 import { CuiUtils } from "../models/utils";
 import { ICuiComponentMutationObserver, CuiComponentMutationHandler } from "../observers/mutations";
 import { AriaAttributes } from "../utils/aria";
@@ -7,6 +6,8 @@ import { CuiActionsHelper } from "../helpers/helpers";
 import { ICuiComponentAction, CuiActionsListFactory } from "../utils/actions";
 import { is, getActiveClass, clone } from "../utils/functions";
 import { EVENTS } from "../utils/statics";
+import { ICuiDevelopmentTool } from "../development/interfaces";
+import { CuiDevtoolFactory } from "../development/factory";
 
 export interface CuiChildMutation {
     removed: Node[];
@@ -66,7 +67,7 @@ export class ComponentHelper {
 }
 
 export class CuiComponentBase implements CuiContext {
-    _log: ICuiLogger;
+    _log: ICuiDevelopmentTool;
     utils: CuiUtils;
     element: HTMLElement;
     cuid: string;
@@ -76,12 +77,12 @@ export class CuiComponentBase implements CuiContext {
     #emittedEvents: string[];
     componentName: string;
     constructor(componentName: string, element: HTMLElement, utils: CuiUtils) {
-        this._log = CuiLoggerFactory.get(componentName);
+        this._log = CuiDevtoolFactory.get(componentName);
         this.utils = utils;
         this.element = element;
         this.cuid = (<any>element).$cuid;
         this.isLocked = false;
-        this._log.setId(this.cuid);
+        // this._log.setId(this.cuid);
         this.activeClassName = getActiveClass(utils.setup.prefix);
         this.helper = new ComponentHelper(utils.interactions);
         this.#emittedEvents = [];
@@ -151,38 +152,29 @@ export class CuiComponentBase implements CuiContext {
     }
 
     registerInDebug(): void {
-        this.utils.development.registerElement(this.element, this.cuid, this.componentName);
+        this._log.registerElement(this.element, this.cuid, this.componentName);
     }
 
     removeFromDebug(): void {
-        this.utils.development.unregisterElement(this.cuid, this.componentName);
+        this._log.unregisterElement(this.cuid, this.componentName);
     }
 
     setDebugProperty<T>(name: string, value: T): void {
-        this.utils.development.setProperty(this.cuid, this.componentName, name, value);
     }
 
     logInfo(message: string, functionName?: string) {
         this._log.debug(message, functionName);
-        this.utils.development.pushState(this.cuid, this.componentName, "info", message, functionName);
     }
 
     logWarning(message: string, functionName?: string) {
         this._log.warning(message, functionName);
-        this.utils.development.pushState(this.cuid, this.componentName, "warning", message, functionName);
     }
-
-    pushDebugState(type: CuiDevelopmentStateType, message: string, functionName?: string) {
-        this.utils.development.pushState(this.cuid, this.componentName, type, message, functionName);
-    }
-
 
     logError(message: string, functionName?: string, error?: Error) {
         this._log.error(message, functionName);
         if (error) {
             this._log.exception(error, functionName)
         }
-        this.utils.development.pushState(this.cuid, this.componentName, "error", message, functionName);
     }
 
 }
@@ -203,7 +195,7 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
     }
 
     handle(args: any): void {
-        this.logInfo("Init", 'handle');
+        this.registerInDebug();
         if (this.isInitialized) {
             this.logWarning("Trying to initialize component again", 'handle');
             return;
@@ -212,7 +204,8 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
         if (!this.element.classList.contains(this.#attribute)) {
             this.element.classList.add(this.#attribute);
         }
-        this.registerInDebug();
+
+        this.logInfo("Init", 'handle');
         this.onHandle();
         this.isInitialized = true;
     }
@@ -225,7 +218,7 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
         }
         this.prevArgs = clone(this.args);
         this.args.parse(args);
-        this.pushDebugState("info", "Component update", 'refresh');
+        this._log.debug("Component update", 'refresh');
         this.onRefresh();
     }
 

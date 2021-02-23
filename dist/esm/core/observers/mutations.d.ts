@@ -1,5 +1,6 @@
-import { ICuiLogger, ICuiComponent, ICuiPluginManager } from "../models/interfaces";
+import { ICuiComponent, ICuiPluginManager } from "../models/interfaces";
 import { CuiUtils } from "../models/utils";
+import { ICuiDevelopmentTool } from "../development/interfaces";
 export interface ICuiMutionObserver {
     setPlugins(plugins: ICuiPluginManager): ICuiMutionObserver;
     setComponents(components: ICuiComponent[]): ICuiMutionObserver;
@@ -16,7 +17,7 @@ export interface ICuiComponentMutationObserver {
 }
 export declare class CuiMutationObserver implements ICuiMutionObserver {
     #private;
-    _log: ICuiLogger;
+    _log: ICuiDevelopmentTool;
     plugins: ICuiPluginManager | undefined;
     constructor(element: HTMLElement, utils: CuiUtils);
     setPlugins(plugins: ICuiPluginManager): ICuiMutionObserver;

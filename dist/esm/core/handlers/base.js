@@ -21,13 +21,13 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _interactions, _emittedEvents, _attribute, _openEventId, _closeEventId, _keyCloseEventId, _openAct, _closeAct, _mutionHandler;
-import { CuiLoggerFactory } from "../factories/logger";
 import { CuiComponentMutationHandler } from "../observers/mutations";
 import { AriaAttributes } from "../utils/aria";
 import { CuiActionsHelper } from "../helpers/helpers";
 import { CuiActionsListFactory } from "../utils/actions";
 import { is, getActiveClass, clone } from "../utils/functions";
 import { EVENTS } from "../utils/statics";
+import { CuiDevtoolFactory } from "../development/factory";
 export class ComponentHelper {
     constructor(interactions) {
         _interactions.set(this, void 0);
@@ -72,12 +72,12 @@ _interactions = new WeakMap();
 export class CuiComponentBase {
     constructor(componentName, element, utils) {
         _emittedEvents.set(this, void 0);
-        this._log = CuiLoggerFactory.get(componentName);
+        this._log = CuiDevtoolFactory.get(componentName);
         this.utils = utils;
         this.element = element;
         this.cuid = element.$cuid;
         this.isLocked = false;
-        this._log.setId(this.cuid);
+        // this._log.setId(this.cuid);
         this.activeClassName = getActiveClass(utils.setup.prefix);
         this.helper = new ComponentHelper(utils.interactions);
         __classPrivateFieldSet(this, _emittedEvents, []);
@@ -135,31 +135,24 @@ export class CuiComponentBase {
         });
     }
     registerInDebug() {
-        this.utils.development.registerElement(this.element, this.cuid, this.componentName);
+        this._log.registerElement(this.element, this.cuid, this.componentName);
     }
     removeFromDebug() {
-        this.utils.development.unregisterElement(this.cuid, this.componentName);
+        this._log.unregisterElement(this.cuid, this.componentName);
     }
     setDebugProperty(name, value) {
-        this.utils.development.setProperty(this.cuid, this.componentName, name, value);
     }
     logInfo(message, functionName) {
         this._log.debug(message, functionName);
-        this.utils.development.pushState(this.cuid, this.componentName, "info", message, functionName);
     }
     logWarning(message, functionName) {
         this._log.warning(message, functionName);
-        this.utils.development.pushState(this.cuid, this.componentName, "warning", message, functionName);
-    }
-    pushDebugState(type, message, functionName) {
-        this.utils.development.pushState(this.cuid, this.componentName, type, message, functionName);
     }
     logError(message, functionName, error) {
         this._log.error(message, functionName);
         if (error) {
             this._log.exception(error, functionName);
         }
-        this.utils.development.pushState(this.cuid, this.componentName, "error", message, functionName);
     }
 }
 _emittedEvents = new WeakMap();
@@ -174,7 +167,7 @@ export class CuiHandlerBase extends CuiComponentBase {
         __classPrivateFieldSet(this, _attribute, attribute);
     }
     handle(args) {
-        this.logInfo("Init", 'handle');
+        this.registerInDebug();
         if (this.isInitialized) {
             this.logWarning("Trying to initialize component again", 'handle');
             return;
@@ -183,7 +176,7 @@ export class CuiHandlerBase extends CuiComponentBase {
         if (!this.element.classList.contains(__classPrivateFieldGet(this, _attribute))) {
             this.element.classList.add(__classPrivateFieldGet(this, _attribute));
         }
-        this.registerInDebug();
+        this.logInfo("Init", 'handle');
         this.onHandle();
         this.isInitialized = true;
     }
@@ -195,7 +188,7 @@ export class CuiHandlerBase extends CuiComponentBase {
         }
         this.prevArgs = clone(this.args);
         this.args.parse(args);
-        this.pushDebugState("info", "Component update", 'refresh');
+        this._log.debug("Component update", 'refresh');
         this.onRefresh();
     }
     destroy() {

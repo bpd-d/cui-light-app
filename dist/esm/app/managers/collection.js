@@ -21,14 +21,14 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _log, _cDt, _helper;
-import { CuiLoggerFactory } from "../../core/factories/logger";
+import { CuiDevtoolFactory } from "../../core/development/factory";
 import { CollectionManagerHelper } from "../helpers/collection";
 export class CollectionManager {
     constructor(elements, interactions) {
         _log.set(this, void 0);
         _cDt.set(this, void 0);
         _helper.set(this, void 0);
-        __classPrivateFieldSet(this, _log, CuiLoggerFactory.get('CollectionManager'));
+        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get('CollectionManager'));
         __classPrivateFieldSet(this, _helper, new CollectionManagerHelper(interactions));
         __classPrivateFieldGet(this, _helper).setElements(elements);
         __classPrivateFieldSet(this, _cDt, Date.now());

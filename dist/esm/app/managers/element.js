@@ -22,10 +22,10 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _elements, _isLocked, _logger, _cDt, _utils, _actionsHelper;
 import { is, are } from "../../core/utils/functions";
-import { CuiLoggerFactory } from "../../core/factories/logger";
 import { CLASSES } from "../../core/utils/statics";
 import { CuiActionsHelper } from "../../core/helpers/helpers";
 import { CuiClassAction } from "../../core/utils/actions";
+import { CuiDevtoolFactory } from "../../core/development/factory";
 export class ElementManager {
     constructor(elements, utils) {
         _elements.set(this, void 0);
@@ -36,7 +36,7 @@ export class ElementManager {
         _actionsHelper.set(this, void 0);
         __classPrivateFieldSet(this, _elements, elements);
         __classPrivateFieldSet(this, _isLocked, false);
-        __classPrivateFieldSet(this, _logger, CuiLoggerFactory.get("ElementManager"));
+        __classPrivateFieldSet(this, _logger, CuiDevtoolFactory.get("ElementManager"));
         __classPrivateFieldSet(this, _utils, utils);
         __classPrivateFieldSet(this, _cDt, Date.now());
         __classPrivateFieldSet(this, _actionsHelper, new CuiActionsHelper(utils.interactions));

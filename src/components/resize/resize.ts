@@ -2,7 +2,7 @@ import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/mo
 import { CuiUtils } from "../../core/models/utils";
 import { CuiHandler } from "../../core/handlers/base";
 import { EVENTS } from "../../core/utils/statics";
-import { calcWindowSize2, getIntOrDefault, getStringOrDefault, is } from "../../core/utils/functions";
+import { calcWindowSize, getIntOrDefault, getStringOrDefault, is } from "../../core/utils/functions";
 import { CuiIntersectionObserver } from "../../core/observers/intersection";
 import { CuiWindowSize } from "../../core/utils/types";
 import { CuiActionsFatory, ICuiComponentAction } from "../../core/utils/actions";
@@ -79,7 +79,7 @@ export class CuiResizeHandler extends CuiHandler<CuiResizeArgs> {
         this.#eventId = this.utils.bus.on(EVENTS.RESIZE, this.resize.bind(this));
         this.#intersectionObserver.connect();
         this.#intersectionObserver.observe(this.element);
-        this.#currentSize = calcWindowSize2(window.innerWidth);
+        this.#currentSize = calcWindowSize(window.innerWidth);
         this.#isIntersecting = this.isInViewport(this.element);
         this.setNewValue();
         this.updateElement();

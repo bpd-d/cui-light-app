@@ -52,7 +52,6 @@ export declare function getSystemPrintMode(): boolean;
  */
 export declare function are(...attributes: any[]): boolean;
 export declare function calcWindowSize(width: number): CuiWindowSize;
-export declare function calcWindowSize2(width: number): CuiWindowSize;
 /**
  * Creates object from string.
  * Supported syntaxes are:

@@ -1,9 +1,9 @@
-import { TaskedEventEmitHandler } from "../bus/handlers";
 import { ICuiEventListener } from "../models/interfaces";
-import { is, round } from "../utils/functions";
+import { is } from "../utils/functions";
+import { EVENTS } from "../utils/statics";
 
 interface OnMoveCallback {
-    (ev: ICuiMoveEvent): void;
+    (ev: ICuiMoveData): void;
 }
 
 interface IMoveListener {
@@ -13,7 +13,7 @@ interface IMoveListener {
 }
 
 export type CuiMoveEventState = "down" | "up" | "move";
-export interface ICuiMoveEvent {
+export interface ICuiMoveData {
     x: number;
     y: number;
     moveX: number;
@@ -23,9 +23,9 @@ export interface ICuiMoveEvent {
     event: MouseEvent | TouchEvent;
 }
 
-export class CuiMoveEventListener implements ICuiEventListener<ICuiMoveEvent> {
+export class CuiMoveEventListener implements ICuiEventListener<ICuiMoveData> {
     #element: HTMLElement | Document;
-    #onEvent: ((t: ICuiMoveEvent) => void) | undefined;
+    #onEvent: ((t: ICuiMoveData) => void) | undefined;
     #isLocked: boolean;
     #isAttached: boolean;
     #preventDefault: boolean;
@@ -46,7 +46,7 @@ export class CuiMoveEventListener implements ICuiEventListener<ICuiMoveEvent> {
         this.onTouchMove = this.onTouchMove.bind(this)
     }
 
-    setCallback(callback: (t: ICuiMoveEvent) => void): void {
+    setCallback(callback: (t: ICuiMoveData) => void): void {
         this.#onEvent = callback;
     }
 
@@ -167,7 +167,7 @@ export class CuiMoveEventListener implements ICuiEventListener<ICuiMoveEvent> {
             moveX: ev.movementX,
             moveY: ev.movementY,
             target: ev.target,
-            event: ev
+            event: ev,
         })
 
     }

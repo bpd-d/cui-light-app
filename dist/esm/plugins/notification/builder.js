@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { IconBuilder } from "../../core/builders/icon";
 import { ElementBuilder } from "../../core/builders/element";
 import { are, is } from "../../core/utils/functions";
-import { CuiLoggerFactory } from "../../core/factories/logger";
+import { CuiDevtoolFactory } from "../../core/development/factory";
 const closeIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\" width=\"20\" height=\"20\"><path d=\"M 3,3 17,17\"></path><path d=\"M 17,3 3,17\"></path></svg>";
 export default function getNotification(data, utils, cache, onClose) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -53,7 +53,7 @@ function getActionsList(actions, onClose) {
                 action.callback();
             }
             catch (e) {
-                const log = CuiLoggerFactory.get("Notifications");
+                const log = CuiDevtoolFactory.get("Notifications");
                 log.exception(e, "OnActionClick");
             }
             finally {

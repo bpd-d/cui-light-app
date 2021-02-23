@@ -1,28 +1,26 @@
-import { ICuiEventBus, CuiEventReceiver, ICuiLogger, CuiElement, CuiEventObj } from "../models/interfaces";
+import { ICuiEventBus, CuiEventReceiver, CuiElement, CuiEventObj } from "../models/interfaces";
 import { is, are, generateRandomString, enumerateObject } from "../utils/functions";
 import { ArgumentError } from "../models/errors";
-import { CuiLoggerFactory } from "../factories/logger";
 import { CuiEventEmitHandlerFactory, TaskedEventEmitHandler } from "./handlers";
 import { CuiCallbackExecutor } from "./executors";
 import { CuiBusExtStatistics, ICuiEventBusQueueSetup, ICuiEventEmitHandler } from "./interfaces";
+import { ICuiDevelopmentTool } from "../development/interfaces";
+import { CuiDevtoolFactory } from "../development/factory";
 
 interface ICuiBusMapping {
     [name: string]: number;
 }
 
-
-
-
 export class CuiEventBus implements ICuiEventBus {
     #events: { [event: string]: CuiEventReceiver }
-    #log: ICuiLogger;
+    #log: ICuiDevelopmentTool;
     #eventHandler: ICuiEventEmitHandler;
     #name: string;
     constructor(emitHandler: ICuiEventEmitHandler, name?: string) {
         this.#events = {};
         this.#eventHandler = emitHandler;
         this.#name = name ?? "CuiEventBus"
-        this.#log = CuiLoggerFactory.get(this.#name);
+        this.#log = CuiDevtoolFactory.get(this.#name);
     }
 
     /**
@@ -155,11 +153,11 @@ export class CuiEventBus implements ICuiEventBus {
 
 export class CuiEventExtBus implements ICuiEventBus {
     #events: { [event: string]: number };
-    #log: ICuiLogger;
+    #log: ICuiDevelopmentTool;
     #buses: ICuiEventBus[];
     #last: number;
     constructor(setup: ICuiEventBusQueueSetup[]) {
-        this.#log = CuiLoggerFactory.get("CuiEventBus");
+        this.#log = CuiDevtoolFactory.get("CuiEventBus");
         this.#buses = [];
         this.#events = {};
         this.#last = 0;
