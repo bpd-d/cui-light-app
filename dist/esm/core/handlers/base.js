@@ -98,10 +98,10 @@ export class CuiComponentBase {
      * @param event Event name
      * @param data Data to emit
      */
-    emitEvent(event, ...data) {
+    emitEvent(event, data) {
         if (!__classPrivateFieldGet(this, _emittedEvents).includes(event))
             __classPrivateFieldGet(this, _emittedEvents).push(event);
-        this.utils.bus.emit(event, this.cuid, ...data);
+        this.utils.bus.emit(event, this.cuid, data);
     }
     onEvent(event, callback) {
         return this.utils.bus.on(event, callback, this.element);
@@ -167,60 +167,74 @@ export class CuiHandlerBase extends CuiComponentBase {
         __classPrivateFieldSet(this, _attribute, attribute);
     }
     handle(args) {
-        this.registerInDebug();
-        if (this.isInitialized) {
-            this.logWarning("Trying to initialize component again", 'handle');
-            return;
-        }
-        this.args.parse(args);
-        if (!this.element.classList.contains(__classPrivateFieldGet(this, _attribute))) {
-            this.element.classList.add(__classPrivateFieldGet(this, _attribute));
-        }
-        this.logInfo("Init", 'handle');
-        this.onHandle();
-        this.isInitialized = true;
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.isInitialized) {
+                this.logWarning("Trying to initialize handler again", 'handle');
+                return false;
+            }
+            if (this.isLocked) {
+                this.logWarning("Handler is locked", 'handle');
+                return false;
+            }
+            this.isLocked = true;
+            this.registerInDebug();
+            this.args.parse(args);
+            if (!this.element.classList.contains(__classPrivateFieldGet(this, _attribute))) {
+                this.helper.setClassesAs(this.element, __classPrivateFieldGet(this, _attribute));
+            }
+            this.logInfo("Init", 'handle');
+            return this.performLifecycleOp("onHandle", this.onHandle(), () => {
+                this.isLocked = false;
+                this.isInitialized = true;
+            });
+        });
     }
     refresh(args) {
-        this.logInfo("Update", 'refresh');
-        if (!this.isInitialized) {
-            this.logError("Cannot update not initialized component", 'refresh');
-            return;
-        }
-        this.prevArgs = clone(this.args);
-        this.args.parse(args);
-        this._log.debug("Component update", 'refresh');
-        this.onRefresh();
+        return __awaiter(this, void 0, void 0, function* () {
+            this.logInfo("Update", 'refresh');
+            if (!this.isInitialized) {
+                this.logError("Cannot update not initialized component", 'refresh');
+                return false;
+            }
+            if (!this.checkLock()) {
+                return false;
+            }
+            this.isLocked = true;
+            this.prevArgs = clone(this.args);
+            this.args.parse(args);
+            this._log.debug("Component update", 'refresh');
+            return this.performLifecycleOp("onRefresh", this.onRefresh(), () => {
+                this.isLocked = false;
+            });
+        });
     }
     destroy() {
-        this.logInfo("Destroy", "destroy");
-        this.onRemove();
-        this.detachEmiitedEvents();
-        this.removeFromDebug();
-        this.isInitialized = false;
-    }
-}
-_attribute = new WeakMap();
-export class CuiHandler extends CuiHandlerBase {
-    constructor(componentName, element, attribute, args, utils) {
-        super(componentName, element, attribute, args, utils);
-    }
-    onHandle() {
-        this.onInit();
-    }
-    onRefresh() {
-        this.onUpdate();
-    }
-    onRemove() {
-        this.onDestroy();
+        return __awaiter(this, void 0, void 0, function* () {
+            this.logInfo("Destroy", "destroy");
+            if (!this.isInitialized) {
+                this.logError("Cannot update not initialized component", 'destroy');
+                return false;
+            }
+            if (!this.checkLock()) {
+                return false;
+            }
+            this.isLocked = true;
+            return this.performLifecycleOp("onRemove", this.onRemove(), () => {
+                this.detachEmiitedEvents();
+                this.removeFromDebug();
+                this.isInitialized = false;
+                this.isLocked = false;
+            });
+        });
     }
     /**
-     * Helper created for elements that animate - perfroms an action *add*, after timeout it performs *remove*.
-     *
-     * @param action - action to perfrom
-     * @param timeout - timeout specified for action removal
-     * @param onFinish - callback to be performed after action is finished after removal
-     * @param callback - optional - callback to be executed in mutation on action removal, e.g. additional DOM changes on element
-     */
+    * Helper created for elements that animate - perfroms an action *add*, after timeout it performs *remove*.
+    *
+    * @param action - action to perfrom
+    * @param timeout - timeout specified for action removal
+    * @param onFinish - callback to be performed after action is finished after removal
+    * @param callback - optional - callback to be executed in mutation on action removal, e.g. additional DOM changes on element
+    */
     performAction(actions, timeout, onFinish, callback) {
         return __awaiter(this, void 0, void 0, function* () {
             if (yield this.actionsHelper.performActions(this.element, actions, timeout, callback)) {
@@ -230,7 +244,30 @@ export class CuiHandler extends CuiHandlerBase {
             return false;
         });
     }
+    checkLock() {
+        if (this.isLocked) {
+            this.logWarning("Handler is locked", 'handle');
+            return false;
+        }
+        return true;
+    }
+    performLifecycleOp(method, operation, onFinish) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let result = false;
+            try {
+                result = yield operation;
+            }
+            catch (e) {
+                this.logError("An exception occured in" + method, method, e);
+            }
+            finally {
+                onFinish();
+            }
+            return result;
+        });
+    }
 }
+_attribute = new WeakMap();
 export class CuiInteractableHandler extends CuiHandlerBase {
     constructor(componentName, element, attribute, args, utils) {
         super(componentName, element, attribute, args, utils);
@@ -246,25 +283,34 @@ export class CuiInteractableHandler extends CuiHandlerBase {
         __classPrivateFieldSet(this, _openAct, []);
     }
     onHandle() {
-        __classPrivateFieldSet(this, _openEventId, this.onEvent(EVENTS.OPEN, this.openFromEvent.bind(this)));
-        __classPrivateFieldSet(this, _closeEventId, this.onEvent(EVENTS.CLOSE, this.closeFromEvent.bind(this)));
-        __classPrivateFieldSet(this, _openAct, CuiActionsListFactory.get(this.args.openAct));
-        __classPrivateFieldSet(this, _closeAct, CuiActionsListFactory.get(this.args.closeAct));
-        this.onInit();
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldSet(this, _openEventId, this.onEvent(EVENTS.OPEN, this.openFromEvent.bind(this)));
+            __classPrivateFieldSet(this, _closeEventId, this.onEvent(EVENTS.CLOSE, this.closeFromEvent.bind(this)));
+            __classPrivateFieldSet(this, _openAct, CuiActionsListFactory.get(this.args.openAct));
+            __classPrivateFieldSet(this, _closeAct, CuiActionsListFactory.get(this.args.closeAct));
+            this.onInit();
+            return true;
+        });
     }
     onRefresh() {
-        if (!this.prevArgs || this.args.openAct !== this.prevArgs.openAct) {
-            __classPrivateFieldSet(this, _openAct, CuiActionsListFactory.get(this.args.openAct));
-        }
-        if (!this.prevArgs || this.args.closeAct !== this.prevArgs.closeAct) {
-            __classPrivateFieldSet(this, _closeAct, CuiActionsListFactory.get(this.args.closeAct));
-        }
-        this.onUpdate();
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.prevArgs || this.args.openAct !== this.prevArgs.openAct) {
+                __classPrivateFieldSet(this, _openAct, CuiActionsListFactory.get(this.args.openAct));
+            }
+            if (!this.prevArgs || this.args.closeAct !== this.prevArgs.closeAct) {
+                __classPrivateFieldSet(this, _closeAct, CuiActionsListFactory.get(this.args.closeAct));
+            }
+            this.onUpdate();
+            return true;
+        });
     }
     onRemove() {
-        this.detachEvent(EVENTS.CLOSE, __classPrivateFieldGet(this, _closeEventId));
-        this.detachEvent(EVENTS.OPEN, __classPrivateFieldGet(this, _openEventId));
-        this.onDestroy();
+        return __awaiter(this, void 0, void 0, function* () {
+            this.detachEvent(EVENTS.CLOSE, __classPrivateFieldGet(this, _closeEventId));
+            this.detachEvent(EVENTS.OPEN, __classPrivateFieldGet(this, _openEventId));
+            this.onDestroy();
+            return true;
+        });
     }
     open(args) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -358,17 +404,26 @@ export class CuiMutableHandler extends CuiHandlerBase {
         __classPrivateFieldGet(this, _mutionHandler).onMutation(this.mutation.bind(this));
     }
     onHandle() {
-        this.onInit();
-        __classPrivateFieldGet(this, _mutionHandler).observe();
+        return __awaiter(this, void 0, void 0, function* () {
+            this.onInit();
+            __classPrivateFieldGet(this, _mutionHandler).observe();
+            return true;
+        });
     }
     onRefresh() {
-        __classPrivateFieldGet(this, _mutionHandler).unobserve();
-        this.onUpdate();
-        __classPrivateFieldGet(this, _mutionHandler).observe();
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldGet(this, _mutionHandler).unobserve();
+            this.onUpdate();
+            __classPrivateFieldGet(this, _mutionHandler).observe();
+            return true;
+        });
     }
     onRemove() {
-        __classPrivateFieldGet(this, _mutionHandler).unobserve();
-        this.onDestroy();
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldGet(this, _mutionHandler).unobserve();
+            this.onDestroy();
+            return true;
+        });
     }
     /**
      * Callback attached to mutation observer set on root element
@@ -377,7 +432,10 @@ export class CuiMutableHandler extends CuiHandlerBase {
      */
     mutation(records) {
         this._log.debug("Element mutation", "mutation");
-        this.onMutation(records.reduce((result, item) => {
+        this.onMutation(this.prepareRecords(records));
+    }
+    prepareRecords(records) {
+        return records.reduce((result, item) => {
             if (item.type !== "childList") {
                 return result;
             }
@@ -391,7 +449,7 @@ export class CuiMutableHandler extends CuiHandlerBase {
         }, {
             added: [],
             removed: []
-        }));
+        });
     }
 }
 _mutionHandler = new WeakMap();

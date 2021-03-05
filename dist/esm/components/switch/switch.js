@@ -20,44 +20,34 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _prefix, _defTimeout, _targets, _currentIdx, _links, _switches, _task, _switchEventId, _actionsIn, _actionsOut;
+var _targets, _currentIdx, _links, _switches, _task, _switchEventId, _actionsIn, _actionsOut;
 import { CuiMutableHandler } from "../../core/handlers/base";
 import { CuiTaskRunner } from "../../core/utils/task";
 import { CuiActionsListFactory } from "../../core/utils/actions";
-import { is, getStringOrDefault, replacePrefix, getIntOrDefault, isStringTrue, calculateNextIndex, getChildrenHeight, isInRange } from "../../core/utils/functions";
-import { SCOPE_SELECTOR, EVENTS } from "../../core/utils/statics";
+import { is, replacePrefix, calculateNextIndex, getChildrenHeight, isInRange, joinWithScopeSelector } from "../../core/utils/functions";
+import { EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const SWITCH_DEFAULT_ACTION_IN = ".{prefix}-switch-animation-default-in";
 const SWITCH_DEFAULT_ACTION_OUT = ".{prefix}-switch-animation-default-out";
 const SWITCH_DEFAULT_TARGETS = " > *";
-export class CuiSwitchArgs {
+export class CuiSwitchArgs extends CuiAutoParseArgs {
     constructor(prefix, timeout) {
-        _prefix.set(this, void 0);
-        _defTimeout.set(this, void 0);
-        __classPrivateFieldSet(this, _prefix, prefix);
-        __classPrivateFieldSet(this, _defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
-        this.targets = "";
-        this.in = "";
-        this.out = "";
-        this.timeout = __classPrivateFieldGet(this, _defTimeout);
+        super({
+            props: {
+                "targets": { corrector: joinWithScopeSelector }
+            }
+        });
+        this.targets = joinWithScopeSelector(SWITCH_DEFAULT_TARGETS);
+        this.in = replacePrefix(SWITCH_DEFAULT_ACTION_IN, prefix);
+        this.out = replacePrefix(SWITCH_DEFAULT_ACTION_OUT, prefix);
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
         this.links = "";
         this.switch = "";
         this.autoTimeout = -1;
-        this.height = "";
+        this.height = "auto";
         this.loop = false;
     }
-    parse(args) {
-        this.targets = is(args.targets) ? SCOPE_SELECTOR + args.targets : SCOPE_SELECTOR + SWITCH_DEFAULT_TARGETS;
-        this.in = getStringOrDefault(args.in, replacePrefix(SWITCH_DEFAULT_ACTION_IN, __classPrivateFieldGet(this, _prefix)));
-        this.out = getStringOrDefault(args.out, replacePrefix(SWITCH_DEFAULT_ACTION_OUT, __classPrivateFieldGet(this, _prefix)));
-        this.timeout = getIntOrDefault(args.timeout, __classPrivateFieldGet(this, _defTimeout));
-        this.links = getStringOrDefault(args.links, "");
-        this.switch = getStringOrDefault(args.switch, "");
-        this.autoTimeout = getIntOrDefault(args.autoTimeout, -1);
-        this.height = getStringOrDefault(args.height, 'auto');
-        this.loop = isStringTrue(args.loop);
-    }
 }
-_prefix = new WeakMap(), _defTimeout = new WeakMap();
 export class CuiSwitchComponent {
     constructor(prefix) {
         this.attribute = `${prefix !== null && prefix !== void 0 ? prefix : 'cui'}-switch`;

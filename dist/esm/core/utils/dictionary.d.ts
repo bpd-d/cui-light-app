@@ -11,5 +11,8 @@ export declare class CuiDictionary<T> implements ICuiDictionary<T> {
     indexOf(key: string): number;
     update(key: string, value: T): void;
     clear(): void;
+    forEach(callback: (key: string, value: T) => void): void;
+    private checkLock;
+    private lock;
     private throwOnEmptyKey;
 }

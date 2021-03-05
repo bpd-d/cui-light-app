@@ -11,6 +11,7 @@ export interface ICuiDictionary<T> {
     keys(): string[];
     values(): T[];
     indexOf(key: string): number;
+    forEach(callback: (key: string, value: T) => void): void;
     update(key: string, value: T): void;
     clear(): void;
 }
@@ -19,9 +20,9 @@ export interface ICuiDictionaryItem<T> {
     value: T;
 }
 export interface ICuiComponentHandler {
-    handle(args: any): void;
-    refresh(args: any): void;
-    destroy(): void;
+    handle(args: any): Promise<boolean>;
+    refresh?(args: any): Promise<boolean>;
+    destroy(): Promise<boolean>;
 }
 export interface ICuiElementHandlers {
     [id: string]: ICuiComponentHandler;
@@ -60,21 +61,6 @@ export interface ICuiPlugin {
 }
 export interface ICuiMutiationPlugin {
     mutation(record: MutationRecord): Promise<boolean>;
-}
-export interface ICuiEventBus {
-    on(name: string, callback: any, cui?: CuiElement): string | null;
-    detach(name: string, id: string, cui?: CuiElement): void;
-    detachAll(name: string, cui?: CuiElement): void;
-    emit(event: string, cuid: string | null, ...args: any[]): Promise<boolean>;
-    isSubscribing(name: string, id: string, cui?: CuiElement): boolean;
-    detachByCuid(event: string, cuid: string): void;
-}
-export interface CuiEventObj {
-    callback: any;
-    $cuid: string | null;
-}
-export interface CuiEventReceiver {
-    [id: string]: CuiEventObj;
 }
 export interface CuiContext {
     getId(): string;
@@ -124,7 +110,8 @@ export interface ICuiEventListener<T> {
     detach(): void;
     isAttached(): boolean;
 }
-export interface KeyDownEvent {
-    timestamp: number;
-    event: KeyboardEvent;
+export interface ICuiMeasure {
+    target: string;
+    method: string;
+    time: number;
 }

@@ -1,5 +1,5 @@
-import { ICuiEventBus, CuiElement } from "../models/interfaces";
-import { CuiBusExtStatistics, ICuiEventBusQueueSetup, ICuiEventEmitHandler } from "./interfaces";
+import { CuiElement } from "../models/interfaces";
+import { CuiBusCallback, CuiBusExtStatistics, ICuiEventBus, ICuiEventBusQueueSetup, ICuiEventEmitHandler } from "./interfaces";
 export declare class CuiEventBus implements ICuiEventBus {
     #private;
     constructor(emitHandler: ICuiEventEmitHandler, name?: string);
@@ -11,7 +11,7 @@ export declare class CuiEventBus implements ICuiEventBus {
      * @param {CuiContext} ctx - callback context with id
      * @param {CuiElement} cui - optional - cui element which event shall be attached to
      */
-    on(name: string, callback: any, cui?: CuiElement): string | null;
+    on<T>(name: string, callback: CuiBusCallback<T>, cui?: CuiElement): string | null;
     /**
     * Detaches specific event from event bus
     *
@@ -33,7 +33,7 @@ export declare class CuiEventBus implements ICuiEventBus {
     * @param {string} cuid - id of component which emits the event
     * @param {any[]} args  - event arguments
     */
-    emit(event: string, cuid: string | null, ...args: any[]): Promise<boolean>;
+    emit<T>(event: string, cuid: string | null, args?: T): Promise<boolean>;
     /**
     * Checks whether given context is already attached to specific event
     *
@@ -62,7 +62,7 @@ export declare class CuiEventExtBus implements ICuiEventBus {
      * @param {CuiContext} ctx - callback context with id
      * @param {CuiElement} cui - optional - cui element which event shall be attached to
      */
-    on(name: string, callback: any, cui?: CuiElement): string | null;
+    on<T>(name: string, callback: CuiBusCallback<T>, cui?: CuiElement): string | null;
     /**
     * Detaches specific event from event bus
     *
@@ -84,7 +84,7 @@ export declare class CuiEventExtBus implements ICuiEventBus {
     * @param {string} cuid - id of component which emits the event
     * @param {any[]} args  - event arguments
     */
-    emit(event: string, cuid: string | null, ...args: any[]): Promise<boolean>;
+    emit<T>(event: string, cuid: string | null, args?: T): Promise<boolean>;
     /**
     * Checks whether given context is already attached to specific event
     *

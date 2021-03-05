@@ -1,6 +1,7 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 /**
  * Toggles an action after specified offset is reached in relation to the element or document
  *
@@ -27,7 +28,7 @@ export interface CuiOffsetAttribute {
     offsetX?: number;
     root?: boolean;
 }
-export declare class CuiOffsetArgs {
+export declare class CuiOffsetArgs extends CuiAutoParseArgs {
     target: string;
     action: string;
     offsetY: number;
@@ -35,7 +36,6 @@ export declare class CuiOffsetArgs {
     root: boolean;
     mode: "static" | "dynamic";
     constructor();
-    parse(args: any): void;
 }
 export declare class CuiOffsetComponent implements ICuiComponent {
     attribute: string;
@@ -43,12 +43,12 @@ export declare class CuiOffsetComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiOffsetHandler extends CuiHandler<CuiOffsetArgs> {
+export declare class CuiOffsetHandler extends CuiHandlerBase<CuiOffsetArgs> {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     private onScroll;
     private parseAttribute;
     private checkAndPerformActions;

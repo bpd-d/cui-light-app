@@ -1,6 +1,6 @@
 {
   "name": "cui-light-app",
-  "version": "0.3.9",
+  "version": "0.4.1",
   "description": "cUI light framework for the web",
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
@@ -39,7 +39,7 @@
   "devDependencies": {
     "@types/jasmine": "^3.6.2",
     "clean-webpack-plugin": "^3.0.0",
-    "dts-bundle": ">=0.7.3",
+    "dts-bundle": "^0.7.3",
     "jasmine": "^3.6.3",
     "karma-typescript": "^5.2.0",
     "serialize-javascript": "^5.0.1",

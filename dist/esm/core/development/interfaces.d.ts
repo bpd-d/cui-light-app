@@ -8,6 +8,7 @@ export interface ICuiDevelopmentTool {
     warning(message: string, functionName?: string): void;
     error(message: string, functionName?: string): void;
     exception(e: Error, functionName?: string): void;
+    setId(id: string): void;
 }
 export declare type CuiDevelopmentStateType = "info" | "error" | "warning" | "debug";
 export interface ICuiDevelopmentToolFactory {

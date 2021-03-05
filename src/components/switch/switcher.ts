@@ -1,27 +1,21 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable, CuiElement } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { is } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 const SWITCHER_LIST_ITEM_SELECTOR = "li > a";
 
-export class CuiSwitcherArgs implements ICuiParsable {
+export class CuiSwitcherArgs extends CuiAutoParseArgs implements ICuiParsable {
 
     target: string;
     index: string;
 
     constructor() {
+        super();
         this.index = "";
-        this.target = ""
-    }
-
-    parse(args: any): void {
-        if (!is(args)) {
-            return;
-        }
-        this.target = args.target;
-        this.index = args.index;
+        this.target = "";
     }
 
 }
@@ -41,7 +35,7 @@ export class CuiSwitcherComponent implements ICuiComponent {
     }
 }
 
-export class CuiSwitcherHandler extends CuiHandler<CuiSwitcherArgs>  {
+export class CuiSwitcherHandler extends CuiHandlerBase<CuiSwitcherArgs>  {
     #targetId: string | null;
     #isList: boolean;
     #listeners: ((ev: MouseEvent) => void)[];
@@ -53,17 +47,18 @@ export class CuiSwitcherHandler extends CuiHandler<CuiSwitcherArgs>  {
         this.#listeners = [];
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         this.setEvents();
         this.getTarget();
+        return true;
     }
-
-    onUpdate(): void {
+    async onRefresh(): Promise<boolean> {
         this.getTarget();
+        return true;
     }
-
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.removeEvents();
+        return true;
     }
 
     getTarget() {

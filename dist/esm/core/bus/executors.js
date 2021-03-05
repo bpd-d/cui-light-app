@@ -10,9 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 export class CuiCallbackExecutor {
     execute(callback, args) {
         return __awaiter(this, void 0, void 0, function* () {
-            args = args !== null && args !== void 0 ? args : [];
             try {
-                callback(...args);
+                callback(args);
                 return true;
             }
             catch (e) {

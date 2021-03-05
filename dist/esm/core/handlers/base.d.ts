@@ -40,8 +40,8 @@ export declare class CuiComponentBase implements CuiContext {
      * @param event Event name
      * @param data Data to emit
      */
-    emitEvent(event: string, ...data: any[]): void;
-    onEvent(event: string, callback: any): string | null;
+    emitEvent<T>(event: string, data: T): void;
+    onEvent<T>(event: string, callback: (t: T) => void): string | null;
     detachEvent(event: string, id: string | null): void;
     getId(): string;
     checkLockAndWarn(fName?: string): boolean;
@@ -64,30 +64,23 @@ export declare abstract class CuiHandlerBase<T extends ICuiParsable> extends Cui
     isInitialized: boolean;
     actionsHelper: CuiActionsHelper;
     constructor(componentName: string, element: HTMLElement, attribute: string, args: T, utils: CuiUtils);
-    handle(args: any): void;
-    refresh(args: any): void;
-    destroy(): void;
-    abstract onHandle(): void;
-    abstract onRefresh(): void;
-    abstract onRemove(): void;
-}
-export declare abstract class CuiHandler<T extends ICuiParsable> extends CuiHandlerBase<T> {
-    constructor(componentName: string, element: HTMLElement, attribute: string, args: T, utils: CuiUtils);
-    onHandle(): void;
-    onRefresh(): void;
-    onRemove(): void;
+    handle(args: any): Promise<boolean>;
+    refresh(args: any): Promise<boolean>;
+    destroy(): Promise<boolean>;
     /**
-     * Helper created for elements that animate - perfroms an action *add*, after timeout it performs *remove*.
-     *
-     * @param action - action to perfrom
-     * @param timeout - timeout specified for action removal
-     * @param onFinish - callback to be performed after action is finished after removal
-     * @param callback - optional - callback to be executed in mutation on action removal, e.g. additional DOM changes on element
-     */
+    * Helper created for elements that animate - perfroms an action *add*, after timeout it performs *remove*.
+    *
+    * @param action - action to perfrom
+    * @param timeout - timeout specified for action removal
+    * @param onFinish - callback to be performed after action is finished after removal
+    * @param callback - optional - callback to be executed in mutation on action removal, e.g. additional DOM changes on element
+    */
     performAction(actions: ICuiComponentAction[], timeout: number, onFinish: () => void, callback?: () => void): Promise<boolean>;
-    abstract onInit(): void;
-    abstract onUpdate(): void;
-    abstract onDestroy(): void;
+    private checkLock;
+    private performLifecycleOp;
+    abstract onHandle(): Promise<boolean>;
+    abstract onRefresh(): Promise<boolean>;
+    abstract onRemove(): Promise<boolean>;
 }
 export interface CuiInteractableArgs {
     timeout: number;
@@ -99,9 +92,9 @@ export interface CuiInteractableArgs {
 export declare abstract class CuiInteractableHandler<T extends ICuiParsable & CuiInteractableArgs> extends CuiHandlerBase<T> implements ICuiOpenable, ICuiClosable {
     #private;
     constructor(componentName: string, element: HTMLElement, attribute: string, args: T, utils: CuiUtils);
-    onHandle(): void;
-    onRefresh(): void;
-    onRemove(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     open(args?: any): Promise<boolean>;
     close(args?: any): Promise<boolean>;
     /**
@@ -128,15 +121,16 @@ export declare abstract class CuiInteractableHandler<T extends ICuiParsable & Cu
 export declare abstract class CuiMutableHandler<T extends ICuiParsable> extends CuiHandlerBase<T> {
     #private;
     constructor(componentName: string, element: HTMLElement, attribute: string, args: T, utils: CuiUtils);
-    onHandle(): void;
-    onRefresh(): void;
-    onRemove(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     /**
      * Callback attached to mutation observer set on root element
      *
      * @param record - mutation records
      */
     mutation(records: MutationRecord[]): void;
+    private prepareRecords;
     abstract onMutation(record: CuiChildMutation): void;
     abstract onInit(): void;
     abstract onUpdate(): void;

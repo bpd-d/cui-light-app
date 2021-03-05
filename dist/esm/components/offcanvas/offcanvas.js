@@ -11,41 +11,30 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _prefix, _defTimeout, _prefix_1, _prefix_2, _bodyClass, _scrollY, _windowClickEventId;
+var _prefix, _prefix_1, _prefix_2, _bodyClass, _scrollY, _windowClickEventId;
 import { CuiInteractableHandler } from "../../core/handlers/base";
 import { AriaAttributes } from "../../core/utils/aria";
-import { is, isStringTrue, getStringOrDefault, getIntOrDefault, replacePrefix, getName } from "../../core/utils/functions";
+import { replacePrefix, getName } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const OFFCANVAS_RIGHT_ANIM_DEFAULT_IN = ".{prefix}-offcanvas-default-right-in";
 const OFFCANVAS_RIGHT_ANIM_DEFAULT_OUT = ".{prefix}-offcanvas-default-right-out";
 const OFFCANVAS_LEFT_ANIM_DEFAULT_IN = ".{prefix}-offcanvas-default-left-in";
 const OFFCANVAS_LEFT_ANIM_DEFAULT_OUT = ".{prefix}-offcanvas-default-left-out";
 const OFFCANVAS_BODY = "{prefix}-off-canvas-open";
 const OFFCANVAS_CONTAINER_CLS = '.{prefix}-off-canvas-container';
-export class CuiOffCanvasArgs {
+export class CuiOffCanvasArgs extends CuiAutoParseArgs {
     constructor(prefix, timeout) {
+        super();
         _prefix.set(this, void 0);
-        _defTimeout.set(this, void 0);
-        __classPrivateFieldSet(this, _defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
         __classPrivateFieldSet(this, _prefix, prefix);
         this.escClose = false;
         this.position = 'right';
         this.openAct = this.getDefaultOpenClass();
         this.closeAct = this.getDefaultCloseClass();
-        this.timeout = __classPrivateFieldGet(this, _defTimeout);
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
         this.outClose = false;
         this.keyClose = "";
-    }
-    parse(args) {
-        if (is(args)) {
-            this.escClose = isStringTrue(args.escClose);
-            this.outClose = isStringTrue(args.outClose);
-            this.position = getStringOrDefault(args.position, 'right');
-            this.openAct = getStringOrDefault(args.openAct, this.getDefaultOpenClass());
-            this.closeAct = getStringOrDefault(args.closeAct, this.getDefaultCloseClass());
-            this.timeout = getIntOrDefault(args.timeout, __classPrivateFieldGet(this, _defTimeout));
-            this.keyClose = args.keyClose;
-        }
     }
     getDefaultOpenClass() {
         return replacePrefix(this.position === 'right' ? OFFCANVAS_RIGHT_ANIM_DEFAULT_IN : OFFCANVAS_LEFT_ANIM_DEFAULT_IN, __classPrivateFieldGet(this, _prefix));
@@ -54,7 +43,7 @@ export class CuiOffCanvasArgs {
         return replacePrefix(this.position === 'right' ? OFFCANVAS_RIGHT_ANIM_DEFAULT_OUT : OFFCANVAS_LEFT_ANIM_DEFAULT_OUT, __classPrivateFieldGet(this, _prefix));
     }
 }
-_prefix = new WeakMap(), _defTimeout = new WeakMap();
+_prefix = new WeakMap();
 export class CuiOffCanvasComponent {
     constructor(prefix) {
         _prefix_1.set(this, void 0);
@@ -123,7 +112,7 @@ export class CuiOffCanvasHandler extends CuiInteractableHandler {
     }
     onWindowClick(ev) {
         const container = this.element.querySelector(replacePrefix(OFFCANVAS_CONTAINER_CLS, __classPrivateFieldGet(this, _prefix_2)));
-        if (container && !container.contains(ev.target)) {
+        if (container && !container.contains(ev.ev.target)) {
             this.close();
         }
     }

@@ -1,8 +1,9 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 declare type CuiResizeComponentMode = "smart" | "simple";
-export declare class CuiResizeArgs implements ICuiParsable {
+export declare class CuiResizeArgs extends CuiAutoParseArgs {
     mode: CuiResizeComponentMode;
     default: string;
     small?: string;
@@ -11,7 +12,6 @@ export declare class CuiResizeArgs implements ICuiParsable {
     xlarge?: string;
     delay: number;
     constructor();
-    parse(args: any): void;
 }
 export declare class CuiResizeComponent implements ICuiComponent {
     #private;
@@ -20,12 +20,12 @@ export declare class CuiResizeComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiResizeHandler extends CuiHandler<CuiResizeArgs> {
+export declare class CuiResizeHandler extends CuiHandlerBase<CuiResizeArgs> {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     private resize;
     private onIntersection;
     private setNewValue;

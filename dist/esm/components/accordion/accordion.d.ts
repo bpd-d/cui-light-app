@@ -1,6 +1,7 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiSwitchable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 /**
  *
  */
@@ -15,16 +16,13 @@ interface CuiAccordionTarget {
     element: Element;
     listener?: any;
 }
-export declare class CuiAccordionArgs {
-    #private;
+export declare class CuiAccordionArgs extends CuiAutoParseArgs {
     single: boolean;
     selector: string;
     items: string;
     timeout: number;
     animation: boolean;
-    constructor(prefix: string, timeout: number | undefined);
-    parse(args: any): void;
-    isValid(): boolean;
+    constructor(prefix: string, timeout?: number);
 }
 export declare class CuiAccordionComponent implements ICuiComponent {
     #private;

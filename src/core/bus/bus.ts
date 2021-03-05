@@ -1,9 +1,9 @@
-import { ICuiEventBus, CuiEventReceiver, CuiElement, CuiEventObj } from "../models/interfaces";
+import { CuiElement } from "../models/interfaces";
 import { is, are, generateRandomString, enumerateObject } from "../utils/functions";
 import { ArgumentError } from "../models/errors";
-import { CuiEventEmitHandlerFactory, TaskedEventEmitHandler } from "./handlers";
+import { CuiEventEmitHandlerFactory } from "./handlers";
 import { CuiCallbackExecutor } from "./executors";
-import { CuiBusExtStatistics, ICuiEventBusQueueSetup, ICuiEventEmitHandler } from "./interfaces";
+import { CuiBusCallback, CuiBusExtStatistics, CuiEventObj, CuiEventReceiver, ICuiEventBus, ICuiEventBusQueueSetup, ICuiEventEmitHandler } from "./interfaces";
 import { ICuiDevelopmentTool } from "../development/interfaces";
 import { CuiDevtoolFactory } from "../development/factory";
 
@@ -31,7 +31,7 @@ export class CuiEventBus implements ICuiEventBus {
      * @param {CuiContext} ctx - callback context with id
      * @param {CuiElement} cui - optional - cui element which event shall be attached to 
      */
-    on(name: string, callback: any, cui?: CuiElement): string | null {
+    on<T>(name: string, callback: CuiBusCallback<T>, cui?: CuiElement): string | null {
         if (!are(name, callback)) {
             throw new ArgumentError("Missing argument")
         }
@@ -89,7 +89,7 @@ export class CuiEventBus implements ICuiEventBus {
     * @param {string} cuid - id of component which emits the event
     * @param {any[]} args  - event arguments
     */
-    async emit(event: string, cuid: string | null, ...args: any[]): Promise<boolean> {
+    async emit<T>(event: string, cuid: string | null, args?: T): Promise<boolean> {
         if (!is(event)) {
             throw new ArgumentError("Event name is incorrect");
         }
@@ -189,7 +189,7 @@ export class CuiEventExtBus implements ICuiEventBus {
      * @param {CuiContext} ctx - callback context with id
      * @param {CuiElement} cui - optional - cui element which event shall be attached to 
      */
-    on(name: string, callback: any, cui?: CuiElement): string | null {
+    on<T>(name: string, callback: CuiBusCallback<T>, cui?: CuiElement): string | null {
 
         if (!are(name, callback)) {
             throw new ArgumentError("Missing argument")
@@ -227,11 +227,11 @@ export class CuiEventExtBus implements ICuiEventBus {
     * @param {string} cuid - id of component which emits the event
     * @param {any[]} args  - event arguments
     */
-    async emit(event: string, cuid: string | null, ...args: any[]): Promise<boolean> {
+    async emit<T>(event: string, cuid: string | null, args?: T): Promise<boolean> {
         if (!is(event)) {
             throw new ArgumentError("Event name is incorrect");
         }
-        return this.get(event).emit(event, cuid, ...args);
+        return this.get(event).emit(event, cuid, args);
     }
 
     /**
@@ -302,7 +302,7 @@ export class CuiEventExtBus implements ICuiEventBus {
 export class CuiEventBusFactory {
     static get(setup?: ICuiEventBusQueueSetup[]): ICuiEventBus {
         //@ts-ignore - setup is underfined check is perfromed
-        return is(setup) ? new CuiEventExtBus(setup) : new CuiEventBus(new TaskedEventEmitHandler(new CuiCallbackExecutor));
+        return is(setup) ? new CuiEventExtBus(setup) : new CuiEventBus(CuiEventEmitHandlerFactory.get('tasked', new CuiCallbackExecutor()));
     }
 }
 

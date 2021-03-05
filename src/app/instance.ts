@@ -6,12 +6,12 @@ import { ICuiMutionObserver, CuiMutationObserver } from "../core/observers/mutat
 import { CuiUtils } from "../core/models/utils";
 import { CuiInstanceInitError } from "../core/models/errors";
 import { ElementManager } from "./managers/element";
-import { CollectionManager } from "./managers/collection";
 import { CuiPluginManager } from "./managers/plugins";
-import { addCuiArgument, createCuiElement, getMatchingComponents } from "../core/utils/api";
 import { CuiDevtoolFactory } from "../core/development/factory";
 import { ICuiDevelopmentTool } from "../core/development/interfaces";
-
+import { ICuiApiHandler } from "src/core/api/interfaces";
+import { CuiApiHandler } from "../core/api/handler";
+import { getMatchingComponents, createCuiElement, addCuiArgument } from "../core/api/functions";
 
 export class CuiInstance {
     #log: ICuiDevelopmentTool;
@@ -21,6 +21,7 @@ export class CuiInstance {
     #components: ICuiComponent[];
     #rootElement: HTMLElement;
     #mutatedAttributes: string[];
+    #api: ICuiApiHandler;
     constructor(setup: CuiSetupInit, plugins: ICuiPlugin[], components: ICuiComponent[]) {
         STATICS.prefix = setup.prefix;
         STATICS.logLevel = setup.logLevel;
@@ -33,6 +34,7 @@ export class CuiInstance {
         this.#rootElement = setup.root;
         this.#mutationObserver = undefined;
         this.#mutatedAttributes = [];
+        this.#api = new CuiApiHandler(this.#components, this.#utils);
     }
 
     async init(): Promise<CuiInstance> {
@@ -96,20 +98,6 @@ export class CuiInstance {
         return newElement
     }
 
-    collection(selector: string): CollectionManager | undefined {
-        const elements = this.all(selector);
-        if (!is(elements)) {
-            return undefined;
-        }
-        // @ts-ignore already checked
-        let manager = new CollectionManager(elements, this.#utils.interactions);
-        return manager;
-    }
-
-    select(selector: string): Element | null {
-        return document.querySelector(selector)
-    }
-
     all(selector: string): Element[] | undefined {
         const nodes: NodeListOf<Element> = document.querySelectorAll(selector);
         if (!is(nodes)) {
@@ -119,7 +107,7 @@ export class CuiInstance {
     }
 
     getUtils(): CuiUtils {
-        return this.#utils;
+        return this.#utils//;
     }
 
     on(event: string, callback: any, element?: CuiElement): string | null {
@@ -165,6 +153,10 @@ export class CuiInstance {
 
     getPlugin(name: string): ICuiPlugin | undefined {
         return this.#plugins.get(name);
+    }
+
+    api(): ICuiApiHandler {
+        return this.#api;
     }
 
 

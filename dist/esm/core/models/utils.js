@@ -18,7 +18,7 @@ import { CuiEventBusFactory } from "../bus/bus";
 import { are, getName, is, replacePrefix } from "../utils/functions";
 import { CLASSES } from "../utils/statics";
 import { CuiDocumentStyleAppender } from "../styles/appender";
-import { CuiInstanceColorHandler } from "../handlers/colors";
+//import { CuiInstanceColorHandler } from "../handlers/colors";
 import { CSSVariableError } from "./errors";
 export class CuiUtils {
     constructor(initialSetup, plugins) {
@@ -27,7 +27,7 @@ export class CuiUtils {
         this.interactions = CuiInteractionsFactory.get(initialSetup.interaction, this.onInteractionError.bind(this));
         // this.cache = new CuiCacheManager(this.setup.cacheSize);
         this.bus = CuiEventBusFactory.get(initialSetup.busSetup);
-        this.colors = new CuiInstanceColorHandler(this.interactions);
+        // this.colors = new CuiInstanceColorHandler(this.interactions);
         this.styleAppender = new CuiDocumentStyleAppender(this.interactions);
         __classPrivateFieldSet(this, _plugins, plugins !== null && plugins !== void 0 ? plugins : []);
     }
@@ -68,7 +68,9 @@ export class CuiUtils {
             throw new CSSVariableError("Property or value was not provided");
         }
         let prop = replacePrefix(name, this.setup.prefix);
-        document.documentElement.style.setProperty(prop, value);
+        this.interactions.mutate(() => {
+            document.documentElement.style.setProperty(prop, value);
+        }, null);
     }
     isPlugin(name) {
         return is(name) && __classPrivateFieldGet(this, _plugins).find(plugin => plugin === name);

@@ -3,48 +3,36 @@ import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers
 import { CuiSwipeAnimationEngine } from "../../core/animation/engine";
 import { ICuiMoveData } from "../../core/listeners/move";
 import { AriaAttributes } from "../../core/utils/aria";
-import { boolStringOrDefault, getIntOrDefault, getStringOrDefault, replacePrefix } from "../../core/utils/functions";
-import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
+import { replacePrefix } from "../../core/utils/functions";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { EVENTS, CLASSES } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 const BANNER_OPEN_ANIMATION: string = ".{prefix}-animation-fade-in";
 const BANNER_CLOSE_ANIMATION: string = ".{prefix}-animation-fade-out";
 
-export class CuiBannerArgs implements ICuiParsable, CuiInteractableArgs {
+export class CuiBannerArgs extends CuiAutoParseArgs implements CuiInteractableArgs {
     timeout: number;
-    swipe: boolean;
-
     openAct: string;
     closeAct: string;
     // Not in use
     escClose: boolean;
     keyClose: string;
 
-    #defTimeout: number;
-    #prefix: string;
-    constructor(prefix: string, timeout: number | undefined) {
-        this.#defTimeout = timeout ?? 300;
-        this.#prefix = prefix;
+    swipe: boolean;
 
+    constructor(prefix: string, timeout?: number) {
+        super();
         this.escClose = false;
         this.keyClose = "";
-        this.timeout = this.#defTimeout;
+        this.timeout = timeout ?? 300;
         this.swipe = false;
-        this.openAct = "";
-        this.closeAct = "";
-    }
-
-
-    parse(args: any) {
-        this.swipe = boolStringOrDefault(args.swipe, false);
-        this.escClose = false;
-        this.keyClose = "";
-        this.timeout = getIntOrDefault(args.timeout, this.#defTimeout);
-        this.openAct = getStringOrDefault(args.openAct, replacePrefix(BANNER_OPEN_ANIMATION, this.#prefix))
-        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(BANNER_CLOSE_ANIMATION, this.#prefix))
+        this.openAct = replacePrefix(BANNER_OPEN_ANIMATION, prefix);
+        this.closeAct = replacePrefix(BANNER_CLOSE_ANIMATION, prefix);
     }
 }
+
 
 export class CuiBanerComponent implements ICuiComponent {
     attribute: string;
@@ -85,11 +73,11 @@ export class CuiBannerHandler extends CuiInteractableHandler<CuiBannerArgs> {
     }
 
     onInit(): void {
-        //   this.#moveEventId = this.onEvent(EVENTS.GLOBAL_MOVE, this.onMove.bind(this));
         if (!this.isActive()) {
-            this.open();
+            this.helper.setClass(this.activeClassName, this.element);
         }
     }
+
     onUpdate(): void {
 
     }

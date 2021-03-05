@@ -1,4 +1,4 @@
-import { is, getName, createElementFromString, getRangeValue, joinAttributesForQuery, clone, are, getMatchingAttribute, getRangeValueOrDefault, getStyleValue, getOffsetTop, getOffsetLeft, parseJsonString, parseAttributeString, prepLogString, jsonify, isInRange, getIntOrDefault, isString, replacePrefix, parseAttribute, isStringTrue, boolStringOrDefault, getStringOrDefault, generateCUID, generateRandomString, getRandomInt, getMatchingAttributes, hasFunction, mapObject, mapObjectArray } from "../../src/core/utils/functions";
+import { is, getName, createElementFromString, getRangeValue, joinAttributesForQuery, clone, are, getMatchingAttribute, getRangeValueOrDefault, getStyleValue, getOffsetTop, getOffsetLeft, parseJsonString, parseAttributeString, prepLogString, jsonify, isInRange, getIntOrDefault, isString, replacePrefix, parseAttribute, isStringTrue, boolStringOrDefault, getStringOrDefault, generateCUID, generateRandomString, getRandomInt, hasFunction, mapObject, mapObjectArray } from "../../src/core/utils/functions";
 import { SampleTask } from "../helpers/models";
 
 /**
@@ -654,17 +654,18 @@ describe("Tests checking method [getRandomInt]", function () {
     })
 })
 
-describe("Tests checking method [getMatchingAttributes]", function () {
-    it("Normal case", function () {
-        let attrs = ['XXX', 'YYY']
-        let element = document.createElement('span');
-        element.setAttribute('XXX', "sss")
-        let matching: string[] = null;
-        matching = getMatchingAttributes(element, attrs);
-        expect(matching.length).toEqual(1);
-        expect(matching[0]).toEqual('XXX')
-    })
-})
+// Function removed
+// describe("Tests checking method [getMatchingAttributes]", function () {
+//     it("Normal case", function () {
+//         let attrs = ['XXX', 'YYY']
+//         let element = document.createElement('span');
+//         element.setAttribute('XXX', "sss")
+//         let matching: string[] = null;
+//         matching = getMatchingAttributes(element, attrs);
+//         expect(matching.length).toEqual(1);
+//         expect(matching[0]).toEqual('XXX')
+//     })
+// })
 
 describe("Tests checking method [hasFunction]", function () {
     it("Normal case", function () {

@@ -52,6 +52,11 @@ export class CuiConsoleDevelopementTool implements ICuiDevelopmentTool {
             console.error(e.stack)
     }
 
+    setId(id: string) {
+        if (id)
+            this.#cuid = id;
+    }
+
     private prepString(message: string, level: string, functionName?: string) {
         return `[${new Date().toLocaleString()}][${level}][${this.#name}][${functionName ?? '-'}][${this.#cuid}][${message}]`
     }

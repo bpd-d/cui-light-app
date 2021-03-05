@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -12,23 +21,18 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _currentIcon;
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { ICONS } from "../../core/utils/statics";
-import { is, isString, getStringOrDefault, getIntOrDefault } from "../../core/utils/functions";
+import { is } from "../../core/utils/functions";
 import { IconBuilder } from "../../core/builders/icon";
-export class CuiIconArgs {
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export class CuiIconArgs extends CuiAutoParseArgs {
     constructor() {
+        super({
+            main: 'icon'
+        });
         this.icon = "";
         this.scale = 1;
-    }
-    parse(val) {
-        if (isString(val)) {
-            this.icon = getStringOrDefault(val, "");
-        }
-        else {
-            this.icon = getStringOrDefault(val.icon, "");
-            this.scale = getIntOrDefault(val.scale, 1);
-        }
     }
 }
 export class CuiIconComponent {
@@ -42,46 +46,47 @@ export class CuiIconComponent {
         return new CuiIconHandler(element, utils, this.attribute);
     }
 }
-export class CuiIconHandler extends CuiHandler {
+export class CuiIconHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiIconHandler", element, attribute, new CuiIconArgs(), utils);
         _currentIcon.set(this, void 0);
         __classPrivateFieldSet(this, _currentIcon, null);
     }
-    onInit() {
-        if (this.isLocked) {
-            return;
-        }
-        if (__classPrivateFieldGet(this, _currentIcon) !== null) {
-            this._log.debug("Icon already initialized");
-            return;
-        }
-        this.isLocked = true;
-        __classPrivateFieldSet(this, _currentIcon, this.args.icon);
-        this.addIcon(this.args.icon);
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (__classPrivateFieldGet(this, _currentIcon) !== null) {
+                this._log.debug("Icon already initialized");
+                return false;
+            }
+            __classPrivateFieldSet(this, _currentIcon, this.args.icon);
+            this.addIcon(this.args.icon);
+            return true;
+        });
     }
-    onUpdate() {
-        if (this.isLocked) {
-            return;
-        }
-        if (this.args.icon === __classPrivateFieldGet(this, _currentIcon)) {
-            return;
-        }
-        __classPrivateFieldSet(this, _currentIcon, this.args.icon);
-        this.addIcon(this.args.icon);
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.args.icon === __classPrivateFieldGet(this, _currentIcon)) {
+                return false;
+            }
+            __classPrivateFieldSet(this, _currentIcon, this.args.icon);
+            this.addIcon(this.args.icon);
+            return true;
+        });
     }
-    onDestroy() {
-        const svg = this.element.querySelector('svg');
-        if (is(svg)) {
-            //@ts-ignore checked
-            svg.remove();
-        }
-        __classPrivateFieldSet(this, _currentIcon, null);
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const svg = this.element.querySelector('svg');
+            if (is(svg)) {
+                //@ts-ignore checked
+                svg.remove();
+            }
+            __classPrivateFieldSet(this, _currentIcon, null);
+            return true;
+        });
     }
     addIcon(icon) {
         const iconStr = icon ? ICONS[icon] : null;
         if (!iconStr) {
-            this.isLocked = false;
             return;
         }
         const iconSvg = new IconBuilder(iconStr).setScale(this.args.scale).build();
@@ -92,18 +97,15 @@ export class CuiIconHandler extends CuiHandler {
         }
         if (this.element.childNodes.length > 0) {
             this.mutate(this.insertBefore, iconSvg);
+            return;
         }
-        else {
-            this.mutate(this.appendChild, iconSvg);
-        }
+        this.mutate(this.appendChild, iconSvg);
     }
     insertBefore(iconElement) {
         this.element.insertBefore(iconElement, this.element.firstChild);
-        this.isLocked = false;
     }
     appendChild(iconElement) {
         this.element.appendChild(iconElement);
-        this.isLocked = false;
     }
 }
 _currentIcon = new WeakMap();

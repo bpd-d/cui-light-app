@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -12,24 +21,15 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _factor, _full, _path, _attr, _progressEventId;
-import { CuiHandler } from "../../core/handlers/base";
-import { is, getRangeValue, isString, getIntOrDefault } from "../../core/utils/functions";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { is, getRangeValue } from "../../core/utils/functions";
 import { ICONS, EVENTS } from "../../core/utils/statics";
 import { IconBuilder } from "../../core/builders/icon";
-export class CuiCircleArgs {
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export class CuiCircleArgs extends CuiAutoParseArgs {
     constructor() {
+        super();
         this.progress = 0;
-    }
-    parse(val) {
-        if (!is(val)) {
-            this.progress = 0;
-        }
-        else if (isString(val)) {
-            this.progress = getIntOrDefault(val, 0);
-        }
-        else {
-            this.progress = getIntOrDefault(val.progress, 0);
-        }
     }
 }
 export class CuiCircleComponent {
@@ -44,7 +44,7 @@ export class CuiCircleComponent {
         return new CuiCircleHandler(element, utils, this.attribute);
     }
 }
-export class CuiCircleHandler extends CuiHandler {
+export class CuiCircleHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiCircleHandler", element, attribute, new CuiCircleArgs(), utils);
         _factor.set(this, void 0);
@@ -57,34 +57,43 @@ export class CuiCircleHandler extends CuiHandler {
         __classPrivateFieldSet(this, _attr, attribute);
         __classPrivateFieldSet(this, _progressEventId, null);
     }
-    onInit() {
-        const iconSvg = new IconBuilder(ICONS['special_circle_progress']).build();
-        if (!is(iconSvg)) {
-            this.logError("SVG circle was not created", "onInit");
-            return;
-        }
-        const svg = this.element.querySelector('svg');
-        if (is(svg)) {
-            //@ts-ignore svg checked
-            svg.remove();
-        }
-        //@ts-ignore iconSvg checked
-        this.element.appendChild(iconSvg);
-        __classPrivateFieldSet(this, _path, this.element.querySelector('.circle-progress-path'));
-        __classPrivateFieldSet(this, _full, __classPrivateFieldGet(this, _path).getTotalLength());
-        __classPrivateFieldSet(this, _factor, __classPrivateFieldGet(this, _full) / 100);
-        this.fetch(this.readStyle);
-        __classPrivateFieldSet(this, _progressEventId, this.onEvent(EVENTS.PROGRESS_CHANGE, this.onSetProgress.bind(this)));
-    }
-    onUpdate() {
-        this.fetch(this.readStyle);
-        this.emitEvent(EVENTS.PROGRESS_CHANGED, {
-            timestamp: Date.now(),
-            progress: this.args.progress
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const iconSvg = new IconBuilder(ICONS['special_circle_progress']).build();
+            if (!is(iconSvg)) {
+                this.logError("SVG circle was not created", "onInit");
+                return false;
+            }
+            const svg = this.element.querySelector('svg');
+            if (is(svg)) {
+                //@ts-ignore svg checked
+                svg.remove();
+            }
+            //@ts-ignore iconSvg checked
+            this.element.appendChild(iconSvg);
+            __classPrivateFieldSet(this, _path, this.element.querySelector('.circle-progress-path'));
+            __classPrivateFieldSet(this, _full, __classPrivateFieldGet(this, _path).getTotalLength());
+            __classPrivateFieldSet(this, _factor, __classPrivateFieldGet(this, _full) / 100);
+            this.fetch(this.readStyle);
+            __classPrivateFieldSet(this, _progressEventId, this.onEvent(EVENTS.PROGRESS_CHANGE, this.onSetProgress.bind(this)));
+            return true;
         });
     }
-    onDestroy() {
-        this.detachEvent(EVENTS.PROGRESS_CHANGE, __classPrivateFieldGet(this, _progressEventId));
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.fetch(this.readStyle);
+            this.emitEvent(EVENTS.PROGRESS_CHANGED, {
+                timestamp: Date.now(),
+                progress: this.args.progress
+            });
+            return true;
+        });
+    }
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.detachEvent(EVENTS.PROGRESS_CHANGE, __classPrivateFieldGet(this, _progressEventId));
+            return true;
+        });
     }
     onSetProgress(val) {
         if (is(val)) {

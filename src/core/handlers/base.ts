@@ -1,4 +1,4 @@
-import { IUIInteractionProvider, CuiContext, ICuiComponentHandler, ICuiParsable, ICuiOpenable, ICuiClosable, KeyDownEvent } from "../models/interfaces";
+import { IUIInteractionProvider, CuiContext, ICuiComponentHandler, ICuiParsable, ICuiOpenable, ICuiClosable } from "../models/interfaces";
 import { CuiUtils } from "../models/utils";
 import { ICuiComponentMutationObserver, CuiComponentMutationHandler } from "../observers/mutations";
 import { AriaAttributes } from "../utils/aria";
@@ -8,6 +8,7 @@ import { is, getActiveClass, clone } from "../utils/functions";
 import { EVENTS } from "../utils/statics";
 import { ICuiDevelopmentTool } from "../development/interfaces";
 import { CuiDevtoolFactory } from "../development/factory";
+import { KeyDownEvent } from "../models/events";
 
 export interface CuiChildMutation {
     removed: Node[];
@@ -108,13 +109,13 @@ export class CuiComponentBase implements CuiContext {
      * @param event Event name
      * @param data Data to emit
      */
-    emitEvent(event: string, ...data: any[]) {
+    emitEvent<T>(event: string, data: T) {
         if (!this.#emittedEvents.includes(event))
             this.#emittedEvents.push(event);
-        this.utils.bus.emit(event, this.cuid, ...data)
+        this.utils.bus.emit(event, this.cuid, data)
     }
 
-    onEvent(event: string, callback: any): string | null {
+    onEvent<T>(event: string, callback: (t: T) => void): string | null {
         return this.utils.bus.on(event, callback, this.element as any)
     }
 
@@ -176,7 +177,6 @@ export class CuiComponentBase implements CuiContext {
             this._log.exception(error, functionName)
         }
     }
-
 }
 
 export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponentBase implements ICuiComponentHandler {
@@ -194,75 +194,74 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
         this.#attribute = attribute;
     }
 
-    handle(args: any): void {
-        this.registerInDebug();
+    async handle(args: any): Promise<boolean> {
+
         if (this.isInitialized) {
-            this.logWarning("Trying to initialize component again", 'handle');
-            return;
+            this.logWarning("Trying to initialize handler again", 'handle');
+            return false;
         }
+        if (this.isLocked) {
+            this.logWarning("Handler is locked", 'handle');
+            return false;
+        }
+        this.isLocked = true;
+        this.registerInDebug();
         this.args.parse(args);
         if (!this.element.classList.contains(this.#attribute)) {
-            this.element.classList.add(this.#attribute);
+            this.helper.setClassesAs(this.element, this.#attribute)
         }
 
         this.logInfo("Init", 'handle');
-        this.onHandle();
-        this.isInitialized = true;
+        return this.performLifecycleOp("onHandle", this.onHandle(), () => {
+            this.isLocked = false; this.isInitialized = true;
+        });
     }
 
-    refresh(args: any): void {
+    async refresh(args: any): Promise<boolean> {
         this.logInfo("Update", 'refresh')
         if (!this.isInitialized) {
             this.logError("Cannot update not initialized component", 'refresh');
-            return;
+            return false;
         }
+        if (!this.checkLock()) {
+            return false;
+        }
+        this.isLocked = true;
+
         this.prevArgs = clone(this.args);
         this.args.parse(args);
         this._log.debug("Component update", 'refresh');
-        this.onRefresh();
+        return this.performLifecycleOp("onRefresh", this.onRefresh(), () => {
+            this.isLocked = false;
+        });
     }
 
-    destroy(): void {
+    async destroy(): Promise<boolean> {
         this.logInfo("Destroy", "destroy");
-        this.onRemove();
-        this.detachEmiitedEvents();
-        this.removeFromDebug();
-        this.isInitialized = false;
-    }
-
-    // Abstract
-    abstract onHandle(): void;
-    abstract onRefresh(): void;
-    abstract onRemove(): void;
-}
-
-
-export abstract class CuiHandler<T extends ICuiParsable> extends CuiHandlerBase<T> {
-    constructor(componentName: string, element: HTMLElement, attribute: string, args: T, utils: CuiUtils) {
-        super(componentName, element, attribute, args, utils);
-    }
-
-    onHandle() {
-        this.onInit();
-    }
-
-
-    onRefresh() {
-        this.onUpdate();
-    }
-
-    onRemove() {
-        this.onDestroy();
+        if (!this.isInitialized) {
+            this.logError("Cannot update not initialized component", 'destroy');
+            return false;
+        }
+        if (!this.checkLock()) {
+            return false;
+        }
+        this.isLocked = true;
+        return this.performLifecycleOp("onRemove", this.onRemove(), () => {
+            this.detachEmiitedEvents();
+            this.removeFromDebug();
+            this.isInitialized = false;
+            this.isLocked = false;
+        });
     }
 
     /**
-     * Helper created for elements that animate - perfroms an action *add*, after timeout it performs *remove*.
-     * 
-     * @param action - action to perfrom
-     * @param timeout - timeout specified for action removal
-     * @param onFinish - callback to be performed after action is finished after removal
-     * @param callback - optional - callback to be executed in mutation on action removal, e.g. additional DOM changes on element
-     */
+    * Helper created for elements that animate - perfroms an action *add*, after timeout it performs *remove*.
+    * 
+    * @param action - action to perfrom
+    * @param timeout - timeout specified for action removal
+    * @param onFinish - callback to be performed after action is finished after removal
+    * @param callback - optional - callback to be executed in mutation on action removal, e.g. additional DOM changes on element
+    */
     async performAction(actions: ICuiComponentAction[], timeout: number, onFinish: () => void, callback?: () => void): Promise<boolean> {
         if (await this.actionsHelper.performActions(this.element, actions, timeout, callback)) {
             onFinish();
@@ -271,12 +270,33 @@ export abstract class CuiHandler<T extends ICuiParsable> extends CuiHandlerBase<
         return false;
     }
 
-    // Abstract
-    abstract onInit(): void;
-    abstract onUpdate(): void;
-    abstract onDestroy(): void;
+    private checkLock(): boolean {
+        if (this.isLocked) {
+            this.logWarning("Handler is locked", 'handle');
+            return false;
+        }
+        return true;
+    }
 
+
+    private async performLifecycleOp(method: string, operation: Promise<boolean>, onFinish: () => void): Promise<boolean> {
+        let result = false;
+        try {
+            result = await operation;
+        } catch (e) {
+            this.logError("An exception occured in" + method, method, e)
+        } finally {
+            onFinish();
+        }
+        return result
+    }
+    // Abstract
+    abstract onHandle(): Promise<boolean>;
+    abstract onRefresh(): Promise<boolean>;
+    abstract onRemove(): Promise<boolean>;
 }
+
+
 export interface CuiInteractableArgs {
     timeout: number;
     openAct: string;
@@ -298,20 +318,19 @@ export abstract class CuiInteractableHandler<T extends ICuiParsable & CuiInterac
         this.#keyCloseEventId = null;
         this.#closeAct = [];
         this.#openAct = [];
-
     }
 
-
-    onHandle() {
+    async onHandle(): Promise<boolean> {
         this.#openEventId = this.onEvent(EVENTS.OPEN, this.openFromEvent.bind(this))
         this.#closeEventId = this.onEvent(EVENTS.CLOSE, this.closeFromEvent.bind(this))
         this.#openAct = CuiActionsListFactory.get(this.args.openAct)
         this.#closeAct = CuiActionsListFactory.get(this.args.closeAct)
         this.onInit();
+        return true;
     }
 
 
-    onRefresh() {
+    async onRefresh(): Promise<boolean> {
         if (!this.prevArgs || this.args.openAct !== this.prevArgs.openAct) {
             this.#openAct = CuiActionsListFactory.get(this.args.openAct)
         }
@@ -319,12 +338,14 @@ export abstract class CuiInteractableHandler<T extends ICuiParsable & CuiInterac
             this.#closeAct = CuiActionsListFactory.get(this.args.closeAct)
         }
         this.onUpdate();
+        return true;
     }
 
-    onRemove() {
+    async onRemove(): Promise<boolean> {
         this.detachEvent(EVENTS.CLOSE, this.#closeEventId);
-        this.detachEvent(EVENTS.OPEN, this.#openEventId)
+        this.detachEvent(EVENTS.OPEN, this.#openEventId);
         this.onDestroy();
+        return true;
     }
 
     async open(args?: any): Promise<boolean> {
@@ -427,21 +448,24 @@ export abstract class CuiMutableHandler<T extends ICuiParsable> extends CuiHandl
         this.#mutionHandler.onMutation(this.mutation.bind(this))
     }
 
-    onHandle() {
+    async onHandle(): Promise<boolean> {
         this.onInit();
         this.#mutionHandler.observe();
+        return true;
     }
 
 
-    onRefresh() {
+    async onRefresh(): Promise<boolean> {
         this.#mutionHandler.unobserve();
         this.onUpdate();
         this.#mutionHandler.observe();
+        return true;
     }
 
-    onRemove() {
+    async onRemove(): Promise<boolean> {
         this.#mutionHandler.unobserve();
         this.onDestroy();
+        return true;
     }
 
     /**
@@ -451,7 +475,11 @@ export abstract class CuiMutableHandler<T extends ICuiParsable> extends CuiHandl
      */
     mutation(records: MutationRecord[]): void {
         this._log.debug("Element mutation", "mutation")
-        this.onMutation(records.reduce<CuiChildMutation>((result: CuiChildMutation, item: MutationRecord) => {
+        this.onMutation(this.prepareRecords(records));
+    }
+
+    private prepareRecords(records: MutationRecord[]): CuiChildMutation {
+        return records.reduce<CuiChildMutation>((result: CuiChildMutation, item: MutationRecord) => {
             if (item.type !== "childList") {
                 return result;
             }
@@ -465,7 +493,7 @@ export abstract class CuiMutableHandler<T extends ICuiParsable> extends CuiHandl
         }, {
             added: [],
             removed: []
-        }));
+        })
     }
 
     abstract onMutation(record: CuiChildMutation): void;

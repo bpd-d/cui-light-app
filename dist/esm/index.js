@@ -1,4 +1,4 @@
 import { CuiInit } from './app/init';
-export const CUI_LIGHT_VERSION = "0.3.9";
+export const CUI_LIGHT_VERSION = "0.4.1";
 export { CuiInstance } from './app/instance';
 window.cuiInit = new CuiInit();

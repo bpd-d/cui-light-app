@@ -1,26 +1,21 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { ICONS } from "../../core/utils/statics";
-import { is, isString, getStringOrDefault, getIntOrDefault } from "../../core/utils/functions";
+import { is } from "../../core/utils/functions";
 import { IconBuilder } from "../../core/builders/icon";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
-export class CuiIconArgs implements ICuiParsable {
+export class CuiIconArgs extends CuiAutoParseArgs {
     icon: string;
     scale: number;
 
     constructor() {
+        super({
+            main: 'icon'
+        });
         this.icon = "";
         this.scale = 1;
-    }
-    parse(val: any) {
-        if (isString(val)) {
-            this.icon = getStringOrDefault(val, "");
-        } else {
-            this.icon = getStringOrDefault(val.icon, "");
-            this.scale = getIntOrDefault(val.scale, 1);
-        }
-
     }
 }
 
@@ -41,54 +36,47 @@ export class CuiIconComponent implements ICuiComponent {
 
 
 
-export class CuiIconHandler extends CuiHandler<CuiIconArgs> {
+export class CuiIconHandler extends CuiHandlerBase<CuiIconArgs> {
 
     #currentIcon: string | null;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
         super("CuiIconHandler", element, attribute, new CuiIconArgs(), utils);
         this.#currentIcon = null;
-
     }
 
-    onInit(): void {
-        if (this.isLocked) {
-            return;
-        }
+    async onHandle(): Promise<boolean> {
         if (this.#currentIcon !== null) {
             this._log.debug("Icon already initialized")
-            return;
+            return false;
         }
-        this.isLocked = true;
         this.#currentIcon = this.args.icon;
         this.addIcon(this.args.icon)
 
+        return true;
     }
 
-    onUpdate(): void {
-        if (this.isLocked) {
-            return;
-        }
+    async onRefresh(): Promise<boolean> {
         if (this.args.icon === this.#currentIcon) {
-            return;
+            return false;
         }
         this.#currentIcon = this.args.icon;
         this.addIcon(this.args.icon);
-
+        return true;
     }
 
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         const svg = this.element.querySelector('svg')
         if (is(svg)) {
             //@ts-ignore checked
             svg.remove();
         }
         this.#currentIcon = null;
+        return true;
     }
 
     private addIcon(icon: string) {
         const iconStr = icon ? ICONS[icon] : null;
         if (!iconStr) {
-            this.isLocked = false;
             return;
         }
         const iconSvg = new IconBuilder(iconStr).setScale(this.args.scale).build();
@@ -97,22 +85,19 @@ export class CuiIconHandler extends CuiHandler<CuiIconArgs> {
             //@ts-ignore checked
             svg.remove();
         }
-
         if (this.element.childNodes.length > 0) {
             this.mutate(this.insertBefore, iconSvg)
-        } else {
-            this.mutate(this.appendChild, iconSvg)
+            return;
         }
+        this.mutate(this.appendChild, iconSvg)
 
     }
 
     private insertBefore(iconElement: Element) {
         this.element.insertBefore(iconElement, this.element.firstChild);
-        this.isLocked = false;
     }
 
     private appendChild(iconElement: Element) {
         this.element.appendChild(iconElement);
-        this.isLocked = false;
     }
 }

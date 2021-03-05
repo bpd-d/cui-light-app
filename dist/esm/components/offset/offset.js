@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -12,28 +21,22 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _listener, _target, _utils, _matched, _action, _prevX, _prevY, _threshold, _root, _modeHandler;
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiScrollListener } from "../../core/listeners/scroll";
 import { CuiActionsListFactory } from "../../core/utils/actions";
-import { are, getIntOrDefault, getRangeValue, getStringOrDefault, is, isStringTrue } from "../../core/utils/functions";
+import { are, getRangeValue, is } from "../../core/utils/functions";
 import { CuiOffsetModeFactory } from "./modes";
 import { EVENTS } from "../../core/utils/statics";
-export class CuiOffsetArgs {
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export class CuiOffsetArgs extends CuiAutoParseArgs {
     constructor() {
-        this.offsetX = 0;
-        this.offsetY = 0;
+        super();
+        this.offsetX = -1;
+        this.offsetY = -1;
         this.target = "";
         this.root = false;
         this.action = "";
         this.mode = 'static';
-    }
-    parse(args) {
-        this.target = args.target;
-        this.action = args.action;
-        this.offsetX = getIntOrDefault(args.offsetX, -1);
-        this.offsetY = getIntOrDefault(args.offsetY, -1);
-        this.root = isStringTrue(args.root);
-        this.mode = getStringOrDefault(args.mode, 'static');
     }
 }
 export class CuiOffsetComponent {
@@ -47,7 +50,7 @@ export class CuiOffsetComponent {
         return new CuiOffsetHandler(element, utils, this.attribute);
     }
 }
-export class CuiOffsetHandler extends CuiHandler {
+export class CuiOffsetHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiOffsetHandler", element, attribute, new CuiOffsetArgs(), utils);
         _listener.set(this, void 0);
@@ -72,18 +75,27 @@ export class CuiOffsetHandler extends CuiHandler {
         __classPrivateFieldSet(this, _modeHandler, null);
         __classPrivateFieldSet(this, _listener, undefined);
     }
-    onInit() {
-        this.parseAttribute();
-        __classPrivateFieldSet(this, _listener, new CuiScrollListener(this.args.root ? window : this.element, this.utils.setup.scrollThreshold));
-        __classPrivateFieldGet(this, _listener).setCallback(this.onScroll.bind(this));
-        __classPrivateFieldGet(this, _listener).attach();
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.parseAttribute();
+            __classPrivateFieldSet(this, _listener, new CuiScrollListener(this.args.root ? window : this.element, this.utils.setup.scrollThreshold));
+            __classPrivateFieldGet(this, _listener).setCallback(this.onScroll.bind(this));
+            __classPrivateFieldGet(this, _listener).attach();
+            return true;
+        });
     }
-    onUpdate() {
-        this.parseAttribute();
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.parseAttribute();
+            return true;
+        });
     }
-    onDestroy() {
-        if (__classPrivateFieldGet(this, _listener))
-            __classPrivateFieldGet(this, _listener).detach();
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (__classPrivateFieldGet(this, _listener))
+                __classPrivateFieldGet(this, _listener).detach();
+            return true;
+        });
     }
     onScroll(ev) {
         this.checkAndPerformActions(ev);

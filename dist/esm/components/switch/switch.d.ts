@@ -1,8 +1,8 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable, ICuiSwitchable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
-export declare class CuiSwitchArgs implements ICuiParsable {
-    #private;
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export declare class CuiSwitchArgs extends CuiAutoParseArgs implements ICuiParsable {
     targets: string;
     in: string;
     out: string;
@@ -13,7 +13,6 @@ export declare class CuiSwitchArgs implements ICuiParsable {
     height: 'auto' | string;
     loop: boolean;
     constructor(prefix: string, timeout?: number);
-    parse(args: any): void;
 }
 export declare class CuiSwitchComponent implements ICuiComponent {
     attribute: string;

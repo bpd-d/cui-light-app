@@ -1,14 +1,16 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiOpenable, ICuiClosable, CuiElement, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler, ICuiOpenable, ICuiClosable, CuiElement } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
-import { is, replacePrefix, isStringTrue, getStringOrDefault, getIntOrDefault } from "../../core/utils/functions";
-import { EVENTS, SCOPE_SELECTOR } from "../../core/utils/statics";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { is, joinWithScopeSelector, replacePrefix } from "../../core/utils/functions";
+import { EVENTS } from "../../core/utils/statics";
 import { AriaAttributes } from "../../core/utils/aria";
 import { CuiHoverListener, CuiHoverEvent } from "../../core/listeners/hover";
 import { ICuiPositionCalculator } from "../../core/position/interfaces";
 import { CuiBasePositionCalculator } from "../../core/position/calculator";
 import { CuiTaskRunner, ICuiTask } from "../../core/utils/task";
 import { ICuiComponentAction, CuiActionsListFactory } from "../../core/utils/actions";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { GlobalClickEvent } from "src/core/models/events";
 
 const bodyClass = '{prefix}-drop-open';
 const DROP_POSITION = "{prefix}-drop-position-";
@@ -21,7 +23,7 @@ export interface CuiDropEvent {
     timestamp: number;
 }
 
-export class CuiDropArgs implements ICuiParsable {
+export class CuiDropArgs extends CuiAutoParseArgs {
     mode: "click" | "hover";
     trigger: string;
     prevent: boolean;
@@ -32,31 +34,21 @@ export class CuiDropArgs implements ICuiParsable {
     timeout: number;
     margin: number;
 
-    #defOpenAct: string
     constructor(prefix: string) {
-        this.#defOpenAct = replacePrefix(DROP_DEFAULT_ANIMATION_CLS, prefix);
+        super({
+            props: {
+                'trigger': { corrector: joinWithScopeSelector }
+            }
+        });
         this.mode = "click";
-        this.trigger = DROP_DEFAULT_TRIGGER;
+        this.trigger = joinWithScopeSelector(DROP_DEFAULT_TRIGGER);
         this.autoClose = false;
         this.outClose = false;
         this.prevent = false;
         this.pos = "";
-        this.action = this.#defOpenAct;
+        this.action = replacePrefix(DROP_DEFAULT_ANIMATION_CLS, prefix);
         this.timeout = 3000;
         this.margin = 8;
-    }
-
-
-    parse(args: any) {
-        this.mode = getStringOrDefault(args.mode, 'click').toLowerCase();
-        this.trigger = SCOPE_SELECTOR + getStringOrDefault(args.trigger, DROP_DEFAULT_TRIGGER);
-        this.prevent = isStringTrue(args.prevent);
-        this.autoClose = isStringTrue(args.autoClose);
-        this.outClose = args.outClose ? isStringTrue(args.outClose) : true;
-        this.pos = getStringOrDefault(args.pos, "");
-        this.action = getStringOrDefault(args.action, this.#defOpenAct);
-        this.timeout = getIntOrDefault(args.timeout, 3000);
-        this.margin = getIntOrDefault(args.margin, 8);
     }
 }
 
@@ -77,7 +69,7 @@ export class CuiDropComponenet implements ICuiComponent {
     }
 }
 
-export class CuiDropHandler extends CuiHandler<CuiDropArgs> implements ICuiOpenable, ICuiClosable {
+export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiOpenable, ICuiClosable {
     #prefix: string;
     #bodyClass: string;
     #attribute: string;
@@ -116,7 +108,7 @@ export class CuiDropHandler extends CuiHandler<CuiDropArgs> implements ICuiOpena
         }
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         this.#trigger = this.acquireTrigger();
         this.#triggerHoverListener = new CuiHoverListener(this.#trigger);
         this.setTriggerEvent();
@@ -130,10 +122,9 @@ export class CuiDropHandler extends CuiHandler<CuiDropArgs> implements ICuiOpena
             AriaAttributes.setAria(this.element, 'aria-dropdown', "");
         })
 
-        this._log.debug("Initialized", "handle")
+        return true;
     }
-
-    onUpdate(): void {
+    async onRefresh(): Promise<boolean> {
         if (this.#triggerHoverListener && this.#triggerHoverListener.isAttached()) {
             this.#triggerHoverListener.detach();
         } else if (this.prevArgs && this.prevArgs.mode === 'click') {
@@ -148,11 +139,12 @@ export class CuiDropHandler extends CuiHandler<CuiDropArgs> implements ICuiOpena
         this.#positionCalculator.setMargin(this.args.margin);
         this.#actions = CuiActionsListFactory.get(this.args.action);
         this.#autoTask.setTimeout(this.args.timeout);
+        return true;
     }
-
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.detachEvent(EVENTS.OPEN, this.#openEventId);
         this.detachEvent(EVENTS.CLOSE, this.#closeEventId);
+        return true;
     }
 
     /**
@@ -241,8 +233,8 @@ export class CuiDropHandler extends CuiHandler<CuiDropArgs> implements ICuiOpena
      * Event invoked when window is clicked
      * @param ev 
      */
-    private onWindowClick(ev: MouseEvent) {
-        if (!this.element.contains((ev.target as Node))) {
+    private onWindowClick(ev: GlobalClickEvent) {
+        if (!this.element.contains((ev.ev.target as Node))) {
             this.close();
         }
     }

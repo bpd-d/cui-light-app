@@ -1,17 +1,16 @@
 import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
 import { ICuiMoveData } from "../../core/listeners/move";
-import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-export declare class CuiBannerArgs implements ICuiParsable, CuiInteractableArgs {
-    #private;
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export declare class CuiBannerArgs extends CuiAutoParseArgs implements CuiInteractableArgs {
     timeout: number;
-    swipe: boolean;
     openAct: string;
     closeAct: string;
     escClose: boolean;
     keyClose: string;
-    constructor(prefix: string, timeout: number | undefined);
-    parse(args: any): void;
+    swipe: boolean;
+    constructor(prefix: string, timeout?: number);
 }
 export declare class CuiBanerComponent implements ICuiComponent {
     #private;

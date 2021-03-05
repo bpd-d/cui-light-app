@@ -1,24 +1,17 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { ICuiComponentAction, CuiActionsListFactory } from "../../core/utils/actions";
-import { getRangeValueOrDefault, getStringOrDefault, isStringTrue, getIntOrDefault } from "../../core/utils/functions";
-import { EVENTS, SCOPE_SELECTOR } from "../../core/utils/statics";
+import { getRangeValueOrDefault, getEnumOrDefault, joinWithScopeSelector } from "../../core/utils/functions";
+import { EVENTS } from "../../core/utils/statics";
 import { CuiIntersectionListener } from "../../core/intersection/intersection";
 import { CuiIntersectionResult } from "../../core/intersection/interfaces";
 import { CuiElementBoxFactory, CuiElementBoxType, ICuiElementBox } from "../../core/models/elements";
 import { CuiScrollSpyModeHandlerFactory, CuiScrollspyUpdateResult, ICuiScrollspyModeHandler } from "./mode";
+import { CuiScrollspyScrollEvent } from "../../core/models/events";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 const DEFAULT_SELECTOR = "> *";
-
-export interface CuiScrollspyScrollEvent {
-    top: number;
-    left: number;
-    scrolling: boolean;
-    initial: boolean;
-    source: string;
-    timestamp: number;
-}
 
 export interface CuiScrollspyTargetChangeEvent {
     intersecting: HTMLElement[];
@@ -35,7 +28,7 @@ export interface CuiScrollSpyAttribute {
 }
 
 
-export class CuiScrollSpyArgs {
+export class CuiScrollSpyArgs extends CuiAutoParseArgs {
     selector: string; // Child selector
     action: string; // Action to be performed on intersecting elements
     link: string; // Link selector
@@ -46,24 +39,21 @@ export class CuiScrollSpyArgs {
     threshold: number; // Threshold value (in px) for scroll listener
 
     constructor() {
+        super({
+            props: {
+                "selector": { corrector: joinWithScopeSelector },
+                "ratio": { corrector: (value: any) => getRangeValueOrDefault(value, 0, 1, 0) },
+                'mode': { corrector: (value: string) => getEnumOrDefault(value, 'single', "multi") }
+            }
+        });
         this.ratio = 0;
         this.mode = "single";
         this.threshold = -1;
-        this.selector = "";
+        this.selector = joinWithScopeSelector(DEFAULT_SELECTOR);
         this.action = "";
         this.isRoot = false;
         this.link = "";
         this.linkAction = "";
-    }
-    parse(args: any) {
-        this.selector = `${SCOPE_SELECTOR}${args.selector ?? DEFAULT_SELECTOR}`;
-        this.action = getStringOrDefault(args.action, "");
-        this.link = getStringOrDefault(args.link, "");
-        this.linkAction = getStringOrDefault(args.linkAction, "");
-        this.ratio = getRangeValueOrDefault(parseFloat(args.ratio), 0, 1, 0);
-        this.isRoot = isStringTrue(args.isRoot);
-        this.mode = args?.mode === 'multi' ? "multi" : "single";
-        this.threshold = getIntOrDefault(args.threshold, -1);
     }
 }
 export class CuiScrollspyComponent implements ICuiComponent {
@@ -81,7 +71,7 @@ export class CuiScrollspyComponent implements ICuiComponent {
     }
 }
 
-export class CuiScrollspyHandler extends CuiHandler<CuiScrollSpyArgs> {
+export class CuiScrollspyHandler extends CuiHandlerBase<CuiScrollSpyArgs> {
     #listener: CuiIntersectionListener;
     #links: HTMLElement[];
     #actions: ICuiComponentAction[];
@@ -101,18 +91,19 @@ export class CuiScrollspyHandler extends CuiHandler<CuiScrollSpyArgs> {
         this.#modeHandler = undefined;
     }
 
-    onInit(): void {
-        this.parseAttribute();
+    async onHandle(): Promise<boolean> {
+        this.init();
         this.#listener.setCallback(this.onIntersection.bind(this));
         this.#listener.attach();
+        return true;
     }
-
-    onUpdate(): void {
-        this.updateAttributes();
+    async onRefresh(): Promise<boolean> {
+        this.update();
+        return true;
     }
-
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.#listener.detach();
+        return true;
     }
 
     private onIntersection(ev: CuiIntersectionResult): void {
@@ -131,17 +122,18 @@ export class CuiScrollspyHandler extends CuiHandler<CuiScrollSpyArgs> {
                 })
             }
         })
-        this.emitEvent(EVENTS.ON_SCROLL, {
+        this.emitEvent<CuiScrollspyScrollEvent>(EVENTS.ON_SCROLL, {
             top: ev.top,
             left: ev.left,
             scrolling: ev.scrolling,
             initial: ev.initial,
             source: ev.source,
             timestamp: timestamp,
+            name: EVENTS.ON_SCROLL
         })
     }
 
-    private parseAttribute() {
+    private init() {
         this.#root = this.args.isRoot ? window : this.element;
         this.#rootBox = CuiElementBoxFactory.get(this.#root);
         let targets = this.args.selector ? this.#rootBox.queryAll(this.args.selector) : [];
@@ -154,7 +146,7 @@ export class CuiScrollspyHandler extends CuiHandler<CuiScrollSpyArgs> {
 
     }
 
-    private updateAttributes() {
+    private update() {
         if (this.prevArgs && this.args.isRoot !== this.prevArgs.isRoot) {
             this.#root = this.args.isRoot ? window : this.element;
             this.#rootBox = CuiElementBoxFactory.get(this.#root);

@@ -6,10 +6,12 @@ export class CuiDictionary<T> implements ICuiDictionary<T> {
 
     #keys: string[];
     #values: T[];
+    #lock: boolean;
 
     constructor(init?: ICuiDictionaryItem<T>[]) {
         this.#keys = []
         this.#values = []
+        this.#lock = false;
 
         if (init) {
             init.forEach(x => {
@@ -25,38 +27,47 @@ export class CuiDictionary<T> implements ICuiDictionary<T> {
 
     add(key: string, value: T): void {
         this.throwOnEmptyKey(key)
-        if (this.containsKey(key))
-            throw new Error("Key already exists");
-        this.#keys.push(key)
-        this.#values.push(value)
+        this.lock(() => {
+            if (this.containsKey(key))
+                throw new Error("Key already exists");
+            this.#keys.push(key)
+            this.#values.push(value)
+        })
     }
 
     remove(key: string): void {
-        if (!is(key)) {
-            return
-        }
-        let index = this.#keys.indexOf(key);
-        if (index >= 0) {
+        this.throwOnEmptyKey(key);
+        this.lock(() => {
+            let index = this.#keys.indexOf(key);
+            if (index < 0) {
+                return;
+            }
             this.#keys.splice(index, 1)
             this.#values.splice(index, 1)
-        }
+        })
     }
+
     get(key: string): T | undefined {
         this.throwOnEmptyKey(key)
-        let index = this.indexOf(key)
-        if (index < 0) {
-            return undefined;
-        }
-        return this.#values[index];
+        let value = undefined
+        this.lock(() => {
+            let index = this.indexOf(key)
+            if (index >= 0) {
+                value = this.#values[index];
+            }
+        })
+        return value;
     }
+
     containsKey(key: string): boolean {
         return is(key) && this.indexOf(key) >= 0
     }
+
     keys(): string[] {
-        return this.#keys
+        return [...this.#keys];
     }
     values(): T[] {
-        return this.#values;
+        return [...this.#values];
     }
 
     indexOf(key: string): number {
@@ -65,16 +76,49 @@ export class CuiDictionary<T> implements ICuiDictionary<T> {
 
     update(key: string, value: T): void {
         this.throwOnEmptyKey(key)
-        let index = this.indexOf(key)
-        if (index < 0) {
-            throw new ItemNotFoundError(`Item with key [${key}] not found`)
-        }
-        this.#values[index] = value
+        this.lock(() => {
+            let index = this.indexOf(key)
+            if (index < 0) {
+                throw new ItemNotFoundError(`Item with key [${key}] not found`)
+            }
+            this.#values[index] = value
+        })
+
     }
 
     clear() {
-        this.#values = [];
-        this.#keys = [];
+        this.lock(() => {
+            this.#values = [];
+            this.#keys = [];
+        });
+
+    }
+
+    forEach(callback: (key: string, value: T) => void) {
+        this.lock(() => {
+            let len = this.#keys.length;
+            for (let index = 0; index < len; index++) {
+                callback(this.#keys[index], this.#values[index]);
+            }
+        });
+    }
+
+    private checkLock(): void {
+        if (this.#lock) {
+            throw new Error("You cannot alter dictionary when is locked!");
+        }
+    }
+
+    private lock(callback: () => void) {
+        this.checkLock();
+        this.#lock = true;
+        try {
+            callback();
+        } catch (e) {
+            throw e;
+        } finally {
+            this.#lock = false;
+        }
     }
 
     private throwOnEmptyKey(key: string) {

@@ -1,41 +1,27 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { getStringOrDefault, getIntOrDefault, is, isString, isStringTrue, getParentCuiElement, are } from "../../core/utils/functions";
 import { CuiActionsListFactory } from "../../core/utils/actions";
 import { EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
-export class CuiCloseArgs {
+export class CuiCloseArgs extends CuiAutoParseArgs {
     target: string;
     action: string;
     timeout: number;
     prevent: boolean;
     state: string;
-    #defTimeout: number;
 
     constructor(timeout?: number) {
+        super({
+            main: "target"
+        });
         this.target = "";
         this.action = "";
         this.prevent = false;
         this.state = "";
-        this.#defTimeout = timeout ?? 300;
-        this.timeout = this.#defTimeout;
-    }
-
-    parse(args: any) {
-        if (is(args) && isString(args)) {
-            this.target = args
-            this.action = ""
-            this.timeout = this.#defTimeout;
-            this.prevent = false
-            this.state = "";
-            return;
-        }
-        this.target = getStringOrDefault(args.target, "");
-        this.action = args.action;
-        this.timeout = getIntOrDefault(args.timeout, this.#defTimeout);
-        this.prevent = args.prevent && isStringTrue(args.prevent)
-        this.state = args.state;
+        this.timeout = timeout ?? 300;
     }
 }
 
@@ -58,7 +44,7 @@ export class CuiCloseComponent implements ICuiComponent {
     }
 }
 
-export class CuiCloseHandler extends CuiHandler<CuiCloseArgs> {
+export class CuiCloseHandler extends CuiHandlerBase<CuiCloseArgs> {
     #eventId: string | null;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string) {
         super("CuiCloseHandler", element, attribute, new CuiCloseArgs(utils.setup.animationTime), utils);
@@ -66,17 +52,19 @@ export class CuiCloseHandler extends CuiHandler<CuiCloseArgs> {
         this.onClick = this.onClick.bind(this);
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         this.element.addEventListener('click', this.onClick)
         this.#eventId = this.onEvent(EVENTS.CLOSE, this.onClose.bind(this));
+        return true;
     }
 
-    onUpdate(): void {
-        //
+    async onRefresh(): Promise<boolean> {
+        return true;
     }
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.element.removeEventListener('click', this.onClick)
         this.detachEvent(EVENTS.CLOSE, this.#eventId);
+        return true;
     }
 
     onClick(ev: MouseEvent) {

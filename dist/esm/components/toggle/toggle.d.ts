@@ -1,11 +1,11 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
-export declare class CuiToggleArgs {
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export declare class CuiToggleArgs extends CuiAutoParseArgs {
     target: string;
     action: string;
     constructor();
-    parse(args: any): void;
 }
 export declare class CuiToggleComponent implements ICuiComponent {
     attribute: string;
@@ -13,12 +13,12 @@ export declare class CuiToggleComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiToggleHandler extends CuiHandler<CuiToggleArgs> {
+export declare class CuiToggleHandler extends CuiHandlerBase<CuiToggleArgs> {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     toggle(): void;
     onClick(ev: MouseEvent): void;
     getTarget(): Element;

@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -12,35 +21,32 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _listener, _links, _actions, _linkActions, _root, _rootBox, _modeHandler;
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiActionsListFactory } from "../../core/utils/actions";
-import { getRangeValueOrDefault, getStringOrDefault, isStringTrue, getIntOrDefault } from "../../core/utils/functions";
-import { EVENTS, SCOPE_SELECTOR } from "../../core/utils/statics";
+import { getRangeValueOrDefault, getEnumOrDefault, joinWithScopeSelector } from "../../core/utils/functions";
+import { EVENTS } from "../../core/utils/statics";
 import { CuiIntersectionListener } from "../../core/intersection/intersection";
 import { CuiElementBoxFactory } from "../../core/models/elements";
 import { CuiScrollSpyModeHandlerFactory } from "./mode";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const DEFAULT_SELECTOR = "> *";
-export class CuiScrollSpyArgs {
+export class CuiScrollSpyArgs extends CuiAutoParseArgs {
     constructor() {
+        super({
+            props: {
+                "selector": { corrector: joinWithScopeSelector },
+                "ratio": { corrector: (value) => getRangeValueOrDefault(value, 0, 1, 0) },
+                'mode': { corrector: (value) => getEnumOrDefault(value, 'single', "multi") }
+            }
+        });
         this.ratio = 0;
         this.mode = "single";
         this.threshold = -1;
-        this.selector = "";
+        this.selector = joinWithScopeSelector(DEFAULT_SELECTOR);
         this.action = "";
         this.isRoot = false;
         this.link = "";
         this.linkAction = "";
-    }
-    parse(args) {
-        var _a;
-        this.selector = `${SCOPE_SELECTOR}${(_a = args.selector) !== null && _a !== void 0 ? _a : DEFAULT_SELECTOR}`;
-        this.action = getStringOrDefault(args.action, "");
-        this.link = getStringOrDefault(args.link, "");
-        this.linkAction = getStringOrDefault(args.linkAction, "");
-        this.ratio = getRangeValueOrDefault(parseFloat(args.ratio), 0, 1, 0);
-        this.isRoot = isStringTrue(args.isRoot);
-        this.mode = (args === null || args === void 0 ? void 0 : args.mode) === 'multi' ? "multi" : "single";
-        this.threshold = getIntOrDefault(args.threshold, -1);
     }
 }
 export class CuiScrollspyComponent {
@@ -54,7 +60,7 @@ export class CuiScrollspyComponent {
         return new CuiScrollspyHandler(element, utils, this.attribute);
     }
 }
-export class CuiScrollspyHandler extends CuiHandler {
+export class CuiScrollspyHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiScrollspyHandler", element, attribute, new CuiScrollSpyArgs(), utils);
         _listener.set(this, void 0);
@@ -73,16 +79,25 @@ export class CuiScrollspyHandler extends CuiHandler {
         __classPrivateFieldSet(this, _rootBox, undefined);
         __classPrivateFieldSet(this, _modeHandler, undefined);
     }
-    onInit() {
-        this.parseAttribute();
-        __classPrivateFieldGet(this, _listener).setCallback(this.onIntersection.bind(this));
-        __classPrivateFieldGet(this, _listener).attach();
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.init();
+            __classPrivateFieldGet(this, _listener).setCallback(this.onIntersection.bind(this));
+            __classPrivateFieldGet(this, _listener).attach();
+            return true;
+        });
     }
-    onUpdate() {
-        this.updateAttributes();
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.update();
+            return true;
+        });
     }
-    onDestroy() {
-        __classPrivateFieldGet(this, _listener).detach();
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldGet(this, _listener).detach();
+            return true;
+        });
     }
     onIntersection(ev) {
         if (!__classPrivateFieldGet(this, _modeHandler)) {
@@ -107,9 +122,10 @@ export class CuiScrollspyHandler extends CuiHandler {
             initial: ev.initial,
             source: ev.source,
             timestamp: timestamp,
+            name: EVENTS.ON_SCROLL
         });
     }
-    parseAttribute() {
+    init() {
         __classPrivateFieldSet(this, _root, this.args.isRoot ? window : this.element);
         __classPrivateFieldSet(this, _rootBox, CuiElementBoxFactory.get(__classPrivateFieldGet(this, _root)));
         let targets = this.args.selector ? __classPrivateFieldGet(this, _rootBox).queryAll(this.args.selector) : [];
@@ -120,7 +136,7 @@ export class CuiScrollspyHandler extends CuiHandler {
         __classPrivateFieldSet(this, _linkActions, CuiActionsListFactory.get(this.args.linkAction));
         __classPrivateFieldSet(this, _modeHandler, CuiScrollSpyModeHandlerFactory.get(this.args.mode));
     }
-    updateAttributes() {
+    update() {
         if (this.prevArgs && this.args.isRoot !== this.prevArgs.isRoot) {
             __classPrivateFieldSet(this, _root, this.args.isRoot ? window : this.element);
             __classPrivateFieldSet(this, _rootBox, CuiElementBoxFactory.get(__classPrivateFieldGet(this, _root)));

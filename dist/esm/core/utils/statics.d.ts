@@ -1,6 +1,6 @@
 import { CuiLogLevel } from "./types";
-import { CuiColorPair } from "../models/colors";
 import { ICuiDevelopmentToolFactory } from "../development/interfaces";
+import { ICuiMeasure } from "../models/interfaces";
 export declare const CUID_ATTRIBUTE = "cuid";
 export declare const CLASSES: {
     dark: string;
@@ -11,47 +11,6 @@ export declare const CLASSES: {
     selectionOff: string;
 };
 export declare const ICONS: any;
-export declare const COLORS: string[];
-export declare const CSS_APP_BACKGROUND_COLORS: CuiColorPair;
-export declare const CSS_COMPONENT_BACKGROUND_COLORS: CuiColorPair;
-export declare const CSS_COMPONENT_BORDER_COLORS: CuiColorPair;
-export declare const CSS_THEMES: {
-    light: {
-        base: string;
-        muted: string;
-        active: string;
-    };
-    dark: {
-        base: string;
-        muted: string;
-        active: string;
-    };
-    accent: {
-        base: string;
-        muted: string;
-        active: string;
-    };
-    secondary: {
-        base: string;
-        muted: string;
-        active: string;
-    };
-    success: {
-        base: string;
-        muted: string;
-        active: string;
-    };
-    warning: {
-        base: string;
-        muted: string;
-        active: string;
-    };
-    error: {
-        base: string;
-        muted: string;
-        active: string;
-    };
-};
 export declare const SCOPE_SELECTOR = ":scope ";
 export declare const CSS_VARIABLES: any;
 export declare class STATICS {
@@ -101,8 +60,9 @@ export declare const EVENTS: {
 };
 export declare const OBSERVABLE_SCROLL = "SCROLL";
 export declare const OBSERVABLE_INTERSECTION = "INTERSECTION";
-export declare const COMPONENTS_COUNTER: Generator<number, void, unknown>;
+export declare const COMPONENTS_COUNTER: Generator<number, number, number>;
 export declare const SCREEN_SIZE_SMALL = 640;
 export declare const SCREEN_SIZE_MEDIUM = 960;
 export declare const SCREEN_SIZE_LARGE = 1200;
 export declare const SCREEN_SIZE_XLARGE = 1600;
+export declare const MEASUREMENT: ICuiMeasure[];

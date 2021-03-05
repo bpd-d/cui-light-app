@@ -1,11 +1,12 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { replacePrefix, isStringTrue, is, getIntOrDefault, getStringOrDefault } from "../../core/utils/functions";
+import { replacePrefix, is } from "../../core/utils/functions";
 import { AriaAttributes } from "../../core/utils/aria";
 import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
 import { CuiMoveEventListener, ICuiMoveData } from "../../core/listeners/move";
 import { BasePositionCalculator, BaseResizeCalculator, ICuiFloatPositionCalculator, ICuiFloatResizeCalculator } from "./helpers";
 import { CLASSES, EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 const FLOAT_OPEN_ANIMATION_CLASS = '.{prefix}-float-default-in';
 const FLOAT_CLOSE_ANIMATION_CLASS = '.{prefix}-float-default-out';
@@ -13,33 +14,20 @@ const MOVE = '.{prefix}-float-move';
 const RESIZE = '.{prefix}-float-resize';
 
 
-export class CuiFloatArgs implements CuiInteractableArgs, ICuiParsable {
+export class CuiFloatArgs extends CuiAutoParseArgs implements CuiInteractableArgs {
     escClose: boolean;
     timeout: number;
     openAct: string;
     closeAct: string;
     keyClose: string;
 
-    #defTimeout: number;
-    #prefix: string;
     constructor(prefix: string, defTimeout?: number) {
-        this.#defTimeout = defTimeout ?? 300;
-        this.#prefix = prefix;
-
+        super();
         this.escClose = false;
         this.keyClose = "";
-        this.openAct = "";
-        this.closeAct = "";
-        this.timeout = this.#defTimeout;
-    }
-
-
-    parse(args: any) {
-        this.escClose = isStringTrue(args.escClose);
-        this.keyClose = args.keyClose;
-        this.timeout = getIntOrDefault(args.timeout, this.#defTimeout);
-        this.openAct = getStringOrDefault(args.openAct, replacePrefix(FLOAT_OPEN_ANIMATION_CLASS, this.#prefix))
-        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(FLOAT_CLOSE_ANIMATION_CLASS, this.#prefix))
+        this.openAct = replacePrefix(FLOAT_OPEN_ANIMATION_CLASS, prefix);
+        this.closeAct = replacePrefix(FLOAT_CLOSE_ANIMATION_CLASS, prefix);
+        this.timeout = defTimeout ?? 300;
     }
 }
 

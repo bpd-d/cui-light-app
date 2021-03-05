@@ -6,7 +6,7 @@ import { CuiAutoLightModePlugin } from "./light/light";
 import { CuiMoveObserverPlugin } from "./move/move";
 import { CuiNotificationPlugin } from "./notification/notification";
 import { CuiAutoPrintModePlugin } from "./print/print";
-import { CuiCSSVariablesPlugin } from "./properties/properties";
+//import { CuiCSSVariablesPlugin } from "./properties/properties";
 import { CuiResizeObserverPlugin } from "./resize/resize";
 import { CuiToastPlugin } from "./toast/toast";
 export function GetPlugins(init) {
@@ -18,7 +18,7 @@ export function GetPlugins(init) {
         new CuiAutoPrintModePlugin({ autoPrint: print }),
         new CuiKeysObserverPlugin({}),
         new CuiWindowClickPlugin(),
-        new CuiCSSVariablesPlugin({}),
+        //  new CuiCSSVariablesPlugin({}),
         new CuiMoveObserverPlugin(),
         new CuiResizeObserverPlugin({}),
         new CuiToastPlugin({}),

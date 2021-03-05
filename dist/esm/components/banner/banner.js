@@ -11,52 +11,41 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _defTimeout, _prefix, _prefix_1, _swipeEngine, _isTracking, _startX, _ratio, _swipeAnimation, _moveEventId;
+var _prefix, _swipeEngine, _isTracking, _startX, _ratio, _swipeAnimation, _moveEventId;
 import { SWIPE_ANIMATIONS_DEFINITIONS } from "../../core/animation/definitions";
 import { CuiInteractableHandler } from "../../core/handlers/base";
 import { CuiSwipeAnimationEngine } from "../../core/animation/engine";
 import { AriaAttributes } from "../../core/utils/aria";
-import { boolStringOrDefault, getIntOrDefault, getStringOrDefault, replacePrefix } from "../../core/utils/functions";
+import { replacePrefix } from "../../core/utils/functions";
 import { EVENTS, CLASSES } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const BANNER_OPEN_ANIMATION = ".{prefix}-animation-fade-in";
 const BANNER_CLOSE_ANIMATION = ".{prefix}-animation-fade-out";
-export class CuiBannerArgs {
+export class CuiBannerArgs extends CuiAutoParseArgs {
     constructor(prefix, timeout) {
-        _defTimeout.set(this, void 0);
-        _prefix.set(this, void 0);
-        __classPrivateFieldSet(this, _defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
-        __classPrivateFieldSet(this, _prefix, prefix);
+        super();
         this.escClose = false;
         this.keyClose = "";
-        this.timeout = __classPrivateFieldGet(this, _defTimeout);
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
         this.swipe = false;
-        this.openAct = "";
-        this.closeAct = "";
-    }
-    parse(args) {
-        this.swipe = boolStringOrDefault(args.swipe, false);
-        this.escClose = false;
-        this.keyClose = "";
-        this.timeout = getIntOrDefault(args.timeout, __classPrivateFieldGet(this, _defTimeout));
-        this.openAct = getStringOrDefault(args.openAct, replacePrefix(BANNER_OPEN_ANIMATION, __classPrivateFieldGet(this, _prefix)));
-        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(BANNER_CLOSE_ANIMATION, __classPrivateFieldGet(this, _prefix)));
+        this.openAct = replacePrefix(BANNER_OPEN_ANIMATION, prefix);
+        this.closeAct = replacePrefix(BANNER_CLOSE_ANIMATION, prefix);
     }
 }
-_defTimeout = new WeakMap(), _prefix = new WeakMap();
 export class CuiBanerComponent {
     constructor(prefix) {
-        _prefix_1.set(this, void 0);
-        __classPrivateFieldSet(this, _prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${__classPrivateFieldGet(this, _prefix_1)}-banner`;
+        _prefix.set(this, void 0);
+        __classPrivateFieldSet(this, _prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${__classPrivateFieldGet(this, _prefix)}-banner`;
     }
     getStyle() {
         return null;
     }
     get(element, utils) {
-        return new CuiBannerHandler(element, utils, this.attribute, __classPrivateFieldGet(this, _prefix_1));
+        return new CuiBannerHandler(element, utils, this.attribute, __classPrivateFieldGet(this, _prefix));
     }
 }
-_prefix_1 = new WeakMap();
+_prefix = new WeakMap();
 export class CuiBannerHandler extends CuiInteractableHandler {
     constructor(element, utils, attribute, prefix) {
         super("CuiBannerHandler", element, attribute, new CuiBannerArgs(prefix, utils.setup.animationTime), utils);
@@ -76,9 +65,8 @@ export class CuiBannerHandler extends CuiInteractableHandler {
         __classPrivateFieldSet(this, _isTracking, false);
     }
     onInit() {
-        //   this.#moveEventId = this.onEvent(EVENTS.GLOBAL_MOVE, this.onMove.bind(this));
         if (!this.isActive()) {
-            this.open();
+            this.helper.setClass(this.activeClassName, this.element);
         }
     }
     onUpdate() {

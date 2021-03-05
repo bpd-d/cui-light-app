@@ -5,8 +5,9 @@ import { ICuiTask, CuiTaskRunner } from "../../core/utils/task";
 import { ICuiMoveData } from "../../core/listeners/move";
 import { CuiSwipeAnimationEngine } from "../../core/animation/engine";
 import { AnimationDefinition, SWIPE_ANIMATIONS_DEFINITIONS } from "../../core/animation/definitions";
-import { getStringOrDefault, getIntOrDefault, boolStringOrDefault, calculateNextIndex, is, getChildrenHeight, isInRange } from "../../core/utils/functions";
-import { SCOPE_SELECTOR, EVENTS, CLASSES } from "../../core/utils/statics";
+import { calculateNextIndex, is, getChildrenHeight, isInRange, joinWithScopeSelector } from "../../core/utils/functions";
+import { EVENTS, CLASSES } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 /**
  * 
@@ -18,9 +19,9 @@ import { SCOPE_SELECTOR, EVENTS, CLASSES } from "../../core/utils/statics";
  *   animation: string - animation name
  *   loop: boolean - allows to slide elements in loop
  */
-const SWITCH_DEFAULT_TARGETS = "> li";
+const SWITCH_DEFAULT_TARGETS = " > li";
 
-export class CuiSliderArgs implements ICuiParsable {
+export class CuiSliderArgs extends CuiAutoParseArgs implements ICuiParsable {
     targets: string;
     timeout: number;
     links: string;
@@ -29,30 +30,22 @@ export class CuiSliderArgs implements ICuiParsable {
     animation: string;
     loop: boolean;
 
-    #prefix: string;
-    #defTimeout: number;
     constructor(prefix: string, timeout?: number) {
-        this.#prefix = prefix;
-        this.#defTimeout = timeout ?? 300;
+        super({
+            props: {
+                "targets": { corrector: joinWithScopeSelector }
+            }
+        });
 
-        this.targets = SWITCH_DEFAULT_TARGETS;
-        this.timeout = this.#defTimeout;
+        this.targets = joinWithScopeSelector(SWITCH_DEFAULT_TARGETS);
         this.links = "";
         this.autoTimeout = -1;
         this.height = "";
-        this.animation = "";
+        this.animation = "slide";
         this.loop = false;
+        this.timeout = timeout ?? 300;
     }
 
-    parse(args: any): void {
-        this.targets = SCOPE_SELECTOR + getStringOrDefault(args.targets, SWITCH_DEFAULT_TARGETS)
-        this.timeout = getIntOrDefault(args.timeout, this.#defTimeout);
-        this.links = args.links;
-        this.autoTimeout = getIntOrDefault(args.autoTimeout, -1);
-        this.height = getStringOrDefault(args.height, 'auto')
-        this.animation = getStringOrDefault(args.animation, 'slide');
-        this.loop = boolStringOrDefault(args.loop, false);
-    }
 
 }
 
@@ -234,6 +227,7 @@ export class CuiSliderHandler extends CuiMutableHandler<CuiSliderArgs> implement
      */
     async switch(index: any): Promise<boolean> {
         if (this.isLocked) {
+            console.log("Locked")
             return false;
         }
         this.onPushSwitch(index);

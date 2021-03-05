@@ -1,7 +1,9 @@
 import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-export declare class CuiOffCanvasArgs implements ICuiParsable, CuiInteractableArgs {
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { GlobalClickEvent } from "src/core/models/events";
+export declare class CuiOffCanvasArgs extends CuiAutoParseArgs implements ICuiParsable, CuiInteractableArgs {
     #private;
     escClose: boolean;
     outClose: boolean;
@@ -11,7 +13,6 @@ export declare class CuiOffCanvasArgs implements ICuiParsable, CuiInteractableAr
     position: 'left' | 'right';
     timeout: number;
     constructor(prefix: string, timeout?: number);
-    parse(args: any): void;
     getDefaultOpenClass(): string;
     getDefaultCloseClass(): string;
 }
@@ -32,7 +33,7 @@ export declare class CuiOffCanvasHandler extends CuiInteractableHandler<CuiOffCa
     onAfterOpen(): void;
     onAfterClose(): void;
     onBeforeClose(): boolean;
-    onWindowClick(ev: MouseEvent): void;
+    onWindowClick(ev: GlobalClickEvent): void;
     isAnyActive(): boolean;
     setPositionLeft(): void;
 }

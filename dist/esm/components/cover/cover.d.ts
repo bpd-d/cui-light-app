@@ -1,18 +1,17 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 export interface CuiDialogEvent {
     timestamp: number;
 }
-export declare class CuiCoverArgs implements ICuiParsable, CuiInteractableArgs {
-    #private;
+export declare class CuiCoverArgs extends CuiAutoParseArgs implements CuiInteractableArgs {
     escClose: boolean;
     timeout: number;
     openAct: string;
     closeAct: string;
     keyClose: string;
     constructor(prefix: string, defTimeout?: number);
-    parse(args: any): void;
 }
 export declare class CuiCoverComponent implements ICuiComponent {
     #private;

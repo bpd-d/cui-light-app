@@ -20,41 +20,28 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _defTitleSelector, _defItemsSelector, _defTimeout, _prefix, _items, _targets, _switchEventId;
+var _prefix, _items, _targets, _switchEventId;
 import { CuiMutableHandler } from "../../core/handlers/base";
-import { getIntOrDefault, is, isStringTrue, replacePrefix, getStringOrDefault } from "../../core/utils/functions";
-import { EVENTS, SCOPE_SELECTOR } from "../../core/utils/statics";
+import { getIntOrDefault, replacePrefix, joinWithScopeSelector } from "../../core/utils/functions";
+import { EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const ACCORDION_TITLE_CLS = '> * > .{prefix}-accordion-title';
 const ACCORDION_ITEMS_CLS = '> *';
-export class CuiAccordionArgs {
+export class CuiAccordionArgs extends CuiAutoParseArgs {
     constructor(prefix, timeout) {
-        _defTitleSelector.set(this, void 0);
-        _defItemsSelector.set(this, void 0);
-        _defTimeout.set(this, void 0);
-        __classPrivateFieldSet(this, _defTitleSelector, replacePrefix(ACCORDION_TITLE_CLS, prefix));
-        __classPrivateFieldSet(this, _defItemsSelector, replacePrefix(ACCORDION_ITEMS_CLS, prefix));
+        super({
+            props: {
+                "selector": { corrector: joinWithScopeSelector },
+                "items": { corrector: joinWithScopeSelector },
+            }
+        });
         this.animation = false;
-        __classPrivateFieldSet(this, _defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
         this.single = false;
-        this.selector = SCOPE_SELECTOR + __classPrivateFieldGet(this, _defTitleSelector);
-        this.items = SCOPE_SELECTOR + __classPrivateFieldGet(this, _defItemsSelector);
-        this.timeout = __classPrivateFieldGet(this, _defTimeout);
-    }
-    parse(args) {
-        if (is(args)) {
-            this.single = isStringTrue(args.single);
-            this.selector = SCOPE_SELECTOR + getStringOrDefault(args.selector, __classPrivateFieldGet(this, _defTitleSelector));
-            this.items = SCOPE_SELECTOR + getStringOrDefault(args.content, __classPrivateFieldGet(this, _defItemsSelector));
-            this.timeout = getIntOrDefault(args.timeout, __classPrivateFieldGet(this, _defTimeout));
-            this.animation = isStringTrue(args.animation);
-            return;
-        }
-    }
-    isValid() {
-        return true;
+        this.selector = joinWithScopeSelector(replacePrefix(ACCORDION_TITLE_CLS, prefix));
+        this.items = joinWithScopeSelector(replacePrefix(ACCORDION_ITEMS_CLS, prefix));
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
     }
 }
-_defTitleSelector = new WeakMap(), _defItemsSelector = new WeakMap(), _defTimeout = new WeakMap();
 export class CuiAccordionComponent {
     constructor(prefix) {
         _prefix.set(this, void 0);
@@ -81,15 +68,12 @@ export class CuiAccordionHandler extends CuiMutableHandler {
         __classPrivateFieldSet(this, _switchEventId, null);
     }
     onInit() {
-        if (this.args.isValid()) {
-            try {
-                this.initTargets();
-                __classPrivateFieldSet(this, _switchEventId, this.onEvent(EVENTS.SWITCH, this.onSwitch.bind(this)));
-            }
-            catch (e) {
-                this._log.exception(e, 'handle');
-            }
-            this._log.debug("Initialized", "handle");
+        try {
+            this.initTargets();
+            __classPrivateFieldSet(this, _switchEventId, this.onEvent(EVENTS.SWITCH, this.onSwitch.bind(this)));
+        }
+        catch (e) {
+            this._log.exception(e, 'handle');
         }
     }
     onUpdate() {
@@ -123,10 +107,12 @@ export class CuiAccordionHandler extends CuiMutableHandler {
                 this.helper.removeClassesAs(current, this.activeClassName);
             }
             else {
-                if (this.args.single) {
-                    this.closeAllExcept(index);
-                }
-                this.helper.setClassesAs(current, this.activeClassName);
+                this.mutate(() => {
+                    if (this.args.single) {
+                        this.closeAllExcept(index);
+                    }
+                    this.helper.setClass(this.activeClassName, current);
+                });
             }
             this.emitEvent(EVENTS.SWITCHED, {
                 index: index,
@@ -153,12 +139,10 @@ export class CuiAccordionHandler extends CuiMutableHandler {
         });
     }
     closeAllExcept(current) {
-        this.mutate(() => {
-            __classPrivateFieldGet(this, _items).forEach((item, index) => {
-                if (current !== index && this.helper.hasClass(this.activeClassName, item)) {
-                    item.classList.remove(this.activeClassName);
-                }
-            });
+        __classPrivateFieldGet(this, _items).forEach((item, index) => {
+            if (current !== index && this.helper.hasClass(this.activeClassName, item)) {
+                item.classList.remove(this.activeClassName);
+            }
         });
     }
     setListener(target, index) {

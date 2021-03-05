@@ -19,9 +19,15 @@ export declare class ElementManager implements CuiCachable {
     click(onClick: (ev: MouseEvent) => void): Promise<boolean>;
     event(eventName: string, callback: any): Promise<boolean>;
     call(callback: (element: Element, index: Number) => void, functionName?: string): Promise<boolean>;
-    animate(className: string, timeout?: number): Promise<boolean>;
-    open(openClass: string, animationClass: string, timeout?: number): Promise<boolean>;
-    close(closeClass: string, animationClass: string, timeout?: number): Promise<boolean>;
+    setAction(actionStr: string, animationClass: string, timeout?: number): Promise<boolean>;
+    removeAction(actionStr: string, animationClass: string, timeout?: number): Promise<boolean>;
+    /**
+     * Perform animation on the element
+     * @param animationClass
+     * @param timeout
+     * @param callback
+     */
+    animate(animationClass: string, timeout?: number, callback?: (element: Element) => void): Promise<boolean>;
     emit(event: string, ...args: any[]): void;
     on(event: string, callback: any): string[];
     detach(event: string, id: string): void;

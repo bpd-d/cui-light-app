@@ -1,33 +1,22 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
-import { is, getRangeValue, isString, getIntOrDefault } from "../../core/utils/functions";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { is, getRangeValue } from "../../core/utils/functions";
 import { ICONS, EVENTS } from "../../core/utils/statics";
 import { IconBuilder } from "../../core/builders/icon";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 export interface CuiCircleProgressChnaged {
     timestamp: number;
     progress: number;
 }
 
-export class CuiCircleArgs implements ICuiParsable {
+export class CuiCircleArgs extends CuiAutoParseArgs {
     progress: number;
     constructor() {
+        super();
         this.progress = 0;
     }
-
-    parse(val: any): void {
-        if (!is(val)) {
-            this.progress = 0;
-        }
-        else if (isString(val)) {
-            this.progress = getIntOrDefault(val, 0);
-        } else {
-            this.progress = getIntOrDefault(val.progress, 0);
-        }
-
-    }
-
 }
 
 export class CuiCircleComponent implements ICuiComponent {
@@ -46,7 +35,7 @@ export class CuiCircleComponent implements ICuiComponent {
     }
 }
 
-export class CuiCircleHandler extends CuiHandler<CuiCircleArgs> {
+export class CuiCircleHandler extends CuiHandlerBase<CuiCircleArgs> {
     #factor: number;
     #full: number;
     #path: any;
@@ -60,11 +49,11 @@ export class CuiCircleHandler extends CuiHandler<CuiCircleArgs> {
         this.#progressEventId = null;
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         const iconSvg = new IconBuilder(ICONS['special_circle_progress']).build();
         if (!is(iconSvg)) {
             this.logError("SVG circle was not created", "onInit")
-            return;
+            return false;
         }
         const svg = this.element.querySelector('svg')
         if (is(svg)) {
@@ -78,18 +67,19 @@ export class CuiCircleHandler extends CuiHandler<CuiCircleArgs> {
         this.#factor = this.#full / 100;
         this.fetch(this.readStyle)
         this.#progressEventId = this.onEvent(EVENTS.PROGRESS_CHANGE, this.onSetProgress.bind(this))
+        return true;
     }
-
-    onUpdate(): void {
+    async onRefresh(): Promise<boolean> {
         this.fetch(this.readStyle)
         this.emitEvent(EVENTS.PROGRESS_CHANGED, {
             timestamp: Date.now(),
             progress: this.args.progress
         })
+        return true;
     }
-
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.detachEvent(EVENTS.PROGRESS_CHANGE, this.#progressEventId);
+        return true;
     }
 
     onSetProgress(val: any) {

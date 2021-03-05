@@ -123,7 +123,7 @@ export declare function generateRandomString(): string;
  * @returns random integer
  */
 export declare function getRandomInt(min: number, max: number): number;
-export declare function counter(): Generator<number, void, unknown>;
+export declare function counter(): Generator<number, number, number>;
 export declare function all<T>(array: T[], condition: (t: T) => boolean): boolean;
 export declare function getHandlerExtendingOrNull<T>(target: CuiElement, fName: string): T | null;
 /**
@@ -156,3 +156,6 @@ export declare function mapObjectArray<T, V>(input: T[], callback: (t: T) => V):
  */
 export declare function delay(callback: (...args: any[]) => void, delayTime: number): (...args: any[]) => () => void;
 export declare function splitColon(text: string): string[];
+export declare function getEnumOrDefault<T>(value: T, defVal: T, ...values: T[]): T;
+export declare function joinWithScopeSelector(value: string): string;
+export declare function measure(name?: string): (target: Object, propertyKey: string, descriptor: PropertyDescriptor) => PropertyDescriptor;

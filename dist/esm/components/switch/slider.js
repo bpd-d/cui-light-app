@@ -20,13 +20,14 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _prefix, _defTimeout, _targets, _currentIdx, _links, _task, _switchEventId, _isTracking, _startX, _swipeRatio, _nextIdx, _nextElement, _ratioThreshold, _currSlider, _nextSlider, _animationDef, _targetsCount, _moveEventId;
+var _targets, _currentIdx, _links, _task, _switchEventId, _isTracking, _startX, _swipeRatio, _nextIdx, _nextElement, _ratioThreshold, _currSlider, _nextSlider, _animationDef, _targetsCount, _moveEventId;
 import { CuiMutableHandler } from "../../core/handlers/base";
 import { CuiTaskRunner } from "../../core/utils/task";
 import { CuiSwipeAnimationEngine } from "../../core/animation/engine";
 import { SWIPE_ANIMATIONS_DEFINITIONS } from "../../core/animation/definitions";
-import { getStringOrDefault, getIntOrDefault, boolStringOrDefault, calculateNextIndex, is, getChildrenHeight, isInRange } from "../../core/utils/functions";
-import { SCOPE_SELECTOR, EVENTS, CLASSES } from "../../core/utils/statics";
+import { calculateNextIndex, is, getChildrenHeight, isInRange, joinWithScopeSelector } from "../../core/utils/functions";
+import { EVENTS, CLASSES } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 /**
  *
  *   targets: string - slider elements
@@ -37,32 +38,23 @@ import { SCOPE_SELECTOR, EVENTS, CLASSES } from "../../core/utils/statics";
  *   animation: string - animation name
  *   loop: boolean - allows to slide elements in loop
  */
-const SWITCH_DEFAULT_TARGETS = "> li";
-export class CuiSliderArgs {
+const SWITCH_DEFAULT_TARGETS = " > li";
+export class CuiSliderArgs extends CuiAutoParseArgs {
     constructor(prefix, timeout) {
-        _prefix.set(this, void 0);
-        _defTimeout.set(this, void 0);
-        __classPrivateFieldSet(this, _prefix, prefix);
-        __classPrivateFieldSet(this, _defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
-        this.targets = SWITCH_DEFAULT_TARGETS;
-        this.timeout = __classPrivateFieldGet(this, _defTimeout);
+        super({
+            props: {
+                "targets": { corrector: joinWithScopeSelector }
+            }
+        });
+        this.targets = joinWithScopeSelector(SWITCH_DEFAULT_TARGETS);
         this.links = "";
         this.autoTimeout = -1;
         this.height = "";
-        this.animation = "";
+        this.animation = "slide";
         this.loop = false;
-    }
-    parse(args) {
-        this.targets = SCOPE_SELECTOR + getStringOrDefault(args.targets, SWITCH_DEFAULT_TARGETS);
-        this.timeout = getIntOrDefault(args.timeout, __classPrivateFieldGet(this, _defTimeout));
-        this.links = args.links;
-        this.autoTimeout = getIntOrDefault(args.autoTimeout, -1);
-        this.height = getStringOrDefault(args.height, 'auto');
-        this.animation = getStringOrDefault(args.animation, 'slide');
-        this.loop = boolStringOrDefault(args.loop, false);
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
     }
 }
-_prefix = new WeakMap(), _defTimeout = new WeakMap();
 export class CuiSliderComponent {
     constructor(prefix) {
         this.attribute = `${prefix !== null && prefix !== void 0 ? prefix : 'cui'}-slider`;
@@ -226,6 +218,7 @@ export class CuiSliderHandler extends CuiMutableHandler {
     switch(index) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.isLocked) {
+                console.log("Locked");
                 return false;
             }
             this.onPushSwitch(index);

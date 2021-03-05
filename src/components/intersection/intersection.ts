@@ -1,10 +1,11 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiIntersectionObserver } from "../../core/observers/intersection";
 import { CuiActionsListFactory, ICuiComponentAction } from "../../core/utils/actions";
-import { is, getRangeValueOrDefault, getStringOrDefault, isStringTrue } from "../../core/utils/functions";
-import { EVENTS, SCOPE_SELECTOR } from "../../core/utils/statics";
+import { is, getRangeValueOrDefault, joinWithScopeSelector } from "../../core/utils/functions";
+import { EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 const DEFAULT_SELCTOR = "> *";
 
@@ -18,23 +19,22 @@ const DEFAULT_SELCTOR = "> *";
  * action - action to trigger
  */
 
-export class CuiIntersectionAttributes {
+export class CuiIntersectionAttributes extends CuiAutoParseArgs {
     target: string;
     action: string;
     offset: number;
     isRoot: boolean;
     constructor() {
-        this.target = "div";
+        super({
+            props: {
+                offset: { corrector: (value: any) => { return getRangeValueOrDefault(value, 0, 1, 0) } },
+                target: { corrector: joinWithScopeSelector }
+            }
+        })
+        this.target = joinWithScopeSelector(DEFAULT_SELCTOR);
         this.action = "";
         this.offset = 0;
         this.isRoot = false;
-    }
-
-    parse(args: any) {
-        this.target = is(args.target) ? SCOPE_SELECTOR + args.target : SCOPE_SELECTOR + DEFAULT_SELCTOR;
-        this.action = getStringOrDefault(args.action, "");
-        this.offset = getRangeValueOrDefault(parseFloat(args.offset), 0, 1, 0);
-        this.isRoot = isStringTrue(args.isRoot);
     }
 }
 
@@ -53,7 +53,7 @@ export class CuiIntersectionComponent implements ICuiComponent {
     }
 }
 
-export class CuiIntersectionHandler extends CuiHandler<CuiIntersectionAttributes> {
+export class CuiIntersectionHandler extends CuiHandlerBase<CuiIntersectionAttributes> {
 
     #observer: CuiIntersectionObserver;
     #targets: Element[];
@@ -65,21 +65,24 @@ export class CuiIntersectionHandler extends CuiHandler<CuiIntersectionAttributes
         this.#actions = [];
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         this.parseArguments();
         this.#observer.setCallback(this.onIntersection.bind(this))
         this.#observer.connect();
         this.#targets.forEach(target => {
             this.#observer.observe(target);
         })
+        return true;
     }
 
-    onUpdate(): void {
+    async onRefresh(): Promise<boolean> {
         this.parseArguments();
+        return true;
     }
 
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.#observer.disconnect();
+        return true;
     }
 
     parseArguments() {

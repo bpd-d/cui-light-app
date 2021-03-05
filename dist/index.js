@@ -166,6 +166,7 @@ class CuiPositionError extends ErrorBase {
 }
 
 // CONCATENATED MODULE: ./src/core/utils/statics.ts
+//import { CuiColorPair } from "../models/colors";
 
 const CUID_ATTRIBUTE = "cuid";
 const CLASSES = {
@@ -183,56 +184,56 @@ const ICONS = {
     special_fail: "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"special-fail\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\"><path class=\"circle\" d=\"M 50,7.000001 A 43,43 0 0 1 92.999999,50 43,43 0 0 1 50,92.999999 43,43 0 0 1 7.0000011,50 43,43 0 0 1 50,7.000001 Z\"></path><path class=\"arm_1\" d=\"M 28.536809,28.536809 71.342023,71.342023\"></path><path class=\"arm_2\" d=\"M 71.342023,28.536809 28.536809,71.342023\"></path></svg>",
     special_success: "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"special-success\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\"><path class=\"circle\" d=\"M 50,7 A 43,43 0 0 1 93,50 43,43 0 0 1 50,93 43,43 0 0 1 7,50 43,43 0 0 1 50,7 Z\"></path><path class=\"arm\" d=\"M 22.988405,48.234784 36.946233,72.410453 75.516456,33.84023\"></path></svg>",
 };
-const COLORS = ['red', 'green', 'blue', 'alpha'];
-const CSS_APP_BACKGROUND_COLORS = {
-    light: '--cui-color-light-app-background',
-    dark: '--cui-color-dark-app-background'
-};
-const CSS_COMPONENT_BACKGROUND_COLORS = {
-    light: '--cui-color-light-background',
-    dark: '--cui-color-dark-background '
-};
-const CSS_COMPONENT_BORDER_COLORS = {
-    light: '--cui-color-light-border',
-    dark: '--cui-color-dark-border'
-};
-const CSS_THEMES = {
-    light: {
-        base: '--cui-color-light-base',
-        muted: '--cui-color-light-muted',
-        active: '--cui-color-light-active'
-    },
-    dark: {
-        base: '--cui-color-dark-base',
-        muted: '--cui-color-dark-muted',
-        active: '--cui-color-dark-active'
-    },
-    accent: {
-        base: '--cui-color-primary',
-        muted: '--cui-color-primary-muted',
-        active: '--cui-color-primary-active'
-    },
-    secondary: {
-        base: '--cui-color-secondary',
-        muted: '--cui-color-secondary-muted',
-        active: '--cui-color-secondary-active'
-    },
-    success: {
-        base: '--cui-color-success',
-        muted: '--cui-color-success-muted',
-        active: '--cui-color-success-active'
-    },
-    warning: {
-        base: '--cui-color-warning',
-        muted: '--cui-color-warning-muted',
-        active: '--cui-color-warning-active'
-    },
-    error: {
-        base: '--cui-color-error',
-        muted: '--cui-color-error-muted',
-        active: '--cui-color-error-active'
-    }
-};
+// export const COLORS = ['red', 'green', 'blue', 'alpha']
+// export const CSS_APP_BACKGROUND_COLORS: CuiColorPair = {
+//     light: '--cui-color-light-app-background',
+//     dark: '--cui-color-dark-app-background'
+// }
+// export const CSS_COMPONENT_BACKGROUND_COLORS: CuiColorPair = {
+//     light: '--cui-color-light-background',
+//     dark: '--cui-color-dark-background '
+// }
+// export const CSS_COMPONENT_BORDER_COLORS: CuiColorPair = {
+//     light: '--cui-color-light-border',
+//     dark: '--cui-color-dark-border'
+// }
+// export const CSS_THEMES = {
+//     light: {
+//         base: '--cui-color-light-base',
+//         muted: '--cui-color-light-muted',
+//         active: '--cui-color-light-active'
+//     },
+//     dark: {
+//         base: '--cui-color-dark-base',
+//         muted: '--cui-color-dark-muted',
+//         active: '--cui-color-dark-active'
+//     },
+//     accent: {
+//         base: '--cui-color-primary',
+//         muted: '--cui-color-primary-muted',
+//         active: '--cui-color-primary-active'
+//     },
+//     secondary: {
+//         base: '--cui-color-secondary',
+//         muted: '--cui-color-secondary-muted',
+//         active: '--cui-color-secondary-active'
+//     },
+//     success: {
+//         base: '--cui-color-success',
+//         muted: '--cui-color-success-muted',
+//         active: '--cui-color-success-active'
+//     },
+//     warning: {
+//         base: '--cui-color-warning',
+//         muted: '--cui-color-warning-muted',
+//         active: '--cui-color-warning-active'
+//     },
+//     error: {
+//         base: '--cui-color-error',
+//         muted: '--cui-color-error-muted',
+//         active: '--cui-color-error-active'
+//     }
+// }
 const SCOPE_SELECTOR = ":scope ";
 const CSS_VARIABLES = {
     fontSize: "--{prefix}-font-size",
@@ -342,6 +343,7 @@ const SCREEN_SIZE_SMALL = 640;
 const SCREEN_SIZE_MEDIUM = 960;
 const SCREEN_SIZE_LARGE = 1200;
 const SCREEN_SIZE_XLARGE = 1600;
+const MEASUREMENT = [];
 
 // CONCATENATED MODULE: ./src/core/utils/functions.ts
 
@@ -840,6 +842,34 @@ function splitColon(text) {
     // @ts-ignore tag is always defined
     return [tag, split.join(":")];
 }
+function getEnumOrDefault(value, defVal, ...values) {
+    if (values.includes(value)) {
+        return value;
+    }
+    return defVal;
+}
+function joinWithScopeSelector(value) {
+    return SCOPE_SELECTOR + value;
+}
+function measure(name) {
+    const optName = name !== null && name !== void 0 ? name : "";
+    return function (target, propertyKey, descriptor) {
+        const originalMethod = descriptor.value;
+        descriptor.value = function (...args) {
+            const start = performance.now();
+            const result = originalMethod.apply(this, args);
+            const finish = performance.now();
+            MEASUREMENT.push({
+                target: optName,
+                method: propertyKey,
+                time: finish - start
+            });
+            return result;
+        };
+        return descriptor;
+    };
+}
+;
 
 // CONCATENATED MODULE: ./src/core/models/setup.ts
 class CuiSetup {
@@ -885,7 +915,107 @@ class CuiSetupInit {
     }
 }
 
-// CONCATENATED MODULE: ./src/core/utils/api.ts
+// CONCATENATED MODULE: ./src/core/development/console.ts
+var __classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _cuid, _name, _level;
+
+class console_CuiConsoleDevelopementTool {
+    constructor(name, logLevel) {
+        _cuid.set(this, void 0);
+        _name.set(this, void 0);
+        _level.set(this, void 0);
+        __classPrivateFieldSet(this, _name, name);
+        __classPrivateFieldSet(this, _cuid, '-');
+        __classPrivateFieldSet(this, _level, logLevel !== null && logLevel !== void 0 ? logLevel : STATICS.logLevel);
+    }
+    registerElement(element, cuid, component) {
+        __classPrivateFieldSet(this, _cuid, cuid);
+        console.log(this.prepString("Register element: " + cuid, 'debug', component));
+    }
+    unregisterElement(cuid, component) {
+        __classPrivateFieldSet(this, _cuid, '-');
+        console.log(this.prepString("Unregister element: " + cuid, 'debug', component));
+    }
+    setProperty(cuid, component, name, t) {
+        //throw new Error("Method not implemented.");
+    }
+    pushState(cuid, component, type, message, functionName) {
+        this.logByType(type, message, functionName);
+    }
+    log(type, message, functionName) {
+        this.logByType(type, message, functionName);
+    }
+    debug(message, functionName) {
+        if (__classPrivateFieldGet(this, _level) === 'debug') {
+            console.log(this.prepString(message, "debug", functionName));
+        }
+    }
+    warning(message, functionName) {
+        if (__classPrivateFieldGet(this, _level) === 'warning' || __classPrivateFieldGet(this, _level) === 'debug')
+            console.warn(this.prepString(message, "warning", functionName));
+    }
+    error(message, functionName) {
+        if (__classPrivateFieldGet(this, _level) === 'error' || __classPrivateFieldGet(this, _level) === 'debug' || __classPrivateFieldGet(this, _level) === 'warning')
+            console.error(this.prepString(message, "error", functionName));
+    }
+    exception(e, functionName) {
+        console.error(this.prepString(`An exception occured: ${e.name}: ${e.message}`, "exception", functionName));
+        if (__classPrivateFieldGet(this, _level) === 'debug')
+            console.error(e.stack);
+    }
+    setId(id) {
+        if (id)
+            __classPrivateFieldSet(this, _cuid, id);
+    }
+    prepString(message, level, functionName) {
+        return `[${new Date().toLocaleString()}][${level}][${__classPrivateFieldGet(this, _name)}][${functionName !== null && functionName !== void 0 ? functionName : '-'}][${__classPrivateFieldGet(this, _cuid)}][${message}]`;
+    }
+    logByType(type, message, functionName) {
+        switch (type) {
+            case 'debug':
+                this.debug(message, functionName);
+                break;
+            case 'warning':
+                this.warning(message, functionName);
+                break;
+            case 'error':
+                this.error(message, functionName);
+                break;
+        }
+    }
+}
+_cuid = new WeakMap(), _name = new WeakMap(), _level = new WeakMap();
+
+// CONCATENATED MODULE: ./src/core/development/factory.ts
+
+
+class factory_CuiConsoleDevToolFactory {
+    get(name) {
+        return new console_CuiConsoleDevelopementTool(name);
+    }
+}
+class factory_CuiDevtoolFactory {
+    static get(name) {
+        if (!STATICS.devTool) {
+            STATICS.devTool = new factory_CuiConsoleDevToolFactory();
+        }
+        return STATICS.devTool.get(name);
+    }
+}
+
+// CONCATENATED MODULE: ./src/core/api/functions.ts
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -950,10 +1080,14 @@ function createComponent(node, component, utils, args) {
         if (!node.$handlers) {
             node.$handlers = {};
         }
+        // If handler already exists - ignore
+        if (node.$handlers[component.attribute]) {
+            return false;
+        }
         try {
             let handler = component.get(node, utils);
             node.$handlers[component.attribute] = handler;
-            node.$handlers[component.attribute].handle(args);
+            yield node.$handlers[component.attribute].handle(args);
         }
         catch (e) {
             throw new RegisterElementError(`An error occured during [${component.attribute}] initialization: ${e.message}`);
@@ -971,7 +1105,8 @@ function updateComponent(node, component, args) {
             return false;
         }
         try {
-            handler.refresh(args);
+            if (handler.refresh)
+                yield handler.refresh(args);
         }
         catch (e) {
             throw new RegisterElementError(`An error occured during [${component}] update: ${e.message}`);
@@ -989,109 +1124,13 @@ function destroyComponent(node, component) {
             return false;
         }
         try {
-            handler.destroy();
+            yield handler.destroy();
         }
         catch (e) {
             throw new RegisterElementError(`An error occured during [${component}] destroy: ${e.message}`);
         }
         return true;
     });
-}
-
-// CONCATENATED MODULE: ./src/core/development/console.ts
-var __classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _cuid, _name, _level;
-
-class console_CuiConsoleDevelopementTool {
-    constructor(name, logLevel) {
-        _cuid.set(this, void 0);
-        _name.set(this, void 0);
-        _level.set(this, void 0);
-        __classPrivateFieldSet(this, _name, name);
-        __classPrivateFieldSet(this, _cuid, '-');
-        __classPrivateFieldSet(this, _level, logLevel !== null && logLevel !== void 0 ? logLevel : STATICS.logLevel);
-    }
-    registerElement(element, cuid, component) {
-        __classPrivateFieldSet(this, _cuid, cuid);
-        console.log(this.prepString("Register element: " + cuid, 'debug', component));
-    }
-    unregisterElement(cuid, component) {
-        __classPrivateFieldSet(this, _cuid, '-');
-        console.log(this.prepString("Unregister element: " + cuid, 'debug', component));
-    }
-    setProperty(cuid, component, name, t) {
-        //throw new Error("Method not implemented.");
-    }
-    pushState(cuid, component, type, message, functionName) {
-        this.logByType(type, message, functionName);
-    }
-    log(type, message, functionName) {
-        this.logByType(type, message, functionName);
-    }
-    debug(message, functionName) {
-        if (__classPrivateFieldGet(this, _level) === 'debug') {
-            console.log(this.prepString(message, "debug", functionName));
-        }
-    }
-    warning(message, functionName) {
-        if (__classPrivateFieldGet(this, _level) === 'warning' || __classPrivateFieldGet(this, _level) === 'debug')
-            console.warn(this.prepString(message, "warning", functionName));
-    }
-    error(message, functionName) {
-        if (__classPrivateFieldGet(this, _level) === 'error' || __classPrivateFieldGet(this, _level) === 'debug' || __classPrivateFieldGet(this, _level) === 'warning')
-            console.error(this.prepString(message, "error", functionName));
-    }
-    exception(e, functionName) {
-        console.error(this.prepString(`An exception occured: ${e.name}: ${e.message}`, "exception", functionName));
-        if (__classPrivateFieldGet(this, _level) === 'debug')
-            console.error(e.stack);
-    }
-    prepString(message, level, functionName) {
-        return `[${new Date().toLocaleString()}][${level}][${__classPrivateFieldGet(this, _name)}][${functionName !== null && functionName !== void 0 ? functionName : '-'}][${__classPrivateFieldGet(this, _cuid)}][${message}]`;
-    }
-    logByType(type, message, functionName) {
-        switch (type) {
-            case 'debug':
-                this.debug(message, functionName);
-                break;
-            case 'warning':
-                this.warning(message, functionName);
-                break;
-            case 'error':
-                this.error(message, functionName);
-                break;
-        }
-    }
-}
-_cuid = new WeakMap(), _name = new WeakMap(), _level = new WeakMap();
-
-// CONCATENATED MODULE: ./src/core/development/factory.ts
-
-
-class factory_CuiConsoleDevToolFactory {
-    get(name) {
-        return new console_CuiConsoleDevelopementTool(name);
-    }
-}
-class factory_CuiDevtoolFactory {
-    static get(name) {
-        if (!STATICS.devTool) {
-            STATICS.devTool = new factory_CuiConsoleDevToolFactory();
-        }
-        return STATICS.devTool.get(name);
-    }
 }
 
 // CONCATENATED MODULE: ./src/core/observers/mutations.ts
@@ -1117,7 +1156,7 @@ var mutations_classPrivateFieldGet = (undefined && undefined.__classPrivateField
     }
     return privateMap.get(receiver);
 };
-var _observer, _options, _element, _components, _attributes, _utils, _queryString, _isObserving, _observer_1, _element_1, _disabled, _options_1;
+var _observer, _options, _element, _components, _utils, _queryString, _isObserving, _observer_1, _element_1, _disabled, _options_1;
 
 
 
@@ -1127,7 +1166,6 @@ class mutations_CuiMutationObserver {
         _options.set(this, void 0);
         _element.set(this, void 0);
         _components.set(this, void 0);
-        _attributes.set(this, void 0);
         _utils.set(this, void 0);
         _queryString.set(this, void 0);
         mutations_classPrivateFieldSet(this, _observer, undefined);
@@ -1136,7 +1174,6 @@ class mutations_CuiMutationObserver {
         mutations_classPrivateFieldSet(this, _element, element);
         this._log = factory_CuiDevtoolFactory.get('CuiMutationObserver');
         mutations_classPrivateFieldSet(this, _components, []);
-        mutations_classPrivateFieldSet(this, _attributes, []);
         mutations_classPrivateFieldSet(this, _utils, utils);
         mutations_classPrivateFieldSet(this, _queryString, "");
     }
@@ -1155,7 +1192,6 @@ class mutations_CuiMutationObserver {
             childList: true,
             attributeFilter: attributes
         });
-        mutations_classPrivateFieldSet(this, _attributes, attributes);
         mutations_classPrivateFieldSet(this, _queryString, joinAttributesForQuery(attributes));
         return this;
     }
@@ -1262,8 +1298,7 @@ class mutations_CuiMutationObserver {
     }
     handleAddedNode(node) {
         return mutations_awaiter(this, void 0, void 0, function* () {
-            let matchingComponents = [];
-            matchingComponents = getMatchingComponents(node, mutations_classPrivateFieldGet(this, _components));
+            let matchingComponents = getMatchingComponents(node, mutations_classPrivateFieldGet(this, _components));
             return createCuiElement(node, matchingComponents, mutations_classPrivateFieldGet(this, _utils));
         });
     }
@@ -1293,7 +1328,7 @@ class mutations_CuiMutationObserver {
         });
     }
 }
-_observer = new WeakMap(), _options = new WeakMap(), _element = new WeakMap(), _components = new WeakMap(), _attributes = new WeakMap(), _utils = new WeakMap(), _queryString = new WeakMap();
+_observer = new WeakMap(), _options = new WeakMap(), _element = new WeakMap(), _components = new WeakMap(), _utils = new WeakMap(), _queryString = new WeakMap();
 class CuiComponentMutationHandler {
     constructor(target) {
         _isObserving.set(this, void 0);
@@ -1481,6 +1516,110 @@ class interactions_CuiInteractionsFactory {
     }
 }
 
+// CONCATENATED MODULE: ./src/core/queue/queue.ts
+var queue_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var queue_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var queue_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _items, _lock, _adapter, _onError, _comparer;
+class CuiQueue {
+    constructor(adapter) {
+        _items.set(this, void 0);
+        _lock.set(this, void 0);
+        _adapter.set(this, void 0);
+        _onError.set(this, void 0);
+        _comparer.set(this, void 0);
+        queue_classPrivateFieldSet(this, _lock, false);
+        queue_classPrivateFieldSet(this, _items, []);
+        queue_classPrivateFieldSet(this, _adapter, adapter);
+        queue_classPrivateFieldSet(this, _comparer, undefined);
+        queue_classPrivateFieldSet(this, _onError, undefined);
+    }
+    add(item) {
+        queue_classPrivateFieldGet(this, _items).push(item);
+        if (queue_classPrivateFieldGet(this, _lock)) {
+            return;
+        }
+        queue_classPrivateFieldSet(this, _lock, true);
+        this.flush().then(() => {
+            queue_classPrivateFieldSet(this, _lock, false);
+        });
+    }
+    delete(item) {
+        const index = queue_classPrivateFieldGet(this, _items).findIndex(_item => this.compare(_item, item));
+        if (index < 0) {
+            return undefined;
+        }
+        return queue_classPrivateFieldGet(this, _items).splice(index, 1)[0];
+    }
+    isLocked() {
+        return queue_classPrivateFieldGet(this, _lock);
+    }
+    setCompareCallback(callback) {
+        queue_classPrivateFieldSet(this, _comparer, callback);
+    }
+    onError(callback) {
+        queue_classPrivateFieldSet(this, _onError, callback);
+    }
+    compare(item1, item2) {
+        if (queue_classPrivateFieldGet(this, _comparer)) {
+            return queue_classPrivateFieldGet(this, _comparer).call(this, item1, item2);
+        }
+        return Object.is(item1, item2);
+    }
+    flush() {
+        return queue_awaiter(this, void 0, void 0, function* () {
+            const items = this.getItemsForFlush();
+            if (items.length === 0) {
+                return true;
+            }
+            try {
+                yield queue_classPrivateFieldGet(this, _adapter).onFlush(items);
+            }
+            catch (e) {
+                this.callError(e, items);
+            }
+            return this.flush();
+        });
+    }
+    getItemsForFlush() {
+        if (queue_classPrivateFieldGet(this, _adapter).type === 'batch') {
+            let result = [...queue_classPrivateFieldGet(this, _items)];
+            queue_classPrivateFieldSet(this, _items, []);
+            return result;
+        }
+        const item = queue_classPrivateFieldGet(this, _items).shift();
+        if (item) {
+            return [item];
+        }
+        return [];
+    }
+    callError(error, items) {
+        if (queue_classPrivateFieldGet(this, _onError)) {
+            queue_classPrivateFieldGet(this, _onError).call(this, error, items);
+        }
+    }
+}
+_items = new WeakMap(), _lock = new WeakMap(), _adapter = new WeakMap(), _onError = new WeakMap(), _comparer = new WeakMap();
+
 // CONCATENATED MODULE: ./src/core/bus/handlers.ts
 var handlers_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -1504,109 +1643,71 @@ var handlers_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldG
     }
     return privateMap.get(receiver);
 };
-var _log, _executor, _executor_1;
+var _executor, _executor_1;
 
 
-class handlers_EmitHandlerBase {
-    constructor() {
-        this.queue = [];
-        this.isBusy = false;
-    }
-    idMatches(emitId, handleId) {
-        return !is(emitId) || (is(emitId) && emitId == handleId);
-    }
-}
-class handlers_SimpleEventEmitHandler extends handlers_EmitHandlerBase {
-    constructor(executor) {
-        super();
-        _log.set(this, void 0);
-        _executor.set(this, void 0);
-        handlers_classPrivateFieldSet(this, _executor, executor);
-        handlers_classPrivateFieldSet(this, _log, factory_CuiDevtoolFactory.get("SimpleEventEmitHandler"));
+
+class handlers_EmitHandler {
+    constructor(name, adapter) {
+        this.log = factory_CuiDevtoolFactory.get(name);
+        this.queue = new CuiQueue(adapter);
+        this.queue.onError((e) => {
+            this.log.error(e, "Flush");
+        });
     }
     handle(events, cuid, args) {
         return handlers_awaiter(this, void 0, void 0, function* () {
             if (!is(events)) {
-                handlers_classPrivateFieldGet(this, _log).warning("No events provided");
+                this.log.warning("No events provided");
                 return false;
             }
-            this.queue.push({
+            this.queue.add({
                 events: events,
                 cuid: cuid,
                 args: args
             });
-            if (!this.isBusy) {
-                if (!this.isBusy) {
-                    this.isBusy = true;
-                    if (this.queue.length > 0) {
-                        yield this.perform();
-                    }
-                    this.isBusy = false;
-                }
-            }
             return true;
         });
     }
-    perform() {
+}
+class SimpleEventEmitHandlerAdapter {
+    constructor(executor) {
+        _executor.set(this, void 0);
+        this.type = 'single';
+        handlers_classPrivateFieldSet(this, _executor, executor);
+    }
+    onFlush(items) {
         return handlers_awaiter(this, void 0, void 0, function* () {
-            let task = this.queue.shift();
-            if (!task) {
-                return;
-            }
-            for (let id in task.events) {
-                let event = task.events[id];
-                try {
-                    if (this.idMatches(task.cuid, event.$cuid))
+            for (const task of items) {
+                for (let id in task.events) {
+                    let event = task.events[id];
+                    if (idMatches(task.cuid, event.$cuid))
                         yield handlers_classPrivateFieldGet(this, _executor).execute(event.callback, task.args);
                 }
-                catch (e) {
-                    handlers_classPrivateFieldGet(this, _log).error(e);
-                }
-            }
-        });
-    }
-}
-_log = new WeakMap(), _executor = new WeakMap();
-class handlers_TaskedEventEmitHandler extends handlers_EmitHandlerBase {
-    constructor(executor) {
-        super();
-        _executor_1.set(this, void 0);
-        handlers_classPrivateFieldSet(this, _executor_1, executor);
-    }
-    handle(events, cuid, args) {
-        return handlers_awaiter(this, void 0, void 0, function* () {
-            if (!is(events)) {
-                return false;
-            }
-            this.queue.push({
-                events: events,
-                cuid: cuid,
-                args: args
-            });
-            if (!this.isBusy) {
-                this.isBusy = true;
-                yield this.perform();
-                if (this.queue.length > 0) {
-                    yield this.perform();
-                }
-                this.isBusy = false;
             }
             return true;
         });
     }
-    perform() {
+}
+_executor = new WeakMap();
+class TaskedEventEmitHandlerAdapter {
+    constructor(executor) {
+        _executor_1.set(this, void 0);
+        this.type = 'single';
+        handlers_classPrivateFieldSet(this, _executor_1, executor);
+    }
+    onFlush(items) {
         return handlers_awaiter(this, void 0, void 0, function* () {
-            let task = this.queue.shift();
-            let promises = [];
-            if (!task) {
-                return Promise.all(promises);
+            for (const task of items) {
+                let promises = [];
+                for (let id in task.events) {
+                    let event = task.events[id];
+                    if (idMatches(task.cuid, event.$cuid))
+                        promises.push(handlers_classPrivateFieldGet(this, _executor_1).execute(event.callback, task.args));
+                }
+                yield Promise.all(promises);
             }
-            for (let id in task.events) {
-                let event = task.events[id];
-                if (this.idMatches(task.cuid, event.$cuid))
-                    promises.push(handlers_classPrivateFieldGet(this, _executor_1).execute(event.callback, task.args));
-            }
-            return Promise.all(promises);
+            return true;
         });
     }
 }
@@ -1615,11 +1716,14 @@ class CuiEventEmitHandlerFactory {
     static get(name, executor) {
         switch (name) {
             case "tasked":
-                return new handlers_TaskedEventEmitHandler(executor);
+                return new handlers_EmitHandler("TaskedEventEmitHandler", new TaskedEventEmitHandlerAdapter(executor));
             default:
-                return new handlers_SimpleEventEmitHandler(executor);
+                return new handlers_EmitHandler("SimpleEventEmitHandler", new SimpleEventEmitHandlerAdapter(executor));
         }
     }
+}
+function idMatches(emitId, handleId) {
+    return !is(emitId) || (is(emitId) && emitId == handleId);
 }
 
 // CONCATENATED MODULE: ./src/core/bus/executors.ts
@@ -1635,9 +1739,8 @@ var executors_awaiter = (undefined && undefined.__awaiter) || function (thisArg,
 class CuiCallbackExecutor {
     execute(callback, args) {
         return executors_awaiter(this, void 0, void 0, function* () {
-            args = args !== null && args !== void 0 ? args : [];
             try {
-                callback(...args);
+                callback(args);
                 return true;
             }
             catch (e) {
@@ -1670,7 +1773,7 @@ var bus_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) |
     }
     return privateMap.get(receiver);
 };
-var _events, bus_log, _eventHandler, bus_name, _events_1, _log_1, _buses, _last, _isOn, _statistics;
+var _events, _log, _eventHandler, bus_name, _events_1, _log_1, _buses, _last, _isOn, _statistics;
 
 
 
@@ -1679,13 +1782,13 @@ var _events, bus_log, _eventHandler, bus_name, _events_1, _log_1, _buses, _last,
 class bus_CuiEventBus {
     constructor(emitHandler, name) {
         _events.set(this, void 0);
-        bus_log.set(this, void 0);
+        _log.set(this, void 0);
         _eventHandler.set(this, void 0);
         bus_name.set(this, void 0);
         bus_classPrivateFieldSet(this, _events, {});
         bus_classPrivateFieldSet(this, _eventHandler, emitHandler);
         bus_classPrivateFieldSet(this, bus_name, name !== null && name !== void 0 ? name : "CuiEventBus");
-        bus_classPrivateFieldSet(this, bus_log, factory_CuiDevtoolFactory.get(bus_classPrivateFieldGet(this, bus_name)));
+        bus_classPrivateFieldSet(this, _log, factory_CuiDevtoolFactory.get(bus_classPrivateFieldGet(this, bus_name)));
     }
     /**
      * Attaches event to event bus
@@ -1707,7 +1810,7 @@ class bus_CuiEventBus {
         if (this.isAttached(bus_classPrivateFieldGet(this, _events)[name], id, cui)) {
             return null;
         }
-        bus_classPrivateFieldGet(this, bus_log).debug(`Attaching new event: [${name}] for: [${id}]`);
+        bus_classPrivateFieldGet(this, _log).debug(`Attaching new event: [${name}] for: [${id}]`);
         bus_classPrivateFieldGet(this, _events)[name][id] = { callback: callback, $cuid: this.getCuid(cui) };
         return id;
     }
@@ -1723,7 +1826,7 @@ class bus_CuiEventBus {
             throw new ArgumentError("Missing argument");
         }
         let ev = bus_classPrivateFieldGet(this, _events)[name];
-        bus_classPrivateFieldGet(this, bus_log).debug(`Detaching item: [${id}] from [${name}]`);
+        bus_classPrivateFieldGet(this, _log).debug(`Detaching item: [${id}] from [${name}]`);
         if (this.isAttached(ev, id)) {
             delete ev[id];
         }
@@ -1738,7 +1841,7 @@ class bus_CuiEventBus {
             delete bus_classPrivateFieldGet(this, _events)[name];
         }
         else {
-            bus_classPrivateFieldGet(this, bus_log).error(`Event name is missing or incorrect`, "detachAll");
+            bus_classPrivateFieldGet(this, _log).error(`Event name is missing or incorrect`, "detachAll");
         }
     }
     /**
@@ -1748,14 +1851,14 @@ class bus_CuiEventBus {
     * @param {string} cuid - id of component which emits the event
     * @param {any[]} args  - event arguments
     */
-    emit(event, cuid, ...args) {
+    emit(event, cuid, args) {
         return bus_awaiter(this, void 0, void 0, function* () {
             if (!is(event)) {
                 throw new ArgumentError("Event name is incorrect");
             }
             let callbacks = bus_classPrivateFieldGet(this, _events)[event];
             if (is(callbacks)) {
-                bus_classPrivateFieldGet(this, bus_log).debug(`Emit: [${event}]`);
+                bus_classPrivateFieldGet(this, _log).debug(`Emit: [${event}]`);
                 yield bus_classPrivateFieldGet(this, _eventHandler).handle(callbacks, cuid, args);
             }
             return true;
@@ -1803,7 +1906,7 @@ class bus_CuiEventBus {
         return is(cui) ? cui.$cuid : null;
     }
 }
-_events = new WeakMap(), bus_log = new WeakMap(), _eventHandler = new WeakMap(), bus_name = new WeakMap();
+_events = new WeakMap(), _log = new WeakMap(), _eventHandler = new WeakMap(), bus_name = new WeakMap();
 class bus_CuiEventExtBus {
     constructor(setup) {
         _events_1.set(this, void 0);
@@ -1871,12 +1974,12 @@ class bus_CuiEventExtBus {
     * @param {string} cuid - id of component which emits the event
     * @param {any[]} args  - event arguments
     */
-    emit(event, cuid, ...args) {
+    emit(event, cuid, args) {
         return bus_awaiter(this, void 0, void 0, function* () {
             if (!is(event)) {
                 throw new ArgumentError("Event name is incorrect");
             }
-            return this.get(event).emit(event, cuid, ...args);
+            return this.get(event).emit(event, cuid, args);
         });
     }
     /**
@@ -1939,7 +2042,7 @@ _events_1 = new WeakMap(), _log_1 = new WeakMap(), _buses = new WeakMap(), _last
 class bus_CuiEventBusFactory {
     static get(setup) {
         //@ts-ignore - setup is underfined check is perfromed
-        return is(setup) ? new bus_CuiEventExtBus(setup) : new bus_CuiEventBus(new handlers_TaskedEventEmitHandler(new CuiCallbackExecutor));
+        return is(setup) ? new bus_CuiEventExtBus(setup) : new bus_CuiEventBus(CuiEventEmitHandlerFactory.get('tasked', new CuiCallbackExecutor()));
     }
 }
 class CuiBusExtStatisticsHandler {
@@ -1997,77 +2100,6 @@ class appender_CuiDocumentStyleAppender {
     }
 }
 
-// CONCATENATED MODULE: ./src/core/handlers/colors.ts
-var colors_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var colors_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _root, _interactions, _LIGHTEN_FACTOR, _DARKEN_FACTOR;
-
-
-class colors_CuiInstanceColorHandler {
-    constructor(interactions) {
-        _root.set(this, void 0);
-        _interactions.set(this, void 0);
-        _LIGHTEN_FACTOR.set(this, 15);
-        _DARKEN_FACTOR.set(this, 15);
-        colors_classPrivateFieldSet(this, _root, document.documentElement);
-        colors_classPrivateFieldSet(this, _interactions, interactions);
-    }
-    setAppBackground(light, dark) {
-        this.setPropertyIn(CSS_APP_BACKGROUND_COLORS.light, light.toCssString());
-        this.setPropertyIn(CSS_APP_BACKGROUND_COLORS.dark, dark.toCssString());
-    }
-    setComponentBackground(light, dark) {
-        this.setPropertyIn(CSS_COMPONENT_BACKGROUND_COLORS.light, light.toCssString());
-        this.setPropertyIn(CSS_COMPONENT_BACKGROUND_COLORS.dark, dark.toCssString());
-    }
-    setBordersColors(light, dark) {
-        this.setPropertyIn(CSS_COMPONENT_BORDER_COLORS.light, light.toCssString());
-        this.setPropertyIn(CSS_COMPONENT_BORDER_COLORS.dark, dark.toCssString());
-    }
-    setColor(type, set) {
-        var _a, _b;
-        const colors = CSS_THEMES[type];
-        const baseColor = set.base;
-        if (!is(colors) || !is(baseColor)) {
-            return;
-        }
-        const mutedColor = (_a = set.muted) !== null && _a !== void 0 ? _a : baseColor.clone().lighten(colors_classPrivateFieldGet(this, _LIGHTEN_FACTOR));
-        const activeColor = (_b = set.active) !== null && _b !== void 0 ? _b : baseColor.clone().darken(colors_classPrivateFieldGet(this, _DARKEN_FACTOR));
-        colors_classPrivateFieldGet(this, _interactions).mutate(() => {
-            this.setProperty(colors.base, baseColor.toCssString());
-            this.setProperty(colors.active, activeColor.toCssString());
-            this.setProperty(colors.muted, mutedColor.toCssString());
-        }, this);
-    }
-    setLightenFactor(factor) {
-        colors_classPrivateFieldSet(this, _LIGHTEN_FACTOR, getRangeValue(factor, 0, 100));
-    }
-    setDarkenFactor(factor) {
-        colors_classPrivateFieldSet(this, _DARKEN_FACTOR, getRangeValue(factor, 0, 100));
-    }
-    setProperty(propertyName, value) {
-        colors_classPrivateFieldGet(this, _root).style.setProperty(propertyName, value);
-    }
-    setPropertyIn(propertyName, value) {
-        if (!are(value, propertyName)) {
-            return;
-        }
-        colors_classPrivateFieldGet(this, _interactions).mutate(this.setProperty, this, propertyName, value);
-    }
-}
-_root = new WeakMap(), _interactions = new WeakMap(), _LIGHTEN_FACTOR = new WeakMap(), _DARKEN_FACTOR = new WeakMap();
-
 // CONCATENATED MODULE: ./src/core/models/utils.ts
 var utils_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
@@ -2089,7 +2121,7 @@ var _plugins;
 
 
 
-
+//import { CuiInstanceColorHandler } from "../handlers/colors";
 
 class utils_CuiUtils {
     constructor(initialSetup, plugins) {
@@ -2098,7 +2130,7 @@ class utils_CuiUtils {
         this.interactions = interactions_CuiInteractionsFactory.get(initialSetup.interaction, this.onInteractionError.bind(this));
         // this.cache = new CuiCacheManager(this.setup.cacheSize);
         this.bus = bus_CuiEventBusFactory.get(initialSetup.busSetup);
-        this.colors = new colors_CuiInstanceColorHandler(this.interactions);
+        // this.colors = new CuiInstanceColorHandler(this.interactions);
         this.styleAppender = new appender_CuiDocumentStyleAppender(this.interactions);
         utils_classPrivateFieldSet(this, _plugins, plugins !== null && plugins !== void 0 ? plugins : []);
     }
@@ -2139,7 +2171,9 @@ class utils_CuiUtils {
             throw new CSSVariableError("Property or value was not provided");
         }
         let prop = replacePrefix(name, this.setup.prefix);
-        document.documentElement.style.setProperty(prop, value);
+        this.interactions.mutate(() => {
+            document.documentElement.style.setProperty(prop, value);
+        }, null);
     }
     isPlugin(name) {
         return is(name) && utils_classPrivateFieldGet(this, _plugins).find(plugin => plugin === name);
@@ -2174,22 +2208,22 @@ var helpers_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGe
     }
     return privateMap.get(receiver);
 };
-var helpers_interactions;
+var _interactions;
 
 
 class helpers_CuiActionsHelper {
     constructor(interactions) {
-        helpers_interactions.set(this, void 0);
-        helpers_classPrivateFieldSet(this, helpers_interactions, interactions);
+        _interactions.set(this, void 0);
+        helpers_classPrivateFieldSet(this, _interactions, interactions);
     }
     performAction(target, action, timeout, callback) {
         return helpers_awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve) => {
-                helpers_classPrivateFieldGet(this, helpers_interactions).mutate(() => {
+                helpers_classPrivateFieldGet(this, _interactions).mutate(() => {
                     action.add(target);
                     target.classList.add(CLASSES.animProgress);
                     setTimeout(() => {
-                        helpers_classPrivateFieldGet(this, helpers_interactions).mutate(() => {
+                        helpers_classPrivateFieldGet(this, _interactions).mutate(() => {
                             action.remove(target);
                             target.classList.remove(CLASSES.animProgress);
                             if (callback)
@@ -2204,11 +2238,11 @@ class helpers_CuiActionsHelper {
     performActions(target, actions, timeout, callback) {
         return helpers_awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve) => {
-                helpers_classPrivateFieldGet(this, helpers_interactions).mutate(() => {
+                helpers_classPrivateFieldGet(this, _interactions).mutate(() => {
                     actions.forEach(x => x.add(target));
                     target.classList.add(CLASSES.animProgress);
                     setTimeout(() => {
-                        helpers_classPrivateFieldGet(this, helpers_interactions).mutate(() => {
+                        helpers_classPrivateFieldGet(this, _interactions).mutate(() => {
                             actions.forEach(x => x.remove(target));
                             target.classList.remove(CLASSES.animProgress);
                             if (callback)
@@ -2223,7 +2257,7 @@ class helpers_CuiActionsHelper {
     performSwitchAction(inTarget, outTarget, inAction, outAction, onFinish, timeout) {
         return helpers_awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve) => {
-                helpers_classPrivateFieldGet(this, helpers_interactions).mutate(() => {
+                helpers_classPrivateFieldGet(this, _interactions).mutate(() => {
                     inAction.forEach(x => x.add(inTarget));
                     inTarget.classList.add(CLASSES.animProgress);
                     if (is(outTarget)) {
@@ -2233,7 +2267,7 @@ class helpers_CuiActionsHelper {
                         outTarget.classList.add(CLASSES.animProgress);
                     }
                     setTimeout(() => {
-                        helpers_classPrivateFieldGet(this, helpers_interactions).mutate(() => {
+                        helpers_classPrivateFieldGet(this, _interactions).mutate(() => {
                             inAction.forEach(x => x.remove(inTarget));
                             inTarget.classList.remove(CLASSES.animProgress);
                             if (is(outTarget)) {
@@ -2251,7 +2285,7 @@ class helpers_CuiActionsHelper {
         });
     }
 }
-helpers_interactions = new WeakMap();
+_interactions = new WeakMap();
 
 // CONCATENATED MODULE: ./src/core/utils/actions.ts
 var actions_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -2496,7 +2530,6 @@ var _elements, _isLocked, _logger, _cDt, element_utils, _actionsHelper;
 
 
 
-
 class element_ElementManager {
     constructor(elements, utils) {
         _elements.set(this, void 0);
@@ -2717,50 +2750,46 @@ class element_ElementManager {
             return true;
         });
     }
-    animate(className, timeout) {
+    setAction(actionStr, animationClass, timeout) {
         return element_awaiter(this, void 0, void 0, function* () {
-            if (!is(className)) {
+            if (!is(actionStr)) {
                 return false;
             }
-            const delay = timeout !== null && timeout !== void 0 ? timeout : element_classPrivateFieldGet(this, element_utils).setup.animationTime;
-            return this.call((element) => {
-                this.change(() => {
-                    element.classList.add(className);
-                    element.classList.add(CLASSES.animProgress);
-                    setTimeout(() => {
-                        this.change(() => {
-                            element.classList.remove(className);
-                            element.classList.remove(CLASSES.animProgress);
-                        });
-                    }, delay);
-                });
+            let act = actions_CuiActionsFatory.get(actionStr);
+            return this.animate(animationClass, timeout, (element) => {
+                act.add(element);
             });
         });
     }
-    open(openClass, animationClass, timeout) {
+    removeAction(actionStr, animationClass, timeout) {
         return element_awaiter(this, void 0, void 0, function* () {
-            if (!are(openClass, animationClass)) {
+            if (!is(actionStr)) {
                 return false;
             }
-            const delay = timeout !== null && timeout !== void 0 ? timeout : element_classPrivateFieldGet(this, element_utils).setup.animationTime;
-            const action = new actions_CuiClassAction(animationClass);
-            return this.call((element) => {
-                element_classPrivateFieldGet(this, _actionsHelper).performAction(element, action, delay !== null && delay !== void 0 ? delay : 0).then(() => {
-                    element.classList.add(openClass);
-                });
+            let act = actions_CuiActionsFatory.get(actionStr);
+            return this.animate(animationClass, timeout, (element) => {
+                act.remove(element);
             });
         });
     }
-    close(closeClass, animationClass, timeout) {
+    /**
+     * Perform animation on the element
+     * @param animationClass
+     * @param timeout
+     * @param callback
+     */
+    animate(animationClass, timeout, callback) {
+        var _a;
         return element_awaiter(this, void 0, void 0, function* () {
-            if (!are(closeClass, animationClass)) {
+            if (!is(animationClass)) {
                 return false;
             }
-            const delay = timeout !== null && timeout !== void 0 ? timeout : element_classPrivateFieldGet(this, element_utils).setup.animationTime;
+            const delay = (_a = timeout !== null && timeout !== void 0 ? timeout : element_classPrivateFieldGet(this, element_utils).setup.animationTime) !== null && _a !== void 0 ? _a : 0;
             const action = new actions_CuiClassAction(animationClass);
             return this.call((element) => {
-                element_classPrivateFieldGet(this, _actionsHelper).performAction(element, action, delay !== null && delay !== void 0 ? delay : 0).then(() => {
-                    element.classList.remove(closeClass);
+                return element_classPrivateFieldGet(this, _actionsHelper).performAction(element, action, delay, () => {
+                    if (callback)
+                        callback(element);
                 });
             });
         });
@@ -2832,235 +2861,6 @@ class element_ElementManager {
 }
 _elements = new WeakMap(), _isLocked = new WeakMap(), _logger = new WeakMap(), _cDt = new WeakMap(), element_utils = new WeakMap(), _actionsHelper = new WeakMap();
 
-// CONCATENATED MODULE: ./src/app/helpers/collection.ts
-var collection_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var collection_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var collection_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var collection_elements, collection_log, collection_isLocked, _toggleClass, collection_interactions;
-
-
-
-class collection_CollectionManagerHelper {
-    constructor(interactions) {
-        collection_elements.set(this, void 0);
-        collection_log.set(this, void 0);
-        collection_isLocked.set(this, void 0);
-        _toggleClass.set(this, void 0);
-        collection_interactions.set(this, void 0);
-        collection_classPrivateFieldSet(this, collection_interactions, interactions);
-        collection_classPrivateFieldSet(this, collection_log, factory_CuiDevtoolFactory.get('CollectionManager'));
-        collection_classPrivateFieldSet(this, collection_elements, []);
-        collection_classPrivateFieldSet(this, collection_isLocked, false);
-        collection_classPrivateFieldSet(this, _toggleClass, "");
-    }
-    setElements(elements) {
-        collection_classPrivateFieldSet(this, collection_elements, elements);
-    }
-    setToggle(className) {
-        collection_classPrivateFieldSet(this, _toggleClass, className);
-    }
-    addAnimationClass(currentElement, nextElement, animIn, animOut) {
-        nextElement.classList.add(CLASSES.animProgress);
-        currentElement.classList.add(animOut);
-        nextElement.classList.add(animIn);
-    }
-    setFinalClasses(currentElement, nextElement, animIn, animOut) {
-        nextElement.classList.remove(CLASSES.animProgress);
-        currentElement.classList.remove(animOut);
-        nextElement.classList.remove(animIn);
-        currentElement.classList.remove(collection_classPrivateFieldGet(this, _toggleClass));
-        nextElement.classList.add(collection_classPrivateFieldGet(this, _toggleClass));
-    }
-    verifyIndex(index, current, count) {
-        return index >= 0 && index !== current && index < count;
-    }
-    setCurrent(newIndex, current) {
-        return collection_awaiter(this, void 0, void 0, function* () {
-            this.lock();
-            collection_classPrivateFieldGet(this, collection_log).debug(`Switching index from: ${current} to ${newIndex}`);
-            if (current > -1)
-                collection_classPrivateFieldGet(this, collection_elements)[current].classList.remove(collection_classPrivateFieldGet(this, _toggleClass));
-            collection_classPrivateFieldGet(this, collection_elements)[newIndex].classList.add(collection_classPrivateFieldGet(this, _toggleClass));
-            this.unlock();
-            return true;
-        });
-    }
-    setCurrentWithAnimation(newIndex, animClassIn, animClassOut, duration, current) {
-        return collection_awaiter(this, void 0, void 0, function* () {
-            this.lock();
-            collection_classPrivateFieldGet(this, collection_log).debug(`Switching index from: ${current} to ${newIndex}`);
-            const currentElement = collection_classPrivateFieldGet(this, collection_elements)[current];
-            const nextElement = collection_classPrivateFieldGet(this, collection_elements)[newIndex];
-            collection_classPrivateFieldGet(this, collection_interactions).mutate(this.addAnimationClass, this, currentElement, nextElement, animClassIn, animClassOut);
-            setTimeout(() => {
-                collection_classPrivateFieldGet(this, collection_interactions).mutate(this.setFinalClasses, this, currentElement, nextElement, animClassIn, animClassOut);
-                this.unlock();
-            }, duration);
-            return true;
-        });
-    }
-    getCurrentIndex() {
-        if (!is(collection_classPrivateFieldGet(this, _toggleClass))) {
-            return -1;
-        }
-        let len = this.count();
-        for (let i = 0; i < len; i++) {
-            if (collection_classPrivateFieldGet(this, collection_elements)[i].classList.contains(collection_classPrivateFieldGet(this, _toggleClass))) {
-                return i;
-            }
-        }
-        return -1;
-    }
-    elements() {
-        return collection_classPrivateFieldGet(this, collection_elements);
-    }
-    check() {
-        if (collection_classPrivateFieldGet(this, collection_isLocked)) {
-            collection_classPrivateFieldGet(this, collection_log).warning("Object locked. Operation in progress", "Check");
-            return false;
-        }
-        else if (!is(collection_classPrivateFieldGet(this, _toggleClass))) {
-            collection_classPrivateFieldGet(this, collection_log).warning("Toggle is not set. Call setToggleClass", "Check");
-            return false;
-        }
-        else if (this.count() <= 0) {
-            collection_classPrivateFieldGet(this, collection_log).warning("Elements list is empty", "Check");
-            return false;
-        }
-        return true;
-    }
-    count() {
-        return collection_classPrivateFieldGet(this, collection_elements) ? collection_classPrivateFieldGet(this, collection_elements).length : -1;
-    }
-    lock() {
-        collection_classPrivateFieldSet(this, collection_isLocked, true);
-    }
-    unlock() {
-        collection_classPrivateFieldSet(this, collection_isLocked, false);
-    }
-}
-collection_elements = new WeakMap(), collection_log = new WeakMap(), collection_isLocked = new WeakMap(), _toggleClass = new WeakMap(), collection_interactions = new WeakMap();
-
-// CONCATENATED MODULE: ./src/app/managers/collection.ts
-var managers_collection_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var managers_collection_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var managers_collection_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var managers_collection_log, collection_cDt, _helper;
-
-
-class collection_CollectionManager {
-    constructor(elements, interactions) {
-        managers_collection_log.set(this, void 0);
-        collection_cDt.set(this, void 0);
-        _helper.set(this, void 0);
-        managers_collection_classPrivateFieldSet(this, managers_collection_log, factory_CuiDevtoolFactory.get('CollectionManager'));
-        managers_collection_classPrivateFieldSet(this, _helper, new collection_CollectionManagerHelper(interactions));
-        managers_collection_classPrivateFieldGet(this, _helper).setElements(elements);
-        managers_collection_classPrivateFieldSet(this, collection_cDt, Date.now());
-    }
-    setToggle(className) {
-        managers_collection_classPrivateFieldGet(this, _helper).setToggle(className);
-    }
-    setElements(elements) {
-        managers_collection_classPrivateFieldGet(this, _helper).setElements(elements);
-    }
-    click(callback) {
-        managers_collection_classPrivateFieldGet(this, _helper).elements().forEach((element, index) => {
-            element.addEventListener('click', () => {
-                this.set(index).then(() => {
-                    if (callback) {
-                        callback(element, index);
-                    }
-                });
-            });
-        });
-    }
-    next() {
-        return managers_collection_awaiter(this, void 0, void 0, function* () {
-            if (!managers_collection_classPrivateFieldGet(this, _helper).check()) {
-                return false;
-            }
-            let newIdx = managers_collection_classPrivateFieldGet(this, _helper).getCurrentIndex() + 1;
-            return this.set(newIdx >= this.length() ? 0 : newIdx);
-        });
-    }
-    previous() {
-        return managers_collection_awaiter(this, void 0, void 0, function* () {
-            if (!managers_collection_classPrivateFieldGet(this, _helper).check()) {
-                return false;
-            }
-            let newIdx = managers_collection_classPrivateFieldGet(this, _helper).getCurrentIndex() - 1;
-            return this.set(newIdx < 0 ? this.length() - 1 : newIdx);
-        });
-    }
-    set(index) {
-        return managers_collection_awaiter(this, void 0, void 0, function* () {
-            let current = managers_collection_classPrivateFieldGet(this, _helper).getCurrentIndex();
-            if (!managers_collection_classPrivateFieldGet(this, _helper).check() || !managers_collection_classPrivateFieldGet(this, _helper).verifyIndex(index, current, this.length())) {
-                return false;
-            }
-            return managers_collection_classPrivateFieldGet(this, _helper).setCurrent(index, current);
-        });
-    }
-    setWithAnimation(index, animClassIn, animClassOut, duration) {
-        return managers_collection_awaiter(this, void 0, void 0, function* () {
-            let current = managers_collection_classPrivateFieldGet(this, _helper).getCurrentIndex();
-            if (!managers_collection_classPrivateFieldGet(this, _helper).check() || !managers_collection_classPrivateFieldGet(this, _helper).verifyIndex(index, current, this.length())) {
-                return false;
-            }
-            return managers_collection_classPrivateFieldGet(this, _helper).setCurrentWithAnimation(index, animClassIn, animClassOut, duration, current);
-        });
-    }
-    getCurrentIndex() {
-        return managers_collection_classPrivateFieldGet(this, _helper).getCurrentIndex();
-    }
-    length() {
-        return managers_collection_classPrivateFieldGet(this, _helper).count();
-    }
-    refresh() {
-        return this.length() > 0 && Date.now() - managers_collection_classPrivateFieldGet(this, collection_cDt) > 360000;
-    }
-}
-managers_collection_log = new WeakMap(), collection_cDt = new WeakMap(), _helper = new WeakMap();
-
 // CONCATENATED MODULE: ./src/app/managers/plugins.ts
 var plugins_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -3131,6 +2931,63 @@ class plugins_CuiPluginManager {
 }
 plugins_plugins = new WeakMap(), _mutated = new WeakMap(), plugins_log = new WeakMap();
 
+// CONCATENATED MODULE: ./src/core/api/handler.ts
+var handler_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var handler_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var handler_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var handler_components, handler_utils;
+
+class handler_CuiApiHandler {
+    constructor(components, utils) {
+        handler_components.set(this, void 0);
+        handler_utils.set(this, void 0);
+        handler_classPrivateFieldSet(this, handler_components, components);
+        handler_classPrivateFieldSet(this, handler_utils, utils);
+    }
+    registerComponent(node) {
+        return handler_awaiter(this, void 0, void 0, function* () {
+            let matching = getMatchingComponents(node, handler_classPrivateFieldGet(this, handler_components));
+            if (!matching || matching.length === 0) {
+                return false;
+            }
+            return createCuiElement(node, matching, handler_classPrivateFieldGet(this, handler_utils));
+        });
+    }
+    updateComponent(node, component, args) {
+        return handler_awaiter(this, void 0, void 0, function* () {
+            if (!node.hasAttribute(component)) {
+                return false;
+            }
+            return updateComponent(node, component, args);
+        });
+    }
+    destroyComponent(node) {
+        return handler_awaiter(this, void 0, void 0, function* () {
+            return destroyCuiElement(node);
+        });
+    }
+}
+handler_components = new WeakMap(), handler_utils = new WeakMap();
+
 // CONCATENATED MODULE: ./src/app/instance.ts
 var instance_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -3154,7 +3011,7 @@ var instance_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldG
     }
     return privateMap.get(receiver);
 };
-var instance_log, _mutationObserver, instance_utils, instance_plugins, instance_components, _rootElement, _mutatedAttributes;
+var instance_log, _mutationObserver, instance_utils, instance_plugins, instance_components, _rootElement, _mutatedAttributes, _api;
 
 
 
@@ -3174,6 +3031,7 @@ class instance_CuiInstance {
         instance_components.set(this, void 0);
         _rootElement.set(this, void 0);
         _mutatedAttributes.set(this, void 0);
+        _api.set(this, void 0);
         STATICS.prefix = setup.prefix;
         STATICS.logLevel = setup.logLevel;
         if (setup.development)
@@ -3185,6 +3043,7 @@ class instance_CuiInstance {
         instance_classPrivateFieldSet(this, _rootElement, setup.root);
         instance_classPrivateFieldSet(this, _mutationObserver, undefined);
         instance_classPrivateFieldSet(this, _mutatedAttributes, []);
+        instance_classPrivateFieldSet(this, _api, new handler_CuiApiHandler(instance_classPrivateFieldGet(this, instance_components), instance_classPrivateFieldGet(this, instance_utils)));
     }
     init() {
         return instance_awaiter(this, void 0, void 0, function* () {
@@ -3244,18 +3103,6 @@ class instance_CuiInstance {
         const newElement = new element_ElementManager(elements, instance_classPrivateFieldGet(this, instance_utils));
         return newElement;
     }
-    collection(selector) {
-        const elements = this.all(selector);
-        if (!is(elements)) {
-            return undefined;
-        }
-        // @ts-ignore already checked
-        let manager = new collection_CollectionManager(elements, instance_classPrivateFieldGet(this, instance_utils).interactions);
-        return manager;
-    }
-    select(selector) {
-        return document.querySelector(selector);
-    }
     all(selector) {
         const nodes = document.querySelectorAll(selector);
         if (!is(nodes)) {
@@ -3264,7 +3111,7 @@ class instance_CuiInstance {
         return [...nodes];
     }
     getUtils() {
-        return instance_classPrivateFieldGet(this, instance_utils);
+        return instance_classPrivateFieldGet(this, instance_utils); //;
     }
     on(event, callback, element) {
         if (!are(event, callback)) {
@@ -3307,6 +3154,9 @@ class instance_CuiInstance {
     getPlugin(name) {
         return instance_classPrivateFieldGet(this, instance_plugins).get(name);
     }
+    api() {
+        return instance_classPrivateFieldGet(this, _api);
+    }
     /**
      * Creates cUI element outside of cUI root scope
      * @param element
@@ -3329,7 +3179,7 @@ class instance_CuiInstance {
         });
     }
 }
-instance_log = new WeakMap(), _mutationObserver = new WeakMap(), instance_utils = new WeakMap(), instance_plugins = new WeakMap(), instance_components = new WeakMap(), _rootElement = new WeakMap(), _mutatedAttributes = new WeakMap();
+instance_log = new WeakMap(), _mutationObserver = new WeakMap(), instance_utils = new WeakMap(), instance_plugins = new WeakMap(), instance_components = new WeakMap(), _rootElement = new WeakMap(), _mutatedAttributes = new WeakMap(), _api = new WeakMap();
 
 // CONCATENATED MODULE: ./src/core/animation/definitions.ts
 const SWIPE_ANIMATIONS_DEFINITIONS = {
@@ -3641,10 +3491,10 @@ class base_CuiComponentBase {
      * @param event Event name
      * @param data Data to emit
      */
-    emitEvent(event, ...data) {
+    emitEvent(event, data) {
         if (!base_classPrivateFieldGet(this, _emittedEvents).includes(event))
             base_classPrivateFieldGet(this, _emittedEvents).push(event);
-        this.utils.bus.emit(event, this.cuid, ...data);
+        this.utils.bus.emit(event, this.cuid, data);
     }
     onEvent(event, callback) {
         return this.utils.bus.on(event, callback, this.element);
@@ -3710,60 +3560,74 @@ class base_CuiHandlerBase extends base_CuiComponentBase {
         base_classPrivateFieldSet(this, _attribute, attribute);
     }
     handle(args) {
-        this.registerInDebug();
-        if (this.isInitialized) {
-            this.logWarning("Trying to initialize component again", 'handle');
-            return;
-        }
-        this.args.parse(args);
-        if (!this.element.classList.contains(base_classPrivateFieldGet(this, _attribute))) {
-            this.element.classList.add(base_classPrivateFieldGet(this, _attribute));
-        }
-        this.logInfo("Init", 'handle');
-        this.onHandle();
-        this.isInitialized = true;
+        return base_awaiter(this, void 0, void 0, function* () {
+            if (this.isInitialized) {
+                this.logWarning("Trying to initialize handler again", 'handle');
+                return false;
+            }
+            if (this.isLocked) {
+                this.logWarning("Handler is locked", 'handle');
+                return false;
+            }
+            this.isLocked = true;
+            this.registerInDebug();
+            this.args.parse(args);
+            if (!this.element.classList.contains(base_classPrivateFieldGet(this, _attribute))) {
+                this.helper.setClassesAs(this.element, base_classPrivateFieldGet(this, _attribute));
+            }
+            this.logInfo("Init", 'handle');
+            return this.performLifecycleOp("onHandle", this.onHandle(), () => {
+                this.isLocked = false;
+                this.isInitialized = true;
+            });
+        });
     }
     refresh(args) {
-        this.logInfo("Update", 'refresh');
-        if (!this.isInitialized) {
-            this.logError("Cannot update not initialized component", 'refresh');
-            return;
-        }
-        this.prevArgs = clone(this.args);
-        this.args.parse(args);
-        this._log.debug("Component update", 'refresh');
-        this.onRefresh();
+        return base_awaiter(this, void 0, void 0, function* () {
+            this.logInfo("Update", 'refresh');
+            if (!this.isInitialized) {
+                this.logError("Cannot update not initialized component", 'refresh');
+                return false;
+            }
+            if (!this.checkLock()) {
+                return false;
+            }
+            this.isLocked = true;
+            this.prevArgs = clone(this.args);
+            this.args.parse(args);
+            this._log.debug("Component update", 'refresh');
+            return this.performLifecycleOp("onRefresh", this.onRefresh(), () => {
+                this.isLocked = false;
+            });
+        });
     }
     destroy() {
-        this.logInfo("Destroy", "destroy");
-        this.onRemove();
-        this.detachEmiitedEvents();
-        this.removeFromDebug();
-        this.isInitialized = false;
-    }
-}
-_attribute = new WeakMap();
-class CuiHandler extends base_CuiHandlerBase {
-    constructor(componentName, element, attribute, args, utils) {
-        super(componentName, element, attribute, args, utils);
-    }
-    onHandle() {
-        this.onInit();
-    }
-    onRefresh() {
-        this.onUpdate();
-    }
-    onRemove() {
-        this.onDestroy();
+        return base_awaiter(this, void 0, void 0, function* () {
+            this.logInfo("Destroy", "destroy");
+            if (!this.isInitialized) {
+                this.logError("Cannot update not initialized component", 'destroy');
+                return false;
+            }
+            if (!this.checkLock()) {
+                return false;
+            }
+            this.isLocked = true;
+            return this.performLifecycleOp("onRemove", this.onRemove(), () => {
+                this.detachEmiitedEvents();
+                this.removeFromDebug();
+                this.isInitialized = false;
+                this.isLocked = false;
+            });
+        });
     }
     /**
-     * Helper created for elements that animate - perfroms an action *add*, after timeout it performs *remove*.
-     *
-     * @param action - action to perfrom
-     * @param timeout - timeout specified for action removal
-     * @param onFinish - callback to be performed after action is finished after removal
-     * @param callback - optional - callback to be executed in mutation on action removal, e.g. additional DOM changes on element
-     */
+    * Helper created for elements that animate - perfroms an action *add*, after timeout it performs *remove*.
+    *
+    * @param action - action to perfrom
+    * @param timeout - timeout specified for action removal
+    * @param onFinish - callback to be performed after action is finished after removal
+    * @param callback - optional - callback to be executed in mutation on action removal, e.g. additional DOM changes on element
+    */
     performAction(actions, timeout, onFinish, callback) {
         return base_awaiter(this, void 0, void 0, function* () {
             if (yield this.actionsHelper.performActions(this.element, actions, timeout, callback)) {
@@ -3773,7 +3637,30 @@ class CuiHandler extends base_CuiHandlerBase {
             return false;
         });
     }
+    checkLock() {
+        if (this.isLocked) {
+            this.logWarning("Handler is locked", 'handle');
+            return false;
+        }
+        return true;
+    }
+    performLifecycleOp(method, operation, onFinish) {
+        return base_awaiter(this, void 0, void 0, function* () {
+            let result = false;
+            try {
+                result = yield operation;
+            }
+            catch (e) {
+                this.logError("An exception occured in" + method, method, e);
+            }
+            finally {
+                onFinish();
+            }
+            return result;
+        });
+    }
 }
+_attribute = new WeakMap();
 class base_CuiInteractableHandler extends base_CuiHandlerBase {
     constructor(componentName, element, attribute, args, utils) {
         super(componentName, element, attribute, args, utils);
@@ -3789,25 +3676,34 @@ class base_CuiInteractableHandler extends base_CuiHandlerBase {
         base_classPrivateFieldSet(this, _openAct, []);
     }
     onHandle() {
-        base_classPrivateFieldSet(this, _openEventId, this.onEvent(EVENTS.OPEN, this.openFromEvent.bind(this)));
-        base_classPrivateFieldSet(this, _closeEventId, this.onEvent(EVENTS.CLOSE, this.closeFromEvent.bind(this)));
-        base_classPrivateFieldSet(this, _openAct, actions_CuiActionsListFactory.get(this.args.openAct));
-        base_classPrivateFieldSet(this, _closeAct, actions_CuiActionsListFactory.get(this.args.closeAct));
-        this.onInit();
+        return base_awaiter(this, void 0, void 0, function* () {
+            base_classPrivateFieldSet(this, _openEventId, this.onEvent(EVENTS.OPEN, this.openFromEvent.bind(this)));
+            base_classPrivateFieldSet(this, _closeEventId, this.onEvent(EVENTS.CLOSE, this.closeFromEvent.bind(this)));
+            base_classPrivateFieldSet(this, _openAct, actions_CuiActionsListFactory.get(this.args.openAct));
+            base_classPrivateFieldSet(this, _closeAct, actions_CuiActionsListFactory.get(this.args.closeAct));
+            this.onInit();
+            return true;
+        });
     }
     onRefresh() {
-        if (!this.prevArgs || this.args.openAct !== this.prevArgs.openAct) {
-            base_classPrivateFieldSet(this, _openAct, actions_CuiActionsListFactory.get(this.args.openAct));
-        }
-        if (!this.prevArgs || this.args.closeAct !== this.prevArgs.closeAct) {
-            base_classPrivateFieldSet(this, _closeAct, actions_CuiActionsListFactory.get(this.args.closeAct));
-        }
-        this.onUpdate();
+        return base_awaiter(this, void 0, void 0, function* () {
+            if (!this.prevArgs || this.args.openAct !== this.prevArgs.openAct) {
+                base_classPrivateFieldSet(this, _openAct, actions_CuiActionsListFactory.get(this.args.openAct));
+            }
+            if (!this.prevArgs || this.args.closeAct !== this.prevArgs.closeAct) {
+                base_classPrivateFieldSet(this, _closeAct, actions_CuiActionsListFactory.get(this.args.closeAct));
+            }
+            this.onUpdate();
+            return true;
+        });
     }
     onRemove() {
-        this.detachEvent(EVENTS.CLOSE, base_classPrivateFieldGet(this, _closeEventId));
-        this.detachEvent(EVENTS.OPEN, base_classPrivateFieldGet(this, _openEventId));
-        this.onDestroy();
+        return base_awaiter(this, void 0, void 0, function* () {
+            this.detachEvent(EVENTS.CLOSE, base_classPrivateFieldGet(this, _closeEventId));
+            this.detachEvent(EVENTS.OPEN, base_classPrivateFieldGet(this, _openEventId));
+            this.onDestroy();
+            return true;
+        });
     }
     open(args) {
         return base_awaiter(this, void 0, void 0, function* () {
@@ -3901,17 +3797,26 @@ class base_CuiMutableHandler extends base_CuiHandlerBase {
         base_classPrivateFieldGet(this, _mutionHandler).onMutation(this.mutation.bind(this));
     }
     onHandle() {
-        this.onInit();
-        base_classPrivateFieldGet(this, _mutionHandler).observe();
+        return base_awaiter(this, void 0, void 0, function* () {
+            this.onInit();
+            base_classPrivateFieldGet(this, _mutionHandler).observe();
+            return true;
+        });
     }
     onRefresh() {
-        base_classPrivateFieldGet(this, _mutionHandler).unobserve();
-        this.onUpdate();
-        base_classPrivateFieldGet(this, _mutionHandler).observe();
+        return base_awaiter(this, void 0, void 0, function* () {
+            base_classPrivateFieldGet(this, _mutionHandler).unobserve();
+            this.onUpdate();
+            base_classPrivateFieldGet(this, _mutionHandler).observe();
+            return true;
+        });
     }
     onRemove() {
-        base_classPrivateFieldGet(this, _mutionHandler).unobserve();
-        this.onDestroy();
+        return base_awaiter(this, void 0, void 0, function* () {
+            base_classPrivateFieldGet(this, _mutionHandler).unobserve();
+            this.onDestroy();
+            return true;
+        });
     }
     /**
      * Callback attached to mutation observer set on root element
@@ -3920,7 +3825,10 @@ class base_CuiMutableHandler extends base_CuiHandlerBase {
      */
     mutation(records) {
         this._log.debug("Element mutation", "mutation");
-        this.onMutation(records.reduce((result, item) => {
+        this.onMutation(this.prepareRecords(records));
+    }
+    prepareRecords(records) {
+        return records.reduce((result, item) => {
             if (item.type !== "childList") {
                 return result;
             }
@@ -3934,10 +3842,97 @@ class base_CuiMutableHandler extends base_CuiHandlerBase {
         }, {
             added: [],
             removed: []
-        }));
+        });
     }
 }
 _mutionHandler = new WeakMap();
+
+// CONCATENATED MODULE: ./src/core/utils/arguments.ts
+var arguments_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var arguments_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
+var _parser, _defaults, _defaultsLength, arguments_options, _props;
+
+const parserCallbacks = {
+    "string": (value) => value.trim().toLowerCase(),
+    'boolean': isStringTrue,
+    "number": (value) => {
+        const num = value.includes('.') ? parseFloat(value) : parseInt(value);
+        return isNaN(num) ? undefined : num;
+    }
+};
+class arguments_CuiAutoParseArgs {
+    constructor(options) {
+        _parser.set(this, void 0);
+        _defaults.set(this, void 0);
+        _defaultsLength.set(this, void 0);
+        arguments_options.set(this, void 0);
+        arguments_classPrivateFieldSet(this, arguments_options, options !== null && options !== void 0 ? options : {});
+        arguments_classPrivateFieldSet(this, _parser, new TypeParser(arguments_classPrivateFieldGet(this, arguments_options).props));
+        arguments_classPrivateFieldSet(this, _defaults, {});
+        arguments_classPrivateFieldSet(this, _defaultsLength, 0);
+    }
+    parse(args) {
+        this.fillDefaultValues();
+        if (!args) {
+            return;
+        }
+        if (typeof args === 'string' && arguments_classPrivateFieldGet(this, arguments_options).main) {
+            const currentType = typeof this[arguments_classPrivateFieldGet(this, arguments_options).main];
+            this[arguments_classPrivateFieldGet(this, arguments_options).main] = arguments_classPrivateFieldGet(this, _parser).parseValue(arguments_classPrivateFieldGet(this, arguments_options).main, args, currentType);
+            return;
+        }
+        enumerateObject(this, (thisProp, thisValue) => {
+            const currentType = typeof thisValue;
+            // In case args doesn't have property, set default value set during object construction
+            if (!args[thisProp]) {
+                this[thisProp] = arguments_classPrivateFieldGet(this, _defaults)[thisProp];
+                return;
+            }
+            // Case that value is in args, parse and adjust
+            const newVal = arguments_classPrivateFieldGet(this, _parser).parseValue(thisProp, args[thisProp], currentType);
+            if (newVal) {
+                this[thisProp] = newVal;
+            }
+        });
+    }
+    fillDefaultValues() {
+        if (arguments_classPrivateFieldGet(this, _defaultsLength) === 0) {
+            enumerateObject(this, (prperty, value) => {
+                arguments_classPrivateFieldGet(this, _defaults)[prperty] = value;
+            });
+            arguments_classPrivateFieldSet(this, _defaultsLength, Object.keys(arguments_classPrivateFieldGet(this, _defaults)).length);
+        }
+    }
+}
+_parser = new WeakMap(), _defaults = new WeakMap(), _defaultsLength = new WeakMap(), arguments_options = new WeakMap();
+class TypeParser {
+    constructor(props) {
+        _props.set(this, void 0);
+        arguments_classPrivateFieldSet(this, _props, props !== null && props !== void 0 ? props : {});
+    }
+    parseValue(name, value, type) {
+        var _a, _b, _c;
+        let prop = arguments_classPrivateFieldGet(this, _props)[name];
+        let callback = parserCallbacks[(_a = prop === null || prop === void 0 ? void 0 : prop.type) !== null && _a !== void 0 ? _a : type];
+        let newVal = callback === null || callback === void 0 ? void 0 : callback(value);
+        if (!newVal) {
+            return prop === null || prop === void 0 ? void 0 : prop.default;
+        }
+        return (_c = (_b = prop === null || prop === void 0 ? void 0 : prop.corrector) === null || _b === void 0 ? void 0 : _b.call(prop, newVal)) !== null && _c !== void 0 ? _c : newVal;
+    }
+}
+_props = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/accordion/accordion.ts
 var accordion_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -3962,41 +3957,28 @@ var accordion_classPrivateFieldGet = (undefined && undefined.__classPrivateField
     }
     return privateMap.get(receiver);
 };
-var _defTitleSelector, _defItemsSelector, _defTimeout, _prefix, _items, _targets, _switchEventId;
+var _prefix, accordion_items, _targets, _switchEventId;
+
 
 
 
 const ACCORDION_TITLE_CLS = '> * > .{prefix}-accordion-title';
 const ACCORDION_ITEMS_CLS = '> *';
-class accordion_CuiAccordionArgs {
+class accordion_CuiAccordionArgs extends arguments_CuiAutoParseArgs {
     constructor(prefix, timeout) {
-        _defTitleSelector.set(this, void 0);
-        _defItemsSelector.set(this, void 0);
-        _defTimeout.set(this, void 0);
-        accordion_classPrivateFieldSet(this, _defTitleSelector, replacePrefix(ACCORDION_TITLE_CLS, prefix));
-        accordion_classPrivateFieldSet(this, _defItemsSelector, replacePrefix(ACCORDION_ITEMS_CLS, prefix));
+        super({
+            props: {
+                "selector": { corrector: joinWithScopeSelector },
+                "items": { corrector: joinWithScopeSelector },
+            }
+        });
         this.animation = false;
-        accordion_classPrivateFieldSet(this, _defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
         this.single = false;
-        this.selector = SCOPE_SELECTOR + accordion_classPrivateFieldGet(this, _defTitleSelector);
-        this.items = SCOPE_SELECTOR + accordion_classPrivateFieldGet(this, _defItemsSelector);
-        this.timeout = accordion_classPrivateFieldGet(this, _defTimeout);
-    }
-    parse(args) {
-        if (is(args)) {
-            this.single = isStringTrue(args.single);
-            this.selector = SCOPE_SELECTOR + getStringOrDefault(args.selector, accordion_classPrivateFieldGet(this, _defTitleSelector));
-            this.items = SCOPE_SELECTOR + getStringOrDefault(args.content, accordion_classPrivateFieldGet(this, _defItemsSelector));
-            this.timeout = getIntOrDefault(args.timeout, accordion_classPrivateFieldGet(this, _defTimeout));
-            this.animation = isStringTrue(args.animation);
-            return;
-        }
-    }
-    isValid() {
-        return true;
+        this.selector = joinWithScopeSelector(replacePrefix(ACCORDION_TITLE_CLS, prefix));
+        this.items = joinWithScopeSelector(replacePrefix(ACCORDION_ITEMS_CLS, prefix));
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
     }
 }
-_defTitleSelector = new WeakMap(), _defItemsSelector = new WeakMap(), _defTimeout = new WeakMap();
 class CuiAccordionComponent {
     constructor(prefix) {
         _prefix.set(this, void 0);
@@ -4014,24 +3996,21 @@ _prefix = new WeakMap();
 class accordion_CuiAccordionHandler extends base_CuiMutableHandler {
     constructor(element, utils, attribute, prefix) {
         super("CuiAccordionHandler", element, attribute, new accordion_CuiAccordionArgs(prefix, utils.setup.animationTime), utils);
-        _items.set(this, void 0);
+        accordion_items.set(this, void 0);
         _targets.set(this, void 0);
         _switchEventId.set(this, void 0);
         accordion_classPrivateFieldSet(this, _switchEventId, null);
-        accordion_classPrivateFieldSet(this, _items, []);
+        accordion_classPrivateFieldSet(this, accordion_items, []);
         accordion_classPrivateFieldSet(this, _targets, []);
         accordion_classPrivateFieldSet(this, _switchEventId, null);
     }
     onInit() {
-        if (this.args.isValid()) {
-            try {
-                this.initTargets();
-                accordion_classPrivateFieldSet(this, _switchEventId, this.onEvent(EVENTS.SWITCH, this.onSwitch.bind(this)));
-            }
-            catch (e) {
-                this._log.exception(e, 'handle');
-            }
-            this._log.debug("Initialized", "handle");
+        try {
+            this.initTargets();
+            accordion_classPrivateFieldSet(this, _switchEventId, this.onEvent(EVENTS.SWITCH, this.onSwitch.bind(this)));
+        }
+        catch (e) {
+            this._log.exception(e, 'handle');
         }
     }
     onUpdate() {
@@ -4055,20 +4034,22 @@ class accordion_CuiAccordionHandler extends base_CuiMutableHandler {
             if (index < 0 || this.isLocked || !this.isInitialized) {
                 return false;
             }
-            accordion_classPrivateFieldSet(this, _items, this.queryItems());
-            if (accordion_classPrivateFieldGet(this, _items).length <= index) {
+            accordion_classPrivateFieldSet(this, accordion_items, this.queryItems());
+            if (accordion_classPrivateFieldGet(this, accordion_items).length <= index) {
                 return false;
             }
             this.isLocked = true;
-            const current = accordion_classPrivateFieldGet(this, _items)[index];
+            const current = accordion_classPrivateFieldGet(this, accordion_items)[index];
             if (this.helper.hasClass(this.activeClassName, current)) {
                 this.helper.removeClassesAs(current, this.activeClassName);
             }
             else {
-                if (this.args.single) {
-                    this.closeAllExcept(index);
-                }
-                this.helper.setClassesAs(current, this.activeClassName);
+                this.mutate(() => {
+                    if (this.args.single) {
+                        this.closeAllExcept(index);
+                    }
+                    this.helper.setClass(this.activeClassName, current);
+                });
             }
             this.emitEvent(EVENTS.SWITCHED, {
                 index: index,
@@ -4085,7 +4066,7 @@ class accordion_CuiAccordionHandler extends base_CuiMutableHandler {
         });
     }
     initTargets() {
-        accordion_classPrivateFieldSet(this, _items, this.queryItems());
+        accordion_classPrivateFieldSet(this, accordion_items, this.queryItems());
         const t = this.element.querySelectorAll(this.args.selector);
         accordion_classPrivateFieldSet(this, _targets, []);
         t.forEach((item, index) => {
@@ -4095,12 +4076,10 @@ class accordion_CuiAccordionHandler extends base_CuiMutableHandler {
         });
     }
     closeAllExcept(current) {
-        this.mutate(() => {
-            accordion_classPrivateFieldGet(this, _items).forEach((item, index) => {
-                if (current !== index && this.helper.hasClass(this.activeClassName, item)) {
-                    item.classList.remove(this.activeClassName);
-                }
-            });
+        accordion_classPrivateFieldGet(this, accordion_items).forEach((item, index) => {
+            if (current !== index && this.helper.hasClass(this.activeClassName, item)) {
+                item.classList.remove(this.activeClassName);
+            }
         });
     }
     setListener(target, index) {
@@ -4118,7 +4097,7 @@ class accordion_CuiAccordionHandler extends base_CuiMutableHandler {
         return [...this.element.querySelectorAll(this.args.items)];
     }
 }
-_items = new WeakMap(), _targets = new WeakMap(), _switchEventId = new WeakMap();
+accordion_items = new WeakMap(), _targets = new WeakMap(), _switchEventId = new WeakMap();
 
 // CONCATENATED MODULE: ./src/core/animation/animators.ts
 var animators_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -4253,7 +4232,7 @@ var engine_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet
     }
     return privateMap.get(receiver);
 };
-var _engine, _timeout, _factory, _onError, _onFinishCallback, _animators, _lock, _animStartStamp, engine_element, _cleanOnFinish, _errorOccured, _factory_1, _onError_1, engine_element_1, _animators_1, _animationEngine, _factory_2, _onError_2;
+var _engine, _timeout, _factory, engine_onError, _onFinishCallback, _animators, engine_lock, _animStartStamp, engine_element, _cleanOnFinish, _errorOccured, _factory_1, _onError_1, engine_element_1, _animators_1, _animationEngine, _factory_2, _onError_2;
 
 
 class engine_CuiAnimation {
@@ -4261,9 +4240,9 @@ class engine_CuiAnimation {
         _engine.set(this, void 0);
         _timeout.set(this, void 0);
         _factory.set(this, void 0);
-        _onError.set(this, void 0);
+        engine_onError.set(this, void 0);
         engine_classPrivateFieldSet(this, _engine, new engine_CuiAnimationEngine(true));
-        engine_classPrivateFieldSet(this, _onError, undefined);
+        engine_classPrivateFieldSet(this, engine_onError, undefined);
         engine_classPrivateFieldSet(this, _timeout, 0);
         engine_classPrivateFieldSet(this, _factory, new engine_AnimatorFactory());
         if (element) {
@@ -4277,7 +4256,7 @@ class engine_CuiAnimation {
         engine_classPrivateFieldSet(this, _timeout, timeout);
     }
     onError(callback) {
-        engine_classPrivateFieldSet(this, _onError, callback);
+        engine_classPrivateFieldSet(this, engine_onError, callback);
         engine_classPrivateFieldGet(this, _engine).setOnError(callback);
     }
     onFinish(callback) {
@@ -4306,15 +4285,15 @@ class engine_CuiAnimation {
         }
     }
     reportError(e) {
-        if (engine_classPrivateFieldGet(this, _onError)) {
-            engine_classPrivateFieldGet(this, _onError).call(this, e);
+        if (engine_classPrivateFieldGet(this, engine_onError)) {
+            engine_classPrivateFieldGet(this, engine_onError).call(this, e);
         }
         else {
             console.error(e);
         }
     }
 }
-_engine = new WeakMap(), _timeout = new WeakMap(), _factory = new WeakMap(), _onError = new WeakMap();
+_engine = new WeakMap(), _timeout = new WeakMap(), _factory = new WeakMap(), engine_onError = new WeakMap();
 class engine_AnimatorFactory {
     get(id) {
         if (!is(id)) {
@@ -4334,7 +4313,7 @@ class engine_CuiAnimationEngine {
     constructor(cleanOnFinish) {
         _onFinishCallback.set(this, void 0);
         _animators.set(this, void 0);
-        _lock.set(this, void 0);
+        engine_lock.set(this, void 0);
         // Needed in animation perform - set on first animation exec, cleaned on end
         _animStartStamp.set(this, void 0);
         engine_element.set(this, void 0);
@@ -4347,7 +4326,7 @@ class engine_CuiAnimationEngine {
         engine_classPrivateFieldSet(this, _animStartStamp, undefined);
         engine_classPrivateFieldSet(this, _cleanOnFinish, cleanOnFinish !== null && cleanOnFinish !== void 0 ? cleanOnFinish : false);
         engine_classPrivateFieldSet(this, _factory_1, new engine_AnimatorFactory());
-        engine_classPrivateFieldSet(this, _lock, false);
+        engine_classPrivateFieldSet(this, engine_lock, false);
         engine_classPrivateFieldSet(this, _onFinishCallback, undefined);
         engine_classPrivateFieldSet(this, _errorOccured, false);
         engine_classPrivateFieldSet(this, _onError_1, undefined);
@@ -4383,7 +4362,7 @@ class engine_CuiAnimationEngine {
         engine_classPrivateFieldSet(this, _onError_1, callback);
     }
     animate(timeout, progress, revert) {
-        if (engine_classPrivateFieldGet(this, _lock)) {
+        if (engine_classPrivateFieldGet(this, engine_lock)) {
             return;
         }
         if (!engine_classPrivateFieldGet(this, engine_element) || engine_classPrivateFieldGet(this, _animators).length === 0) {
@@ -4392,11 +4371,11 @@ class engine_CuiAnimationEngine {
         }
         let animationProgress = progress !== null && progress !== void 0 ? progress : 0;
         let shouldCalcRevert = revert ? revert : false;
-        engine_classPrivateFieldSet(this, _lock, true);
+        engine_classPrivateFieldSet(this, engine_lock, true);
         requestAnimationFrame(this.animateAsync.bind(this, timeout, animationProgress, shouldCalcRevert));
     }
     isLocked() {
-        return engine_classPrivateFieldGet(this, _lock);
+        return engine_classPrivateFieldGet(this, engine_lock);
     }
     animateAsync(timeout, initialProgress, revert, timestamp) {
         if (!engine_classPrivateFieldGet(this, _animStartStamp)) {
@@ -4428,7 +4407,7 @@ class engine_CuiAnimationEngine {
         }
         engine_classPrivateFieldSet(this, _errorOccured, false);
         engine_classPrivateFieldSet(this, _animStartStamp, undefined);
-        engine_classPrivateFieldSet(this, _lock, false);
+        engine_classPrivateFieldSet(this, engine_lock, false);
     }
     callUpdate(progress, factor) {
         try {
@@ -4449,7 +4428,7 @@ class engine_CuiAnimationEngine {
         }
     }
 }
-_onFinishCallback = new WeakMap(), _animators = new WeakMap(), _lock = new WeakMap(), _animStartStamp = new WeakMap(), engine_element = new WeakMap(), _cleanOnFinish = new WeakMap(), _errorOccured = new WeakMap(), _factory_1 = new WeakMap(), _onError_1 = new WeakMap();
+_onFinishCallback = new WeakMap(), _animators = new WeakMap(), engine_lock = new WeakMap(), _animStartStamp = new WeakMap(), engine_element = new WeakMap(), _cleanOnFinish = new WeakMap(), _errorOccured = new WeakMap(), _factory_1 = new WeakMap(), _onError_1 = new WeakMap();
 class engine_CuiSwipeAnimationEngine {
     constructor(shouldCleanOnFinish) {
         engine_element_1.set(this, void 0);
@@ -4545,7 +4524,8 @@ var banner_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet
     }
     return privateMap.get(receiver);
 };
-var banner_defTimeout, banner_prefix, _prefix_1, _swipeEngine, _isTracking, _startX, _ratio, _swipeAnimation, _moveEventId;
+var banner_prefix, _swipeEngine, _isTracking, _startX, _ratio, _swipeAnimation, _moveEventId;
+
 
 
 
@@ -4554,43 +4534,31 @@ var banner_defTimeout, banner_prefix, _prefix_1, _swipeEngine, _isTracking, _sta
 
 const BANNER_OPEN_ANIMATION = ".{prefix}-animation-fade-in";
 const BANNER_CLOSE_ANIMATION = ".{prefix}-animation-fade-out";
-class banner_CuiBannerArgs {
+class banner_CuiBannerArgs extends arguments_CuiAutoParseArgs {
     constructor(prefix, timeout) {
-        banner_defTimeout.set(this, void 0);
-        banner_prefix.set(this, void 0);
-        banner_classPrivateFieldSet(this, banner_defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
-        banner_classPrivateFieldSet(this, banner_prefix, prefix);
+        super();
         this.escClose = false;
         this.keyClose = "";
-        this.timeout = banner_classPrivateFieldGet(this, banner_defTimeout);
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
         this.swipe = false;
-        this.openAct = "";
-        this.closeAct = "";
-    }
-    parse(args) {
-        this.swipe = boolStringOrDefault(args.swipe, false);
-        this.escClose = false;
-        this.keyClose = "";
-        this.timeout = getIntOrDefault(args.timeout, banner_classPrivateFieldGet(this, banner_defTimeout));
-        this.openAct = getStringOrDefault(args.openAct, replacePrefix(BANNER_OPEN_ANIMATION, banner_classPrivateFieldGet(this, banner_prefix)));
-        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(BANNER_CLOSE_ANIMATION, banner_classPrivateFieldGet(this, banner_prefix)));
+        this.openAct = replacePrefix(BANNER_OPEN_ANIMATION, prefix);
+        this.closeAct = replacePrefix(BANNER_CLOSE_ANIMATION, prefix);
     }
 }
-banner_defTimeout = new WeakMap(), banner_prefix = new WeakMap();
 class CuiBanerComponent {
     constructor(prefix) {
-        _prefix_1.set(this, void 0);
-        banner_classPrivateFieldSet(this, _prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${banner_classPrivateFieldGet(this, _prefix_1)}-banner`;
+        banner_prefix.set(this, void 0);
+        banner_classPrivateFieldSet(this, banner_prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${banner_classPrivateFieldGet(this, banner_prefix)}-banner`;
     }
     getStyle() {
         return null;
     }
     get(element, utils) {
-        return new banner_CuiBannerHandler(element, utils, this.attribute, banner_classPrivateFieldGet(this, _prefix_1));
+        return new banner_CuiBannerHandler(element, utils, this.attribute, banner_classPrivateFieldGet(this, banner_prefix));
     }
 }
-_prefix_1 = new WeakMap();
+banner_prefix = new WeakMap();
 class banner_CuiBannerHandler extends base_CuiInteractableHandler {
     constructor(element, utils, attribute, prefix) {
         super("CuiBannerHandler", element, attribute, new banner_CuiBannerArgs(prefix, utils.setup.animationTime), utils);
@@ -4610,9 +4578,8 @@ class banner_CuiBannerHandler extends base_CuiInteractableHandler {
         banner_classPrivateFieldSet(this, _isTracking, false);
     }
     onInit() {
-        //   this.#moveEventId = this.onEvent(EVENTS.GLOBAL_MOVE, this.onMove.bind(this));
         if (!this.isActive()) {
-            this.open();
+            this.helper.setClass(this.activeClassName, this.element);
         }
     }
     onUpdate() {
@@ -4740,6 +4707,15 @@ class icon_IconScaleAppender {
 }
 
 // CONCATENATED MODULE: ./src/components/circle/circle.ts
+var circle_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var circle_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -4758,20 +4734,11 @@ var _factor, _full, _path, _attr, _progressEventId;
 
 
 
-class circle_CuiCircleArgs {
+
+class circle_CuiCircleArgs extends arguments_CuiAutoParseArgs {
     constructor() {
+        super();
         this.progress = 0;
-    }
-    parse(val) {
-        if (!is(val)) {
-            this.progress = 0;
-        }
-        else if (isString(val)) {
-            this.progress = getIntOrDefault(val, 0);
-        }
-        else {
-            this.progress = getIntOrDefault(val.progress, 0);
-        }
     }
 }
 class circle_CuiCircleComponent {
@@ -4786,7 +4753,7 @@ class circle_CuiCircleComponent {
         return new circle_CuiCircleHandler(element, utils, this.attribute);
     }
 }
-class circle_CuiCircleHandler extends CuiHandler {
+class circle_CuiCircleHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiCircleHandler", element, attribute, new circle_CuiCircleArgs(), utils);
         _factor.set(this, void 0);
@@ -4799,34 +4766,43 @@ class circle_CuiCircleHandler extends CuiHandler {
         circle_classPrivateFieldSet(this, _attr, attribute);
         circle_classPrivateFieldSet(this, _progressEventId, null);
     }
-    onInit() {
-        const iconSvg = new icon_IconBuilder(ICONS['special_circle_progress']).build();
-        if (!is(iconSvg)) {
-            this.logError("SVG circle was not created", "onInit");
-            return;
-        }
-        const svg = this.element.querySelector('svg');
-        if (is(svg)) {
-            //@ts-ignore svg checked
-            svg.remove();
-        }
-        //@ts-ignore iconSvg checked
-        this.element.appendChild(iconSvg);
-        circle_classPrivateFieldSet(this, _path, this.element.querySelector('.circle-progress-path'));
-        circle_classPrivateFieldSet(this, _full, circle_classPrivateFieldGet(this, _path).getTotalLength());
-        circle_classPrivateFieldSet(this, _factor, circle_classPrivateFieldGet(this, _full) / 100);
-        this.fetch(this.readStyle);
-        circle_classPrivateFieldSet(this, _progressEventId, this.onEvent(EVENTS.PROGRESS_CHANGE, this.onSetProgress.bind(this)));
-    }
-    onUpdate() {
-        this.fetch(this.readStyle);
-        this.emitEvent(EVENTS.PROGRESS_CHANGED, {
-            timestamp: Date.now(),
-            progress: this.args.progress
+    onHandle() {
+        return circle_awaiter(this, void 0, void 0, function* () {
+            const iconSvg = new icon_IconBuilder(ICONS['special_circle_progress']).build();
+            if (!is(iconSvg)) {
+                this.logError("SVG circle was not created", "onInit");
+                return false;
+            }
+            const svg = this.element.querySelector('svg');
+            if (is(svg)) {
+                //@ts-ignore svg checked
+                svg.remove();
+            }
+            //@ts-ignore iconSvg checked
+            this.element.appendChild(iconSvg);
+            circle_classPrivateFieldSet(this, _path, this.element.querySelector('.circle-progress-path'));
+            circle_classPrivateFieldSet(this, _full, circle_classPrivateFieldGet(this, _path).getTotalLength());
+            circle_classPrivateFieldSet(this, _factor, circle_classPrivateFieldGet(this, _full) / 100);
+            this.fetch(this.readStyle);
+            circle_classPrivateFieldSet(this, _progressEventId, this.onEvent(EVENTS.PROGRESS_CHANGE, this.onSetProgress.bind(this)));
+            return true;
         });
     }
-    onDestroy() {
-        this.detachEvent(EVENTS.PROGRESS_CHANGE, circle_classPrivateFieldGet(this, _progressEventId));
+    onRefresh() {
+        return circle_awaiter(this, void 0, void 0, function* () {
+            this.fetch(this.readStyle);
+            this.emitEvent(EVENTS.PROGRESS_CHANGED, {
+                timestamp: Date.now(),
+                progress: this.args.progress
+            });
+            return true;
+        });
+    }
+    onRemove() {
+        return circle_awaiter(this, void 0, void 0, function* () {
+            this.detachEvent(EVENTS.PROGRESS_CHANGE, circle_classPrivateFieldGet(this, _progressEventId));
+            return true;
+        });
     }
     onSetProgress(val) {
         if (is(val)) {
@@ -4869,38 +4845,24 @@ var close_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet)
     }
     return privateMap.get(receiver);
 };
-var close_defTimeout, close_prefix, _eventId;
+var close_prefix, _eventId;
 
 
 
 
-class close_CuiCloseArgs {
+
+class close_CuiCloseArgs extends arguments_CuiAutoParseArgs {
     constructor(timeout) {
-        close_defTimeout.set(this, void 0);
+        super({
+            main: "target"
+        });
         this.target = "";
         this.action = "";
         this.prevent = false;
         this.state = "";
-        close_classPrivateFieldSet(this, close_defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
-        this.timeout = close_classPrivateFieldGet(this, close_defTimeout);
-    }
-    parse(args) {
-        if (is(args) && isString(args)) {
-            this.target = args;
-            this.action = "";
-            this.timeout = close_classPrivateFieldGet(this, close_defTimeout);
-            this.prevent = false;
-            this.state = "";
-            return;
-        }
-        this.target = getStringOrDefault(args.target, "");
-        this.action = args.action;
-        this.timeout = getIntOrDefault(args.timeout, close_classPrivateFieldGet(this, close_defTimeout));
-        this.prevent = args.prevent && isStringTrue(args.prevent);
-        this.state = args.state;
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
     }
 }
-close_defTimeout = new WeakMap();
 class CuiCloseComponent {
     constructor(prefix) {
         close_prefix.set(this, void 0);
@@ -4915,23 +4877,31 @@ class CuiCloseComponent {
     }
 }
 close_prefix = new WeakMap();
-class close_CuiCloseHandler extends CuiHandler {
+class close_CuiCloseHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute, prefix) {
         super("CuiCloseHandler", element, attribute, new close_CuiCloseArgs(utils.setup.animationTime), utils);
         _eventId.set(this, void 0);
         close_classPrivateFieldSet(this, _eventId, null);
         this.onClick = this.onClick.bind(this);
     }
-    onInit() {
-        this.element.addEventListener('click', this.onClick);
-        close_classPrivateFieldSet(this, _eventId, this.onEvent(EVENTS.CLOSE, this.onClose.bind(this)));
+    onHandle() {
+        return close_awaiter(this, void 0, void 0, function* () {
+            this.element.addEventListener('click', this.onClick);
+            close_classPrivateFieldSet(this, _eventId, this.onEvent(EVENTS.CLOSE, this.onClose.bind(this)));
+            return true;
+        });
     }
-    onUpdate() {
-        //
+    onRefresh() {
+        return close_awaiter(this, void 0, void 0, function* () {
+            return true;
+        });
     }
-    onDestroy() {
-        this.element.removeEventListener('click', this.onClick);
-        this.detachEvent(EVENTS.CLOSE, close_classPrivateFieldGet(this, _eventId));
+    onRemove() {
+        return close_awaiter(this, void 0, void 0, function* () {
+            this.element.removeEventListener('click', this.onClick);
+            this.detachEvent(EVENTS.CLOSE, close_classPrivateFieldGet(this, _eventId));
+            return true;
+        });
     }
     onClick(ev) {
         this.onClose(ev);
@@ -5023,48 +4993,38 @@ var cover_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet)
     }
     return privateMap.get(receiver);
 };
-var cover_defTimeout, cover_prefix, cover_prefix_1, _bodyClass, _scrollY;
+var cover_prefix, _bodyClass, _scrollY;
+
 
 
 
 const COVER_OPEN_ANIMATION_CLASS = '.{prefix}-dialog-default-in';
 const COVER_CLOSE_ANIMATION_CLASS = '.{prefix}-dialog-default-out';
 const bodyClass = '{prefix}-cover-open';
-class cover_CuiCoverArgs {
+class cover_CuiCoverArgs extends arguments_CuiAutoParseArgs {
     constructor(prefix, defTimeout) {
-        cover_defTimeout.set(this, void 0);
-        cover_prefix.set(this, void 0);
-        cover_classPrivateFieldSet(this, cover_defTimeout, defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300);
-        cover_classPrivateFieldSet(this, cover_prefix, prefix);
+        super();
         this.escClose = false;
-        this.timeout = cover_classPrivateFieldGet(this, cover_defTimeout);
-        this.openAct = "";
-        this.closeAct = "";
+        this.timeout = defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300;
+        this.openAct = replacePrefix(COVER_OPEN_ANIMATION_CLASS, prefix);
+        this.closeAct = replacePrefix(COVER_CLOSE_ANIMATION_CLASS, prefix);
         this.keyClose = "";
     }
-    parse(args) {
-        this.escClose = isStringTrue(args.escClose);
-        this.keyClose = args.keyClose;
-        this.timeout = getIntOrDefault(args.timeout, cover_classPrivateFieldGet(this, cover_defTimeout));
-        this.openAct = getStringOrDefault(args.openAct, replacePrefix(COVER_OPEN_ANIMATION_CLASS, cover_classPrivateFieldGet(this, cover_prefix)));
-        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(COVER_CLOSE_ANIMATION_CLASS, cover_classPrivateFieldGet(this, cover_prefix)));
-    }
 }
-cover_defTimeout = new WeakMap(), cover_prefix = new WeakMap();
 class CuiCoverComponent {
     constructor(prefix) {
-        cover_prefix_1.set(this, void 0);
-        cover_classPrivateFieldSet(this, cover_prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${cover_classPrivateFieldGet(this, cover_prefix_1)}-cover`;
+        cover_prefix.set(this, void 0);
+        cover_classPrivateFieldSet(this, cover_prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${cover_classPrivateFieldGet(this, cover_prefix)}-cover`;
     }
     getStyle() {
         return null;
     }
     get(element, utils) {
-        return new cover_CuiCoverHandler(element, utils, this.attribute, cover_classPrivateFieldGet(this, cover_prefix_1));
+        return new cover_CuiCoverHandler(element, utils, this.attribute, cover_classPrivateFieldGet(this, cover_prefix));
     }
 }
-cover_prefix_1 = new WeakMap();
+cover_prefix = new WeakMap();
 class cover_CuiCoverHandler extends base_CuiInteractableHandler {
     constructor(element, utils, attribute, prefix) {
         super("CuiDialogHandler", element, attribute, new cover_CuiCoverArgs(prefix, utils.setup.animationTimeLong), utils);
@@ -5128,7 +5088,8 @@ var dialog_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet
     }
     return privateMap.get(receiver);
 };
-var dialog_defTimeout, dialog_prefix, dialog_prefix_1, _prefix_2, dialog_bodyClass, dialog_scrollY, _windowClickEventId;
+var dialog_prefix, _prefix_1, dialog_bodyClass, dialog_scrollY, _windowClickEventId;
+
 
 
 
@@ -5137,52 +5098,40 @@ const DIALOG_OPEN_ANIMATION_CLASS = '.{prefix}-dialog-default-in';
 const DIALOG_CLOSE_ANIMATION_CLASS = '.{prefix}-dialog-default-out';
 const dialog_dialog_bodyClass = '{prefix}-dialog-open';
 const CONTAINER = '.{prefix}-dialog-container';
-class dialog_CuiDialogArgs {
+class dialog_CuiDialogArgs extends arguments_CuiAutoParseArgs {
     constructor(prefix, defTimeout) {
-        dialog_defTimeout.set(this, void 0);
-        dialog_prefix.set(this, void 0);
-        dialog_classPrivateFieldSet(this, dialog_defTimeout, defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300);
-        dialog_classPrivateFieldSet(this, dialog_prefix, prefix);
+        super();
         this.escClose = false;
         this.outClose = false;
-        this.timeout = dialog_classPrivateFieldGet(this, dialog_defTimeout);
-        this.openAct = "";
-        this.closeAct = "";
+        this.timeout = defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300;
+        this.openAct = replacePrefix(DIALOG_OPEN_ANIMATION_CLASS, prefix);
+        this.closeAct = replacePrefix(DIALOG_CLOSE_ANIMATION_CLASS, prefix);
         this.keyClose = "";
     }
-    parse(args) {
-        this.escClose = isStringTrue(args.escClose);
-        this.outClose = isStringTrue(args.outClose);
-        this.keyClose = args.keyClose;
-        this.timeout = getIntOrDefault(args.timeout, dialog_classPrivateFieldGet(this, dialog_defTimeout));
-        this.openAct = getStringOrDefault(args.openAct, replacePrefix(DIALOG_OPEN_ANIMATION_CLASS, dialog_classPrivateFieldGet(this, dialog_prefix)));
-        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(DIALOG_CLOSE_ANIMATION_CLASS, dialog_classPrivateFieldGet(this, dialog_prefix)));
-    }
 }
-dialog_defTimeout = new WeakMap(), dialog_prefix = new WeakMap();
 class CuiDialogComponent {
     constructor(prefix) {
-        dialog_prefix_1.set(this, void 0);
-        dialog_classPrivateFieldSet(this, dialog_prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${dialog_classPrivateFieldGet(this, dialog_prefix_1)}-dialog`;
+        dialog_prefix.set(this, void 0);
+        dialog_classPrivateFieldSet(this, dialog_prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${dialog_classPrivateFieldGet(this, dialog_prefix)}-dialog`;
     }
     getStyle() {
         return null;
     }
     get(element, utils) {
-        return new dialog_CuiDialogHandler(element, utils, this.attribute, dialog_classPrivateFieldGet(this, dialog_prefix_1));
+        return new dialog_CuiDialogHandler(element, utils, this.attribute, dialog_classPrivateFieldGet(this, dialog_prefix));
     }
 }
-dialog_prefix_1 = new WeakMap();
+dialog_prefix = new WeakMap();
 class dialog_CuiDialogHandler extends base_CuiInteractableHandler {
     constructor(element, utils, attribute, prefix) {
         super("CuiDialogHandler", element, attribute, new dialog_CuiDialogArgs(prefix, utils.setup.animationTimeLong), utils);
-        _prefix_2.set(this, void 0);
+        _prefix_1.set(this, void 0);
         dialog_bodyClass.set(this, void 0);
         dialog_scrollY.set(this, void 0);
         _windowClickEventId.set(this, void 0);
         dialog_classPrivateFieldSet(this, dialog_bodyClass, replacePrefix(dialog_dialog_bodyClass, prefix));
-        dialog_classPrivateFieldSet(this, _prefix_2, prefix);
+        dialog_classPrivateFieldSet(this, _prefix_1, prefix);
         dialog_classPrivateFieldSet(this, dialog_scrollY, 0);
         dialog_classPrivateFieldSet(this, _windowClickEventId, null);
         if (!utils.isPlugin("click-plugin")) {
@@ -5227,15 +5176,15 @@ class dialog_CuiDialogHandler extends base_CuiInteractableHandler {
         return this.helper.hasClass(dialog_classPrivateFieldGet(this, dialog_bodyClass), document.body);
     }
     onWindowClick(ev) {
-        let container = this.element.querySelector(replacePrefix(CONTAINER, dialog_classPrivateFieldGet(this, _prefix_2)));
-        if (container && !container.contains(ev.target)) {
+        let container = this.element.querySelector(replacePrefix(CONTAINER, dialog_classPrivateFieldGet(this, _prefix_1)));
+        if (container && !container.contains(ev.ev.target)) {
             this.close('out').then(() => {
                 this._log.debug("Closed by click outside");
             });
         }
     }
 }
-_prefix_2 = new WeakMap(), dialog_bodyClass = new WeakMap(), dialog_scrollY = new WeakMap(), _windowClickEventId = new WeakMap();
+_prefix_1 = new WeakMap(), dialog_bodyClass = new WeakMap(), dialog_scrollY = new WeakMap(), _windowClickEventId = new WeakMap();
 
 // CONCATENATED MODULE: ./src/core/listeners/hover.ts
 var hover_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -5607,7 +5556,8 @@ var drop_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) 
     }
     return privateMap.get(receiver);
 };
-var _defOpenAct, drop_prefix, drop_prefix_1, drop_bodyClass, drop_attribute, _triggerHoverListener, _hoverListener, _trigger, drop_windowClickEventId, drop_openEventId, drop_closeEventId, _positionCalculator, _posClass, _autoTask, _actions;
+var drop_prefix, drop_prefix_1, drop_bodyClass, drop_attribute, _triggerHoverListener, _hoverListener, _trigger, drop_windowClickEventId, drop_openEventId, drop_closeEventId, _positionCalculator, _posClass, _autoTask, _actions;
+
 
 
 
@@ -5621,33 +5571,24 @@ const DROP_POSITION = "{prefix}-drop-position-";
 const DROP_TRIGGER = "{prefix}-drop-trigger";
 const DROP_DEFAULT_TRIGGER = "> a, button";
 const DROP_DEFAULT_ANIMATION_CLS = '{prefix}-drop-animation-in';
-class drop_CuiDropArgs {
+class drop_CuiDropArgs extends arguments_CuiAutoParseArgs {
     constructor(prefix) {
-        _defOpenAct.set(this, void 0);
-        drop_classPrivateFieldSet(this, _defOpenAct, replacePrefix(DROP_DEFAULT_ANIMATION_CLS, prefix));
+        super({
+            props: {
+                'trigger': { corrector: joinWithScopeSelector }
+            }
+        });
         this.mode = "click";
-        this.trigger = DROP_DEFAULT_TRIGGER;
+        this.trigger = joinWithScopeSelector(DROP_DEFAULT_TRIGGER);
         this.autoClose = false;
         this.outClose = false;
         this.prevent = false;
         this.pos = "";
-        this.action = drop_classPrivateFieldGet(this, _defOpenAct);
+        this.action = replacePrefix(DROP_DEFAULT_ANIMATION_CLS, prefix);
         this.timeout = 3000;
         this.margin = 8;
     }
-    parse(args) {
-        this.mode = getStringOrDefault(args.mode, 'click').toLowerCase();
-        this.trigger = SCOPE_SELECTOR + getStringOrDefault(args.trigger, DROP_DEFAULT_TRIGGER);
-        this.prevent = isStringTrue(args.prevent);
-        this.autoClose = isStringTrue(args.autoClose);
-        this.outClose = args.outClose ? isStringTrue(args.outClose) : true;
-        this.pos = getStringOrDefault(args.pos, "");
-        this.action = getStringOrDefault(args.action, drop_classPrivateFieldGet(this, _defOpenAct));
-        this.timeout = getIntOrDefault(args.timeout, 3000);
-        this.margin = getIntOrDefault(args.margin, 8);
-    }
 }
-_defOpenAct = new WeakMap();
 class CuiDropComponenet {
     constructor(prefix) {
         drop_prefix.set(this, void 0);
@@ -5662,7 +5603,7 @@ class CuiDropComponenet {
     }
 }
 drop_prefix = new WeakMap();
-class drop_CuiDropHandler extends CuiHandler {
+class drop_CuiDropHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute, prefix) {
         super("CuidropHandler", element, attribute, new drop_CuiDropArgs(prefix), utils);
         drop_prefix_1.set(this, void 0);
@@ -5699,40 +5640,48 @@ class drop_CuiDropHandler extends CuiHandler {
             this.logWarning("Window click plugin is not available: outClose will not work");
         }
     }
-    onInit() {
-        drop_classPrivateFieldSet(this, _trigger, this.acquireTrigger());
-        drop_classPrivateFieldSet(this, _triggerHoverListener, new hover_CuiHoverListener(drop_classPrivateFieldGet(this, _trigger)));
-        this.setTriggerEvent();
-        drop_classPrivateFieldSet(this, drop_openEventId, this.onEvent(EVENTS.OPEN, this.open.bind(this)));
-        drop_classPrivateFieldSet(this, drop_closeEventId, this.onEvent(EVENTS.CLOSE, this.close.bind(this)));
-        drop_classPrivateFieldGet(this, _positionCalculator).setStatic(this.args.pos);
-        drop_classPrivateFieldGet(this, _positionCalculator).setMargin(this.args.margin);
-        drop_classPrivateFieldSet(this, _autoTask, new task_CuiTaskRunner(this.args.timeout, false, this.close.bind(this)));
-        drop_classPrivateFieldSet(this, _actions, actions_CuiActionsListFactory.get(this.args.action));
-        this.mutate(() => {
-            AriaAttributes.setAria(this.element, 'aria-dropdown', "");
+    onHandle() {
+        return drop_awaiter(this, void 0, void 0, function* () {
+            drop_classPrivateFieldSet(this, _trigger, this.acquireTrigger());
+            drop_classPrivateFieldSet(this, _triggerHoverListener, new hover_CuiHoverListener(drop_classPrivateFieldGet(this, _trigger)));
+            this.setTriggerEvent();
+            drop_classPrivateFieldSet(this, drop_openEventId, this.onEvent(EVENTS.OPEN, this.open.bind(this)));
+            drop_classPrivateFieldSet(this, drop_closeEventId, this.onEvent(EVENTS.CLOSE, this.close.bind(this)));
+            drop_classPrivateFieldGet(this, _positionCalculator).setStatic(this.args.pos);
+            drop_classPrivateFieldGet(this, _positionCalculator).setMargin(this.args.margin);
+            drop_classPrivateFieldSet(this, _autoTask, new task_CuiTaskRunner(this.args.timeout, false, this.close.bind(this)));
+            drop_classPrivateFieldSet(this, _actions, actions_CuiActionsListFactory.get(this.args.action));
+            this.mutate(() => {
+                AriaAttributes.setAria(this.element, 'aria-dropdown', "");
+            });
+            return true;
         });
-        this._log.debug("Initialized", "handle");
     }
-    onUpdate() {
-        if (drop_classPrivateFieldGet(this, _triggerHoverListener) && drop_classPrivateFieldGet(this, _triggerHoverListener).isAttached()) {
-            drop_classPrivateFieldGet(this, _triggerHoverListener).detach();
-        }
-        else if (this.prevArgs && this.prevArgs.mode === 'click') {
-            //@ts-ignore 
-            drop_classPrivateFieldGet(this, _trigger).removeEventListener('click', this.onTriggerClick);
-        }
-        drop_classPrivateFieldSet(this, _trigger, this.acquireTrigger());
-        drop_classPrivateFieldSet(this, _triggerHoverListener, new hover_CuiHoverListener(drop_classPrivateFieldGet(this, _trigger)));
-        this.setTriggerEvent();
-        drop_classPrivateFieldGet(this, _positionCalculator).setStatic(this.args.pos);
-        drop_classPrivateFieldGet(this, _positionCalculator).setMargin(this.args.margin);
-        drop_classPrivateFieldSet(this, _actions, actions_CuiActionsListFactory.get(this.args.action));
-        drop_classPrivateFieldGet(this, _autoTask).setTimeout(this.args.timeout);
+    onRefresh() {
+        return drop_awaiter(this, void 0, void 0, function* () {
+            if (drop_classPrivateFieldGet(this, _triggerHoverListener) && drop_classPrivateFieldGet(this, _triggerHoverListener).isAttached()) {
+                drop_classPrivateFieldGet(this, _triggerHoverListener).detach();
+            }
+            else if (this.prevArgs && this.prevArgs.mode === 'click') {
+                //@ts-ignore 
+                drop_classPrivateFieldGet(this, _trigger).removeEventListener('click', this.onTriggerClick);
+            }
+            drop_classPrivateFieldSet(this, _trigger, this.acquireTrigger());
+            drop_classPrivateFieldSet(this, _triggerHoverListener, new hover_CuiHoverListener(drop_classPrivateFieldGet(this, _trigger)));
+            this.setTriggerEvent();
+            drop_classPrivateFieldGet(this, _positionCalculator).setStatic(this.args.pos);
+            drop_classPrivateFieldGet(this, _positionCalculator).setMargin(this.args.margin);
+            drop_classPrivateFieldSet(this, _actions, actions_CuiActionsListFactory.get(this.args.action));
+            drop_classPrivateFieldGet(this, _autoTask).setTimeout(this.args.timeout);
+            return true;
+        });
     }
-    onDestroy() {
-        this.detachEvent(EVENTS.OPEN, drop_classPrivateFieldGet(this, drop_openEventId));
-        this.detachEvent(EVENTS.CLOSE, drop_classPrivateFieldGet(this, drop_closeEventId));
+    onRemove() {
+        return drop_awaiter(this, void 0, void 0, function* () {
+            this.detachEvent(EVENTS.OPEN, drop_classPrivateFieldGet(this, drop_openEventId));
+            this.detachEvent(EVENTS.CLOSE, drop_classPrivateFieldGet(this, drop_closeEventId));
+            return true;
+        });
     }
     /**
     * Api Method open
@@ -5816,7 +5765,7 @@ class drop_CuiDropHandler extends CuiHandler {
      * @param ev
      */
     onWindowClick(ev) {
-        if (!this.element.contains(ev.target)) {
+        if (!this.element.contains(ev.ev.target)) {
             this.close();
         }
     }
@@ -6170,7 +6119,8 @@ var float_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet)
     }
     return privateMap.get(receiver);
 };
-var float_defTimeout, float_prefix, float_prefix_1, _isMoving, _isResizing, _prevX, _prevY, float_prefix_2, _moveListener, float_positionCalculator, _resizeCalculator, _resizeBtn, _moveBtn;
+var float_prefix, _isMoving, _isResizing, _prevX, _prevY, float_prefix_1, _moveListener, float_positionCalculator, _resizeCalculator, _resizeBtn, _moveBtn;
+
 
 
 
@@ -6181,41 +6131,30 @@ const FLOAT_OPEN_ANIMATION_CLASS = '.{prefix}-float-default-in';
 const FLOAT_CLOSE_ANIMATION_CLASS = '.{prefix}-float-default-out';
 const MOVE = '.{prefix}-float-move';
 const RESIZE = '.{prefix}-float-resize';
-class float_CuiFloatArgs {
+class float_CuiFloatArgs extends arguments_CuiAutoParseArgs {
     constructor(prefix, defTimeout) {
-        float_defTimeout.set(this, void 0);
-        float_prefix.set(this, void 0);
-        float_classPrivateFieldSet(this, float_defTimeout, defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300);
-        float_classPrivateFieldSet(this, float_prefix, prefix);
+        super();
         this.escClose = false;
         this.keyClose = "";
-        this.openAct = "";
-        this.closeAct = "";
-        this.timeout = float_classPrivateFieldGet(this, float_defTimeout);
-    }
-    parse(args) {
-        this.escClose = isStringTrue(args.escClose);
-        this.keyClose = args.keyClose;
-        this.timeout = getIntOrDefault(args.timeout, float_classPrivateFieldGet(this, float_defTimeout));
-        this.openAct = getStringOrDefault(args.openAct, replacePrefix(FLOAT_OPEN_ANIMATION_CLASS, float_classPrivateFieldGet(this, float_prefix)));
-        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(FLOAT_CLOSE_ANIMATION_CLASS, float_classPrivateFieldGet(this, float_prefix)));
+        this.openAct = replacePrefix(FLOAT_OPEN_ANIMATION_CLASS, prefix);
+        this.closeAct = replacePrefix(FLOAT_CLOSE_ANIMATION_CLASS, prefix);
+        this.timeout = defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300;
     }
 }
-float_defTimeout = new WeakMap(), float_prefix = new WeakMap();
 class CuiFloatComponent {
     constructor(prefix) {
-        float_prefix_1.set(this, void 0);
-        float_classPrivateFieldSet(this, float_prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${float_classPrivateFieldGet(this, float_prefix_1)}-float`;
+        float_prefix.set(this, void 0);
+        float_classPrivateFieldSet(this, float_prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${float_classPrivateFieldGet(this, float_prefix)}-float`;
     }
     getStyle() {
         return null;
     }
     get(element, utils) {
-        return new float_CuiFloatHandler(element, utils, this.attribute, float_classPrivateFieldGet(this, float_prefix_1));
+        return new float_CuiFloatHandler(element, utils, this.attribute, float_classPrivateFieldGet(this, float_prefix));
     }
 }
-float_prefix_1 = new WeakMap();
+float_prefix = new WeakMap();
 class float_CuiFloatHandler extends base_CuiInteractableHandler {
     constructor(element, utils, attribute, prefix) {
         super("CuiFloatHandler", element, attribute, new float_CuiFloatArgs(prefix, utils.setup.animationTime), utils);
@@ -6223,7 +6162,7 @@ class float_CuiFloatHandler extends base_CuiInteractableHandler {
         _isResizing.set(this, void 0);
         _prevX.set(this, void 0);
         _prevY.set(this, void 0);
-        float_prefix_2.set(this, void 0);
+        float_prefix_1.set(this, void 0);
         _moveListener.set(this, void 0);
         float_positionCalculator.set(this, void 0);
         _resizeCalculator.set(this, void 0);
@@ -6237,7 +6176,7 @@ class float_CuiFloatHandler extends base_CuiInteractableHandler {
         float_classPrivateFieldGet(this, _moveListener).preventDefault(false);
         float_classPrivateFieldSet(this, float_positionCalculator, new BasePositionCalculator());
         float_classPrivateFieldSet(this, _resizeCalculator, new BaseResizeCalculator(element));
-        float_classPrivateFieldSet(this, float_prefix_2, prefix);
+        float_classPrivateFieldSet(this, float_prefix_1, prefix);
         this.move = this.move.bind(this);
         this.resize = this.resize.bind(this);
         float_classPrivateFieldSet(this, _moveBtn, null);
@@ -6251,8 +6190,8 @@ class float_CuiFloatHandler extends base_CuiInteractableHandler {
     }
     onInit() {
         AriaAttributes.setAria(this.element, 'aria-modal', "");
-        float_classPrivateFieldSet(this, _moveBtn, this.element.querySelector(replacePrefix(MOVE, float_classPrivateFieldGet(this, float_prefix_2))));
-        float_classPrivateFieldSet(this, _resizeBtn, this.element.querySelector(replacePrefix(RESIZE, float_classPrivateFieldGet(this, float_prefix_2))));
+        float_classPrivateFieldSet(this, _moveBtn, this.element.querySelector(replacePrefix(MOVE, float_classPrivateFieldGet(this, float_prefix_1))));
+        float_classPrivateFieldSet(this, _resizeBtn, this.element.querySelector(replacePrefix(RESIZE, float_classPrivateFieldGet(this, float_prefix_1))));
         float_classPrivateFieldGet(this, _moveListener).setCallback(this.onMove.bind(this));
     }
     onUpdate() {
@@ -6348,9 +6287,18 @@ class float_CuiFloatHandler extends base_CuiInteractableHandler {
             (left + width < window.innerWidth - 10);
     }
 }
-_isMoving = new WeakMap(), _isResizing = new WeakMap(), _prevX = new WeakMap(), _prevY = new WeakMap(), float_prefix_2 = new WeakMap(), _moveListener = new WeakMap(), float_positionCalculator = new WeakMap(), _resizeCalculator = new WeakMap(), _resizeBtn = new WeakMap(), _moveBtn = new WeakMap();
+_isMoving = new WeakMap(), _isResizing = new WeakMap(), _prevX = new WeakMap(), _prevY = new WeakMap(), float_prefix_1 = new WeakMap(), _moveListener = new WeakMap(), float_positionCalculator = new WeakMap(), _resizeCalculator = new WeakMap(), _resizeBtn = new WeakMap(), _moveBtn = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/icon/icon.ts
+var icon_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var icon_icon_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -6369,19 +6317,14 @@ var _currentIcon;
 
 
 
-class icon_CuiIconArgs {
+
+class icon_CuiIconArgs extends arguments_CuiAutoParseArgs {
     constructor() {
+        super({
+            main: 'icon'
+        });
         this.icon = "";
         this.scale = 1;
-    }
-    parse(val) {
-        if (isString(val)) {
-            this.icon = getStringOrDefault(val, "");
-        }
-        else {
-            this.icon = getStringOrDefault(val.icon, "");
-            this.scale = getIntOrDefault(val.scale, 1);
-        }
     }
 }
 class CuiIconComponent {
@@ -6395,46 +6338,47 @@ class CuiIconComponent {
         return new icon_CuiIconHandler(element, utils, this.attribute);
     }
 }
-class icon_CuiIconHandler extends CuiHandler {
+class icon_CuiIconHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiIconHandler", element, attribute, new icon_CuiIconArgs(), utils);
         _currentIcon.set(this, void 0);
         icon_icon_classPrivateFieldSet(this, _currentIcon, null);
     }
-    onInit() {
-        if (this.isLocked) {
-            return;
-        }
-        if (icon_icon_classPrivateFieldGet(this, _currentIcon) !== null) {
-            this._log.debug("Icon already initialized");
-            return;
-        }
-        this.isLocked = true;
-        icon_icon_classPrivateFieldSet(this, _currentIcon, this.args.icon);
-        this.addIcon(this.args.icon);
+    onHandle() {
+        return icon_awaiter(this, void 0, void 0, function* () {
+            if (icon_icon_classPrivateFieldGet(this, _currentIcon) !== null) {
+                this._log.debug("Icon already initialized");
+                return false;
+            }
+            icon_icon_classPrivateFieldSet(this, _currentIcon, this.args.icon);
+            this.addIcon(this.args.icon);
+            return true;
+        });
     }
-    onUpdate() {
-        if (this.isLocked) {
-            return;
-        }
-        if (this.args.icon === icon_icon_classPrivateFieldGet(this, _currentIcon)) {
-            return;
-        }
-        icon_icon_classPrivateFieldSet(this, _currentIcon, this.args.icon);
-        this.addIcon(this.args.icon);
+    onRefresh() {
+        return icon_awaiter(this, void 0, void 0, function* () {
+            if (this.args.icon === icon_icon_classPrivateFieldGet(this, _currentIcon)) {
+                return false;
+            }
+            icon_icon_classPrivateFieldSet(this, _currentIcon, this.args.icon);
+            this.addIcon(this.args.icon);
+            return true;
+        });
     }
-    onDestroy() {
-        const svg = this.element.querySelector('svg');
-        if (is(svg)) {
-            //@ts-ignore checked
-            svg.remove();
-        }
-        icon_icon_classPrivateFieldSet(this, _currentIcon, null);
+    onRemove() {
+        return icon_awaiter(this, void 0, void 0, function* () {
+            const svg = this.element.querySelector('svg');
+            if (is(svg)) {
+                //@ts-ignore checked
+                svg.remove();
+            }
+            icon_icon_classPrivateFieldSet(this, _currentIcon, null);
+            return true;
+        });
     }
     addIcon(icon) {
         const iconStr = icon ? ICONS[icon] : null;
         if (!iconStr) {
-            this.isLocked = false;
             return;
         }
         const iconSvg = new icon_IconBuilder(iconStr).setScale(this.args.scale).build();
@@ -6445,18 +6389,15 @@ class icon_CuiIconHandler extends CuiHandler {
         }
         if (this.element.childNodes.length > 0) {
             this.mutate(this.insertBefore, iconSvg);
+            return;
         }
-        else {
-            this.mutate(this.appendChild, iconSvg);
-        }
+        this.mutate(this.appendChild, iconSvg);
     }
     insertBefore(iconElement) {
         this.element.insertBefore(iconElement, this.element.firstChild);
-        this.isLocked = false;
     }
     appendChild(iconElement) {
         this.element.appendChild(iconElement);
-        this.isLocked = false;
     }
 }
 _currentIcon = new WeakMap();
@@ -6475,7 +6416,7 @@ var intersection_classPrivateFieldGet = (undefined && undefined.__classPrivateFi
     }
     return privateMap.get(receiver);
 };
-var intersection_observer, intersection_root, _threshold, intersection_callback;
+var intersection_observer, _root, _threshold, intersection_callback;
 class CuiIntersectionEntry {
     constructor() {
         this.isInView = false;
@@ -6489,10 +6430,10 @@ class CuiIntersectionEntry {
 class CuiIntersectionObserver {
     constructor(root, threshold) {
         intersection_observer.set(this, void 0);
-        intersection_root.set(this, void 0);
+        _root.set(this, void 0);
         _threshold.set(this, void 0);
         intersection_callback.set(this, void 0);
-        intersection_classPrivateFieldSet(this, intersection_root, root);
+        intersection_classPrivateFieldSet(this, _root, root);
         intersection_classPrivateFieldSet(this, _threshold, threshold !== null && threshold !== void 0 ? threshold : [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]);
         intersection_classPrivateFieldSet(this, intersection_callback, undefined);
         intersection_classPrivateFieldSet(this, intersection_observer, undefined);
@@ -6505,7 +6446,7 @@ class CuiIntersectionObserver {
             return;
         }
         intersection_classPrivateFieldSet(this, intersection_observer, new IntersectionObserver(intersection_classPrivateFieldGet(this, intersection_callback), {
-            root: intersection_classPrivateFieldGet(this, intersection_root),
+            root: intersection_classPrivateFieldGet(this, _root),
             rootMargin: '0px',
             threshold: intersection_classPrivateFieldGet(this, _threshold)
         }));
@@ -6523,9 +6464,18 @@ class CuiIntersectionObserver {
             intersection_classPrivateFieldGet(this, intersection_observer).disconnect();
     }
 }
-intersection_observer = new WeakMap(), intersection_root = new WeakMap(), _threshold = new WeakMap(), intersection_callback = new WeakMap();
+intersection_observer = new WeakMap(), _root = new WeakMap(), _threshold = new WeakMap(), intersection_callback = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/intersection/intersection.ts
+var intersection_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var intersection_intersection_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -6545,6 +6495,7 @@ var intersection_intersection_observer, intersection_targets, intersection_actio
 
 
 
+
 const DEFAULT_SELCTOR = "> *";
 /**
  * Intersection
@@ -6555,18 +6506,18 @@ const DEFAULT_SELCTOR = "> *";
  * offset - 0...1 - tells how much target must intersecting with the screen
  * action - action to trigger
  */
-class intersection_CuiIntersectionAttributes {
+class intersection_CuiIntersectionAttributes extends arguments_CuiAutoParseArgs {
     constructor() {
-        this.target = "div";
+        super({
+            props: {
+                offset: { corrector: (value) => { return getRangeValueOrDefault(value, 0, 1, 0); } },
+                target: { corrector: joinWithScopeSelector }
+            }
+        });
+        this.target = joinWithScopeSelector(DEFAULT_SELCTOR);
         this.action = "";
         this.offset = 0;
         this.isRoot = false;
-    }
-    parse(args) {
-        this.target = is(args.target) ? SCOPE_SELECTOR + args.target : SCOPE_SELECTOR + DEFAULT_SELCTOR;
-        this.action = getStringOrDefault(args.action, "");
-        this.offset = getRangeValueOrDefault(parseFloat(args.offset), 0, 1, 0);
-        this.isRoot = isStringTrue(args.isRoot);
     }
 }
 class CuiIntersectionComponent {
@@ -6580,7 +6531,7 @@ class CuiIntersectionComponent {
         return new intersection_CuiIntersectionHandler(element, utils, this.attribute);
     }
 }
-class intersection_CuiIntersectionHandler extends CuiHandler {
+class intersection_CuiIntersectionHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiIntersectionHandler", element, attribute, new intersection_CuiIntersectionAttributes(), utils);
         intersection_intersection_observer.set(this, void 0);
@@ -6590,19 +6541,28 @@ class intersection_CuiIntersectionHandler extends CuiHandler {
         intersection_intersection_classPrivateFieldSet(this, intersection_targets, []);
         intersection_intersection_classPrivateFieldSet(this, intersection_actions, []);
     }
-    onInit() {
-        this.parseArguments();
-        intersection_intersection_classPrivateFieldGet(this, intersection_intersection_observer).setCallback(this.onIntersection.bind(this));
-        intersection_intersection_classPrivateFieldGet(this, intersection_intersection_observer).connect();
-        intersection_intersection_classPrivateFieldGet(this, intersection_targets).forEach(target => {
-            intersection_intersection_classPrivateFieldGet(this, intersection_intersection_observer).observe(target);
+    onHandle() {
+        return intersection_awaiter(this, void 0, void 0, function* () {
+            this.parseArguments();
+            intersection_intersection_classPrivateFieldGet(this, intersection_intersection_observer).setCallback(this.onIntersection.bind(this));
+            intersection_intersection_classPrivateFieldGet(this, intersection_intersection_observer).connect();
+            intersection_intersection_classPrivateFieldGet(this, intersection_targets).forEach(target => {
+                intersection_intersection_classPrivateFieldGet(this, intersection_intersection_observer).observe(target);
+            });
+            return true;
         });
     }
-    onUpdate() {
-        this.parseArguments();
+    onRefresh() {
+        return intersection_awaiter(this, void 0, void 0, function* () {
+            this.parseArguments();
+            return true;
+        });
     }
-    onDestroy() {
-        intersection_intersection_classPrivateFieldGet(this, intersection_intersection_observer).disconnect();
+    onRemove() {
+        return intersection_awaiter(this, void 0, void 0, function* () {
+            intersection_intersection_classPrivateFieldGet(this, intersection_intersection_observer).disconnect();
+            return true;
+        });
     }
     parseArguments() {
         // @ts-ignore prevArgs is correct
@@ -6656,7 +6616,8 @@ var offcanvas_classPrivateFieldGet = (undefined && undefined.__classPrivateField
     }
     return privateMap.get(receiver);
 };
-var offcanvas_prefix, offcanvas_defTimeout, offcanvas_prefix_1, offcanvas_prefix_2, offcanvas_bodyClass, offcanvas_scrollY, offcanvas_windowClickEventId;
+var offcanvas_prefix, offcanvas_prefix_1, _prefix_2, offcanvas_bodyClass, offcanvas_scrollY, offcanvas_windowClickEventId;
+
 
 
 
@@ -6667,30 +6628,18 @@ const OFFCANVAS_LEFT_ANIM_DEFAULT_IN = ".{prefix}-offcanvas-default-left-in";
 const OFFCANVAS_LEFT_ANIM_DEFAULT_OUT = ".{prefix}-offcanvas-default-left-out";
 const OFFCANVAS_BODY = "{prefix}-off-canvas-open";
 const OFFCANVAS_CONTAINER_CLS = '.{prefix}-off-canvas-container';
-class offcanvas_CuiOffCanvasArgs {
+class offcanvas_CuiOffCanvasArgs extends arguments_CuiAutoParseArgs {
     constructor(prefix, timeout) {
+        super();
         offcanvas_prefix.set(this, void 0);
-        offcanvas_defTimeout.set(this, void 0);
-        offcanvas_classPrivateFieldSet(this, offcanvas_defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
         offcanvas_classPrivateFieldSet(this, offcanvas_prefix, prefix);
         this.escClose = false;
         this.position = 'right';
         this.openAct = this.getDefaultOpenClass();
         this.closeAct = this.getDefaultCloseClass();
-        this.timeout = offcanvas_classPrivateFieldGet(this, offcanvas_defTimeout);
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
         this.outClose = false;
         this.keyClose = "";
-    }
-    parse(args) {
-        if (is(args)) {
-            this.escClose = isStringTrue(args.escClose);
-            this.outClose = isStringTrue(args.outClose);
-            this.position = getStringOrDefault(args.position, 'right');
-            this.openAct = getStringOrDefault(args.openAct, this.getDefaultOpenClass());
-            this.closeAct = getStringOrDefault(args.closeAct, this.getDefaultCloseClass());
-            this.timeout = getIntOrDefault(args.timeout, offcanvas_classPrivateFieldGet(this, offcanvas_defTimeout));
-            this.keyClose = args.keyClose;
-        }
     }
     getDefaultOpenClass() {
         return replacePrefix(this.position === 'right' ? OFFCANVAS_RIGHT_ANIM_DEFAULT_IN : OFFCANVAS_LEFT_ANIM_DEFAULT_IN, offcanvas_classPrivateFieldGet(this, offcanvas_prefix));
@@ -6699,7 +6648,7 @@ class offcanvas_CuiOffCanvasArgs {
         return replacePrefix(this.position === 'right' ? OFFCANVAS_RIGHT_ANIM_DEFAULT_OUT : OFFCANVAS_LEFT_ANIM_DEFAULT_OUT, offcanvas_classPrivateFieldGet(this, offcanvas_prefix));
     }
 }
-offcanvas_prefix = new WeakMap(), offcanvas_defTimeout = new WeakMap();
+offcanvas_prefix = new WeakMap();
 class CuiOffCanvasComponent {
     constructor(prefix) {
         offcanvas_prefix_1.set(this, void 0);
@@ -6717,11 +6666,11 @@ offcanvas_prefix_1 = new WeakMap();
 class offcanvas_CuiOffCanvasHandler extends base_CuiInteractableHandler {
     constructor(element, utils, attribute, prefix) {
         super("CuiOffCanvasHandler", element, attribute, new offcanvas_CuiOffCanvasArgs(prefix, utils.setup.animationTime), utils);
-        offcanvas_prefix_2.set(this, void 0);
+        _prefix_2.set(this, void 0);
         offcanvas_bodyClass.set(this, void 0);
         offcanvas_scrollY.set(this, void 0);
         offcanvas_windowClickEventId.set(this, void 0);
-        offcanvas_classPrivateFieldSet(this, offcanvas_prefix_2, prefix);
+        offcanvas_classPrivateFieldSet(this, _prefix_2, prefix);
         offcanvas_classPrivateFieldSet(this, offcanvas_bodyClass, replacePrefix(OFFCANVAS_BODY, prefix));
         offcanvas_classPrivateFieldSet(this, offcanvas_windowClickEventId, null);
         offcanvas_classPrivateFieldSet(this, offcanvas_scrollY, 0);
@@ -6767,8 +6716,8 @@ class offcanvas_CuiOffCanvasHandler extends base_CuiInteractableHandler {
         return true;
     }
     onWindowClick(ev) {
-        const container = this.element.querySelector(replacePrefix(OFFCANVAS_CONTAINER_CLS, offcanvas_classPrivateFieldGet(this, offcanvas_prefix_2)));
-        if (container && !container.contains(ev.target)) {
+        const container = this.element.querySelector(replacePrefix(OFFCANVAS_CONTAINER_CLS, offcanvas_classPrivateFieldGet(this, _prefix_2)));
+        if (container && !container.contains(ev.ev.target)) {
             this.close();
         }
     }
@@ -6776,7 +6725,7 @@ class offcanvas_CuiOffCanvasHandler extends base_CuiInteractableHandler {
         return this.helper.hasClass(offcanvas_classPrivateFieldGet(this, offcanvas_bodyClass), document.body);
     }
     setPositionLeft() {
-        let cls = getName(offcanvas_classPrivateFieldGet(this, offcanvas_prefix_2), 'left');
+        let cls = getName(offcanvas_classPrivateFieldGet(this, _prefix_2), 'left');
         if (this.args.position === 'left' && !this.helper.hasClass(cls, this.element)) {
             this.helper.setClass(cls, this.element);
         }
@@ -6785,7 +6734,7 @@ class offcanvas_CuiOffCanvasHandler extends base_CuiInteractableHandler {
         }
     }
 }
-offcanvas_prefix_2 = new WeakMap(), offcanvas_bodyClass = new WeakMap(), offcanvas_scrollY = new WeakMap(), offcanvas_windowClickEventId = new WeakMap();
+_prefix_2 = new WeakMap(), offcanvas_bodyClass = new WeakMap(), offcanvas_scrollY = new WeakMap(), offcanvas_windowClickEventId = new WeakMap();
 
 // CONCATENATED MODULE: ./src/core/models/elements.ts
 var elements_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -7115,6 +7064,15 @@ class CuiOffsetModeFactory {
 }
 
 // CONCATENATED MODULE: ./src/components/offset/offset.ts
+var offset_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var offset_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -7135,22 +7093,16 @@ var offset_listener, offset_target, offset_utils, _matched, _action, offset_prev
 
 
 
-class offset_CuiOffsetArgs {
+
+class offset_CuiOffsetArgs extends arguments_CuiAutoParseArgs {
     constructor() {
-        this.offsetX = 0;
-        this.offsetY = 0;
+        super();
+        this.offsetX = -1;
+        this.offsetY = -1;
         this.target = "";
         this.root = false;
         this.action = "";
         this.mode = 'static';
-    }
-    parse(args) {
-        this.target = args.target;
-        this.action = args.action;
-        this.offsetX = getIntOrDefault(args.offsetX, -1);
-        this.offsetY = getIntOrDefault(args.offsetY, -1);
-        this.root = isStringTrue(args.root);
-        this.mode = getStringOrDefault(args.mode, 'static');
     }
 }
 class CuiOffsetComponent {
@@ -7164,7 +7116,7 @@ class CuiOffsetComponent {
         return new offset_CuiOffsetHandler(element, utils, this.attribute);
     }
 }
-class offset_CuiOffsetHandler extends CuiHandler {
+class offset_CuiOffsetHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiOffsetHandler", element, attribute, new offset_CuiOffsetArgs(), utils);
         offset_listener.set(this, void 0);
@@ -7189,18 +7141,27 @@ class offset_CuiOffsetHandler extends CuiHandler {
         offset_classPrivateFieldSet(this, _modeHandler, null);
         offset_classPrivateFieldSet(this, offset_listener, undefined);
     }
-    onInit() {
-        this.parseAttribute();
-        offset_classPrivateFieldSet(this, offset_listener, new scroll_CuiScrollListener(this.args.root ? window : this.element, this.utils.setup.scrollThreshold));
-        offset_classPrivateFieldGet(this, offset_listener).setCallback(this.onScroll.bind(this));
-        offset_classPrivateFieldGet(this, offset_listener).attach();
+    onHandle() {
+        return offset_awaiter(this, void 0, void 0, function* () {
+            this.parseAttribute();
+            offset_classPrivateFieldSet(this, offset_listener, new scroll_CuiScrollListener(this.args.root ? window : this.element, this.utils.setup.scrollThreshold));
+            offset_classPrivateFieldGet(this, offset_listener).setCallback(this.onScroll.bind(this));
+            offset_classPrivateFieldGet(this, offset_listener).attach();
+            return true;
+        });
     }
-    onUpdate() {
-        this.parseAttribute();
+    onRefresh() {
+        return offset_awaiter(this, void 0, void 0, function* () {
+            this.parseAttribute();
+            return true;
+        });
     }
-    onDestroy() {
-        if (offset_classPrivateFieldGet(this, offset_listener))
-            offset_classPrivateFieldGet(this, offset_listener).detach();
+    onRemove() {
+        return offset_awaiter(this, void 0, void 0, function* () {
+            if (offset_classPrivateFieldGet(this, offset_listener))
+                offset_classPrivateFieldGet(this, offset_listener).detach();
+            return true;
+        });
     }
     onScroll(ev) {
         this.checkAndPerformActions(ev);
@@ -7303,38 +7264,24 @@ var open_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) 
     }
     return privateMap.get(receiver);
 };
-var open_defTimeout, open_prefix, open_eventId;
+var open_prefix, open_eventId;
 
 
 
 
-class open_CuiOpenArgs {
+
+class open_CuiOpenArgs extends arguments_CuiAutoParseArgs {
     constructor(timeout) {
-        open_defTimeout.set(this, void 0);
-        open_classPrivateFieldSet(this, open_defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
+        super({
+            main: "target"
+        });
         this.target = "";
         this.action = "";
-        this.timeout = 0;
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
         this.prevent = false;
         this.state = "";
     }
-    parse(args) {
-        if (is(args) && isString(args)) {
-            this.target = args;
-            this.action = "";
-            this.timeout = open_classPrivateFieldGet(this, open_defTimeout);
-            this.prevent = false;
-            this.state = "";
-            return;
-        }
-        this.target = getStringOrDefault(args.target, "");
-        this.action = args.action;
-        this.timeout = getIntOrDefault(args.timeout, open_classPrivateFieldGet(this, open_defTimeout));
-        this.prevent = isStringTrue(args.prevent);
-        this.state = args.state;
-    }
 }
-open_defTimeout = new WeakMap();
 class CuiOpenComponent {
     constructor(prefix) {
         open_prefix.set(this, void 0);
@@ -7349,23 +7296,31 @@ class CuiOpenComponent {
     }
 }
 open_prefix = new WeakMap();
-class open_CuiOpenHandler extends CuiHandler {
+class open_CuiOpenHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute, prefix) {
         super("CuiOpenHandler", element, attribute, new open_CuiOpenArgs(utils.setup.animationTime), utils);
         open_eventId.set(this, void 0);
         open_classPrivateFieldSet(this, open_eventId, null);
         this.onClick = this.onClick.bind(this);
     }
-    onInit() {
-        this.element.addEventListener('click', this.onClick);
-        open_classPrivateFieldSet(this, open_eventId, this.onEvent(EVENTS.OPEN, this.onOpen.bind(this)));
+    onHandle() {
+        return open_awaiter(this, void 0, void 0, function* () {
+            this.element.addEventListener('click', this.onClick);
+            open_classPrivateFieldSet(this, open_eventId, this.onEvent(EVENTS.OPEN, this.onOpen.bind(this)));
+            return true;
+        });
     }
-    onUpdate() {
-        //
+    onRefresh() {
+        return open_awaiter(this, void 0, void 0, function* () {
+            return true;
+        });
     }
-    onDestroy() {
-        this.element.removeEventListener('click', this.onClick);
-        this.detachEvent(EVENTS.OPEN, open_classPrivateFieldGet(this, open_eventId));
+    onRemove() {
+        return open_awaiter(this, void 0, void 0, function* () {
+            this.element.removeEventListener('click', this.onClick);
+            this.detachEvent(EVENTS.OPEN, open_classPrivateFieldGet(this, open_eventId));
+            return true;
+        });
     }
     onClick(ev) {
         this.onOpen(ev);
@@ -7466,6 +7421,15 @@ class open_CuiOpenHandler extends CuiHandler {
 open_eventId = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/resize/resize.ts
+var resize_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var resize_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -7485,22 +7449,14 @@ var resize_prefix, resize_eventId, _intersectionObserver, _currentSize, _current
 
 
 
-class resize_CuiResizeArgs {
+
+class resize_CuiResizeArgs extends arguments_CuiAutoParseArgs {
     constructor() {
+        super();
         this.mode = "simple";
         this.default = "";
-        this.small = this.medium = this.large = this.xlarge = undefined;
+        this.small = this.medium = this.large = this.xlarge = '';
         this.delay = 0;
-    }
-    parse(args) {
-        var _a, _b, _c, _d;
-        this.default = getStringOrDefault(args.default, "");
-        this.small = (_a = args.small) !== null && _a !== void 0 ? _a : args.s;
-        this.medium = (_b = args.medium) !== null && _b !== void 0 ? _b : args.m;
-        this.large = (_c = args.large) !== null && _c !== void 0 ? _c : args.l;
-        this.xlarge = (_d = args.xlarge) !== null && _d !== void 0 ? _d : args.xl;
-        this.mode = args.mode === 'smart' ? "smart" : "simple";
-        this.delay = getIntOrDefault(args.delay, 0);
     }
 }
 class CuiResizeComponent {
@@ -7517,7 +7473,7 @@ class CuiResizeComponent {
     }
 }
 resize_prefix = new WeakMap();
-class resize_CuiResizeHandler extends CuiHandler {
+class resize_CuiResizeHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiResizeHandler", element, attribute, new resize_CuiResizeArgs(), utils);
         resize_eventId.set(this, void 0);
@@ -7538,26 +7494,35 @@ class resize_CuiResizeHandler extends CuiHandler {
         resize_classPrivateFieldSet(this, _timeoutToken, undefined);
         resize_classPrivateFieldSet(this, _currentAction, undefined);
     }
-    onInit() {
-        resize_classPrivateFieldSet(this, resize_eventId, this.utils.bus.on(EVENTS.RESIZE, this.resize.bind(this)));
-        resize_classPrivateFieldGet(this, _intersectionObserver).connect();
-        resize_classPrivateFieldGet(this, _intersectionObserver).observe(this.element);
-        resize_classPrivateFieldSet(this, _currentSize, calcWindowSize(window.innerWidth));
-        resize_classPrivateFieldSet(this, _isIntersecting, this.isInViewport(this.element));
-        this.setNewValue();
-        this.updateElement();
+    onHandle() {
+        return resize_awaiter(this, void 0, void 0, function* () {
+            resize_classPrivateFieldSet(this, resize_eventId, this.utils.bus.on(EVENTS.RESIZE, this.resize.bind(this)));
+            resize_classPrivateFieldGet(this, _intersectionObserver).connect();
+            resize_classPrivateFieldGet(this, _intersectionObserver).observe(this.element);
+            resize_classPrivateFieldSet(this, _currentSize, calcWindowSize(window.innerWidth));
+            resize_classPrivateFieldSet(this, _isIntersecting, this.isInViewport(this.element));
+            this.setNewValue();
+            this.updateElement();
+            return true;
+        });
     }
-    onUpdate() {
-        this.setNewValue();
-        this.updateElement();
+    onRefresh() {
+        return resize_awaiter(this, void 0, void 0, function* () {
+            this.setNewValue();
+            this.updateElement();
+            return true;
+        });
     }
-    onDestroy() {
-        if (resize_classPrivateFieldGet(this, resize_eventId) !== null) {
-            this.utils.bus.detach(EVENTS.RESIZE, resize_classPrivateFieldGet(this, resize_eventId));
-            resize_classPrivateFieldSet(this, resize_eventId, null);
-        }
-        resize_classPrivateFieldGet(this, _intersectionObserver).unobserve(this.element);
-        resize_classPrivateFieldGet(this, _intersectionObserver).disconnect();
+    onRemove() {
+        return resize_awaiter(this, void 0, void 0, function* () {
+            if (resize_classPrivateFieldGet(this, resize_eventId) !== null) {
+                this.utils.bus.detach(EVENTS.RESIZE, resize_classPrivateFieldGet(this, resize_eventId));
+                resize_classPrivateFieldSet(this, resize_eventId, null);
+            }
+            resize_classPrivateFieldGet(this, _intersectionObserver).unobserve(this.element);
+            resize_classPrivateFieldGet(this, _intersectionObserver).disconnect();
+            return true;
+        });
     }
     resize(data) {
         resize_classPrivateFieldSet(this, _currentSize, data.current);
@@ -7665,6 +7630,15 @@ class resize_CuiResizeHandler extends CuiHandler {
 resize_eventId = new WeakMap(), _intersectionObserver = new WeakMap(), _currentSize = new WeakMap(), _currentValue = new WeakMap(), _lastValue = new WeakMap(), _currentAction = new WeakMap(), _isIntersecting = new WeakMap(), _timeoutToken = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/scroll/scroll.ts
+var scroll_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var scroll_scroll_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -7682,6 +7656,19 @@ var _parent, scroll_scroll_target, _onClickBound;
 
 
 
+
+class scroll_CuiScrollArgs extends arguments_CuiAutoParseArgs {
+    constructor() {
+        super({
+            props: {
+                "behavior": { corrector: (value) => getEnumOrDefault(value, 'auto', 'smooth') }
+            }
+        });
+        this.target = "";
+        this.parent = "";
+        this.behavior = 'auto';
+    }
+}
 /**
  * Component scrolls to specified target in the document
  * Arguments:
@@ -7701,19 +7688,7 @@ class scroll_CuiScrollComponent {
         return new scroll_CuiScrollHandler(element, utils, this.attribute);
     }
 }
-class scroll_CuiScrollArgs {
-    constructor() {
-        this.target = "";
-        this.parent = "";
-        this.behavior = 'auto';
-    }
-    parse(val) {
-        this.target = getStringOrDefault(val.target, "");
-        this.parent = getStringOrDefault(val.parent, "");
-        this.behavior = is(val.behavior) && val.behavior.toLowerCase() === 'smooth' ? 'smooth' : 'auto';
-    }
-}
-class scroll_CuiScrollHandler extends CuiHandler {
+class scroll_CuiScrollHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiScrollHandler", element, attribute, new scroll_CuiScrollArgs(), utils);
         _parent.set(this, void 0);
@@ -7724,15 +7699,24 @@ class scroll_CuiScrollHandler extends CuiHandler {
         scroll_scroll_classPrivateFieldSet(this, scroll_scroll_target, null);
         scroll_scroll_classPrivateFieldSet(this, _onClickBound, this.onClick.bind(this));
     }
-    onInit() {
-        this.element.addEventListener('click', scroll_scroll_classPrivateFieldGet(this, _onClickBound));
-        this.setTargets();
+    onHandle() {
+        return scroll_awaiter(this, void 0, void 0, function* () {
+            this.element.addEventListener('click', scroll_scroll_classPrivateFieldGet(this, _onClickBound));
+            this.setTargets();
+            return true;
+        });
     }
-    onUpdate() {
-        this.setTargets();
+    onRefresh() {
+        return scroll_awaiter(this, void 0, void 0, function* () {
+            this.setTargets();
+            return true;
+        });
     }
-    onDestroy() {
-        this.element.removeEventListener('click', scroll_scroll_classPrivateFieldGet(this, _onClickBound));
+    onRemove() {
+        return scroll_awaiter(this, void 0, void 0, function* () {
+            this.element.removeEventListener('click', scroll_scroll_classPrivateFieldGet(this, _onClickBound));
+            return true;
+        });
     }
     onClick(ev) {
         if (!are(scroll_scroll_classPrivateFieldGet(this, scroll_scroll_target), scroll_scroll_classPrivateFieldGet(this, _parent))) {
@@ -8013,6 +7997,15 @@ class mode_CuiMultiModeHandler extends mode_CuiModeHandlerBase {
 }
 
 // CONCATENATED MODULE: ./src/components/scrollspy/scrollspy.ts
+var scrollspy_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var scrollspy_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -8034,28 +8027,25 @@ var scrollspy_listener, _links, scrollspy_actions, _linkActions, scrollspy_root,
 
 
 
+
 const DEFAULT_SELECTOR = "> *";
-class scrollspy_CuiScrollSpyArgs {
+class scrollspy_CuiScrollSpyArgs extends arguments_CuiAutoParseArgs {
     constructor() {
+        super({
+            props: {
+                "selector": { corrector: joinWithScopeSelector },
+                "ratio": { corrector: (value) => getRangeValueOrDefault(value, 0, 1, 0) },
+                'mode': { corrector: (value) => getEnumOrDefault(value, 'single', "multi") }
+            }
+        });
         this.ratio = 0;
         this.mode = "single";
         this.threshold = -1;
-        this.selector = "";
+        this.selector = joinWithScopeSelector(DEFAULT_SELECTOR);
         this.action = "";
         this.isRoot = false;
         this.link = "";
         this.linkAction = "";
-    }
-    parse(args) {
-        var _a;
-        this.selector = `${SCOPE_SELECTOR}${(_a = args.selector) !== null && _a !== void 0 ? _a : DEFAULT_SELECTOR}`;
-        this.action = getStringOrDefault(args.action, "");
-        this.link = getStringOrDefault(args.link, "");
-        this.linkAction = getStringOrDefault(args.linkAction, "");
-        this.ratio = getRangeValueOrDefault(parseFloat(args.ratio), 0, 1, 0);
-        this.isRoot = isStringTrue(args.isRoot);
-        this.mode = (args === null || args === void 0 ? void 0 : args.mode) === 'multi' ? "multi" : "single";
-        this.threshold = getIntOrDefault(args.threshold, -1);
     }
 }
 class CuiScrollspyComponent {
@@ -8069,7 +8059,7 @@ class CuiScrollspyComponent {
         return new scrollspy_CuiScrollspyHandler(element, utils, this.attribute);
     }
 }
-class scrollspy_CuiScrollspyHandler extends CuiHandler {
+class scrollspy_CuiScrollspyHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiScrollspyHandler", element, attribute, new scrollspy_CuiScrollSpyArgs(), utils);
         scrollspy_listener.set(this, void 0);
@@ -8088,16 +8078,25 @@ class scrollspy_CuiScrollspyHandler extends CuiHandler {
         scrollspy_classPrivateFieldSet(this, _rootBox, undefined);
         scrollspy_classPrivateFieldSet(this, scrollspy_modeHandler, undefined);
     }
-    onInit() {
-        this.parseAttribute();
-        scrollspy_classPrivateFieldGet(this, scrollspy_listener).setCallback(this.onIntersection.bind(this));
-        scrollspy_classPrivateFieldGet(this, scrollspy_listener).attach();
+    onHandle() {
+        return scrollspy_awaiter(this, void 0, void 0, function* () {
+            this.init();
+            scrollspy_classPrivateFieldGet(this, scrollspy_listener).setCallback(this.onIntersection.bind(this));
+            scrollspy_classPrivateFieldGet(this, scrollspy_listener).attach();
+            return true;
+        });
     }
-    onUpdate() {
-        this.updateAttributes();
+    onRefresh() {
+        return scrollspy_awaiter(this, void 0, void 0, function* () {
+            this.update();
+            return true;
+        });
     }
-    onDestroy() {
-        scrollspy_classPrivateFieldGet(this, scrollspy_listener).detach();
+    onRemove() {
+        return scrollspy_awaiter(this, void 0, void 0, function* () {
+            scrollspy_classPrivateFieldGet(this, scrollspy_listener).detach();
+            return true;
+        });
     }
     onIntersection(ev) {
         if (!scrollspy_classPrivateFieldGet(this, scrollspy_modeHandler)) {
@@ -8122,9 +8121,10 @@ class scrollspy_CuiScrollspyHandler extends CuiHandler {
             initial: ev.initial,
             source: ev.source,
             timestamp: timestamp,
+            name: EVENTS.ON_SCROLL
         });
     }
-    parseAttribute() {
+    init() {
         scrollspy_classPrivateFieldSet(this, scrollspy_root, this.args.isRoot ? window : this.element);
         scrollspy_classPrivateFieldSet(this, _rootBox, CuiElementBoxFactory.get(scrollspy_classPrivateFieldGet(this, scrollspy_root)));
         let targets = this.args.selector ? scrollspy_classPrivateFieldGet(this, _rootBox).queryAll(this.args.selector) : [];
@@ -8135,7 +8135,7 @@ class scrollspy_CuiScrollspyHandler extends CuiHandler {
         scrollspy_classPrivateFieldSet(this, _linkActions, actions_CuiActionsListFactory.get(this.args.linkAction));
         scrollspy_classPrivateFieldSet(this, scrollspy_modeHandler, CuiScrollSpyModeHandlerFactory.get(this.args.mode));
     }
-    updateAttributes() {
+    update() {
         if (this.prevArgs && this.args.isRoot !== this.prevArgs.isRoot) {
             scrollspy_classPrivateFieldSet(this, scrollspy_root, this.args.isRoot ? window : this.element);
             scrollspy_classPrivateFieldSet(this, _rootBox, CuiElementBoxFactory.get(scrollspy_classPrivateFieldGet(this, scrollspy_root)));
@@ -8168,13 +8168,13 @@ var builders_element_classPrivateFieldGet = (undefined && undefined.__classPriva
     }
     return privateMap.get(receiver);
 };
-var _id, _classes, element_attributes, _tag, _text, element_children, _rawChildren, element_callback, _evName;
+var _id, _classes, _attributes, _tag, _text, element_children, _rawChildren, element_callback, _evName;
 
 class element_ElementBuilder {
     constructor(tag) {
         _id.set(this, void 0);
         _classes.set(this, void 0);
-        element_attributes.set(this, void 0);
+        _attributes.set(this, void 0);
         _tag.set(this, void 0);
         _text.set(this, void 0);
         element_children.set(this, void 0);
@@ -8183,7 +8183,7 @@ class element_ElementBuilder {
         _evName.set(this, void 0);
         builders_element_classPrivateFieldSet(this, _tag, tag);
         builders_element_classPrivateFieldSet(this, _classes, []);
-        builders_element_classPrivateFieldSet(this, element_attributes, undefined);
+        builders_element_classPrivateFieldSet(this, _attributes, undefined);
         builders_element_classPrivateFieldSet(this, _id, undefined);
         builders_element_classPrivateFieldSet(this, _text, undefined);
         builders_element_classPrivateFieldSet(this, element_children, []);
@@ -8200,7 +8200,7 @@ class element_ElementBuilder {
         return this;
     }
     setAttributes(attributes) {
-        builders_element_classPrivateFieldSet(this, element_attributes, attributes);
+        builders_element_classPrivateFieldSet(this, _attributes, attributes);
         return this;
     }
     setTextContent(text) {
@@ -8229,9 +8229,9 @@ class element_ElementBuilder {
         if (is(builders_element_classPrivateFieldGet(this, _classes))) {
             element.classList.add(...builders_element_classPrivateFieldGet(this, _classes));
         }
-        if (is(builders_element_classPrivateFieldGet(this, element_attributes))) {
+        if (is(builders_element_classPrivateFieldGet(this, _attributes))) {
             // @ts-ignore attributes are checked
-            enumerateObject(builders_element_classPrivateFieldGet(this, element_attributes), (attr, value) => {
+            enumerateObject(builders_element_classPrivateFieldGet(this, _attributes), (attr, value) => {
                 element.setAttribute(attr, value);
             });
         }
@@ -8255,7 +8255,7 @@ class element_ElementBuilder {
         return element;
     }
 }
-_id = new WeakMap(), _classes = new WeakMap(), element_attributes = new WeakMap(), _tag = new WeakMap(), _text = new WeakMap(), element_children = new WeakMap(), _rawChildren = new WeakMap(), element_callback = new WeakMap(), _evName = new WeakMap();
+_id = new WeakMap(), _classes = new WeakMap(), _attributes = new WeakMap(), _tag = new WeakMap(), _text = new WeakMap(), element_children = new WeakMap(), _rawChildren = new WeakMap(), element_callback = new WeakMap(), _evName = new WeakMap();
 
 // CONCATENATED MODULE: ./src/core/handlers/drag/detectors.ts
 var detectors_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
@@ -8419,6 +8419,15 @@ class drag_CuiDragHandler {
 drag_root = new WeakMap(), _moveHandler = new WeakMap(), _onDragStart = new WeakMap(), _onDragOver = new WeakMap(), _onDragEnd = new WeakMap(), drag_timeout = new WeakMap(), drag_isTracking = new WeakMap(), _timeoutId = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/sortable/sortable.ts
+var sortable_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var sortable_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -8440,22 +8449,22 @@ var sortable_prefix, _dragHandler, _triggers, sortable_targets, _currentTarget, 
 
 
 
+
 const SORTABLE_IS_MOVING = "{prefix}-moving";
 const sortable_DEFAULT_SELECTOR = " > *";
 const SORTABLE_PREVIEW_CLS = "{prefix}-sortable-preview";
-class sortable_CuiSortableArgs {
+class sortable_CuiSortableArgs extends arguments_CuiAutoParseArgs {
     constructor() {
-        this.target = SCOPE_SELECTOR + sortable_DEFAULT_SELECTOR;
-        ;
-        this.trigger = SCOPE_SELECTOR + sortable_DEFAULT_SELECTOR;
+        super({
+            props: {
+                "target": { corrector: joinWithScopeSelector },
+                "trigger": { corrector: joinWithScopeSelector }
+            }
+        });
+        this.target = joinWithScopeSelector(sortable_DEFAULT_SELECTOR);
+        this.trigger = joinWithScopeSelector(sortable_DEFAULT_SELECTOR);
         this.timeout = 150;
         this.threshold = 5;
-    }
-    parse(val) {
-        this.target = val.target ? SCOPE_SELECTOR + " " + val.target : SCOPE_SELECTOR + sortable_DEFAULT_SELECTOR;
-        this.trigger = val.trigger ? SCOPE_SELECTOR + " " + val.trigger : SCOPE_SELECTOR + sortable_DEFAULT_SELECTOR;
-        this.timeout = getIntOrDefault(val.timeout, 150);
-        this.threshold = getIntOrDefault(val.threshold, 5);
     }
 }
 class CuiSortableComponent {
@@ -8472,7 +8481,7 @@ class CuiSortableComponent {
     }
 }
 sortable_prefix = new WeakMap();
-class sortable_CuiSortableHandler extends CuiHandler {
+class sortable_CuiSortableHandler extends base_CuiHandlerBase {
     constructor(element, attribute, utils, prefix) {
         super("CuiSortableHandler", element, attribute, new sortable_CuiSortableArgs(), utils);
         _dragHandler.set(this, void 0);
@@ -8512,20 +8521,29 @@ class sortable_CuiSortableHandler extends CuiHandler {
             });
         });
     }
-    onInit() {
-        sortable_classPrivateFieldGet(this, _dragHandler).attach();
-        this.getTargetsAndTrggers();
-        sortable_classPrivateFieldGet(this, _detector).setThreshold(this.args.threshold);
-    }
-    onUpdate() {
-        if (this.prevArgs && (this.args.target !== this.prevArgs.target ||
-            this.args.trigger !== this.prevArgs.trigger)) {
+    onHandle() {
+        return sortable_awaiter(this, void 0, void 0, function* () {
+            sortable_classPrivateFieldGet(this, _dragHandler).attach();
             this.getTargetsAndTrggers();
-        }
-        sortable_classPrivateFieldGet(this, _dragHandler).setLongPressTimeout(this.args.timeout);
+            sortable_classPrivateFieldGet(this, _detector).setThreshold(this.args.threshold);
+            return true;
+        });
     }
-    onDestroy() {
-        sortable_classPrivateFieldGet(this, _dragHandler).detach();
+    onRefresh() {
+        return sortable_awaiter(this, void 0, void 0, function* () {
+            if (this.prevArgs && (this.args.target !== this.prevArgs.target ||
+                this.args.trigger !== this.prevArgs.trigger)) {
+                this.getTargetsAndTrggers();
+            }
+            sortable_classPrivateFieldGet(this, _dragHandler).setLongPressTimeout(this.args.timeout);
+            return true;
+        });
+    }
+    onRemove() {
+        return sortable_awaiter(this, void 0, void 0, function* () {
+            sortable_classPrivateFieldGet(this, _dragHandler).detach();
+            return true;
+        });
     }
     /**
      * queries targets and triggers from the element
@@ -8696,6 +8714,15 @@ class sortable_CuiSortableHandler extends CuiHandler {
 _dragHandler = new WeakMap(), _triggers = new WeakMap(), sortable_targets = new WeakMap(), _currentTarget = new WeakMap(), _currentIdx = new WeakMap(), _preview = new WeakMap(), _movingCls = new WeakMap(), _detector = new WeakMap(), _currentBefore = new WeakMap(), _animation = new WeakMap(), _previewCls = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/spinner/spinner.ts
+var spinner_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var spinner_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -8714,19 +8741,14 @@ var spinner_prefix, _pauseEventId, _animationPauseClass;
 
 
 
-class spinner_CuiSpinnerArgs {
+
+class spinner_CuiSpinnerArgs extends arguments_CuiAutoParseArgs {
     constructor() {
+        super({
+            main: "spinner"
+        });
         this.spinner = "circle";
         this.scale = 1;
-    }
-    parse(args) {
-        if (isString(args)) {
-            this.spinner = getStringOrDefault(args, "circle");
-        }
-        else {
-            this.spinner = getStringOrDefault(args.spinner, "circle");
-            this.scale = getIntOrDefault(args.scale, 1);
-        }
     }
 }
 class spinner_CuiSpinnerComponent {
@@ -8745,7 +8767,7 @@ class spinner_CuiSpinnerComponent {
     }
 }
 spinner_prefix = new WeakMap();
-class spinner_CuiSpinnerHandler extends CuiHandler {
+class spinner_CuiSpinnerHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute, prefix) {
         super("CuiSpinnerHandler", element, attribute, new spinner_CuiSpinnerArgs(), utils);
         _pauseEventId.set(this, void 0);
@@ -8753,18 +8775,27 @@ class spinner_CuiSpinnerHandler extends CuiHandler {
         spinner_classPrivateFieldSet(this, _pauseEventId, null);
         spinner_classPrivateFieldSet(this, _animationPauseClass, replacePrefix("{prefix}-animation-pause", prefix));
     }
-    onInit() {
-        spinner_classPrivateFieldSet(this, _pauseEventId, this.onEvent(EVENTS.PAUSE, this.onPause.bind(this)));
-        this.add();
-    }
-    onUpdate() {
-        if (this.prevArgs && this.args.spinner !== this.prevArgs.spinner) {
+    onHandle() {
+        return spinner_awaiter(this, void 0, void 0, function* () {
+            spinner_classPrivateFieldSet(this, _pauseEventId, this.onEvent(EVENTS.PAUSE, this.onPause.bind(this)));
             this.add();
-        }
+            return true;
+        });
     }
-    onDestroy() {
-        this.removeIfAnyExisists();
-        this.detachEvent(EVENTS.PAUSE, spinner_classPrivateFieldGet(this, _pauseEventId));
+    onRefresh() {
+        return spinner_awaiter(this, void 0, void 0, function* () {
+            if (this.prevArgs && this.args.spinner !== this.prevArgs.spinner) {
+                this.add();
+            }
+            return true;
+        });
+    }
+    onRemove() {
+        return spinner_awaiter(this, void 0, void 0, function* () {
+            this.removeIfAnyExisists();
+            this.detachEvent(EVENTS.PAUSE, spinner_classPrivateFieldGet(this, _pauseEventId));
+            return true;
+        });
     }
     addSpinner(iconElement, name) {
         this.element.appendChild(iconElement);
@@ -8823,7 +8854,8 @@ var slider_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet
     }
     return privateMap.get(receiver);
 };
-var slider_prefix, slider_defTimeout, slider_targets, slider_currentIdx, slider_links, slider_task, slider_switchEventId, slider_isTracking, slider_startX, _swipeRatio, _nextIdx, _nextElement, _ratioThreshold, _currSlider, _nextSlider, _animationDef, _targetsCount, slider_moveEventId;
+var slider_targets, slider_currentIdx, slider_links, slider_task, slider_switchEventId, slider_isTracking, slider_startX, _swipeRatio, _nextIdx, _nextElement, _ratioThreshold, _currSlider, _nextSlider, _animationDef, _targetsCount, slider_moveEventId;
+
 
 
 
@@ -8840,32 +8872,23 @@ var slider_prefix, slider_defTimeout, slider_targets, slider_currentIdx, slider_
  *   animation: string - animation name
  *   loop: boolean - allows to slide elements in loop
  */
-const SWITCH_DEFAULT_TARGETS = "> li";
-class slider_CuiSliderArgs {
+const SWITCH_DEFAULT_TARGETS = " > li";
+class slider_CuiSliderArgs extends arguments_CuiAutoParseArgs {
     constructor(prefix, timeout) {
-        slider_prefix.set(this, void 0);
-        slider_defTimeout.set(this, void 0);
-        slider_classPrivateFieldSet(this, slider_prefix, prefix);
-        slider_classPrivateFieldSet(this, slider_defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
-        this.targets = SWITCH_DEFAULT_TARGETS;
-        this.timeout = slider_classPrivateFieldGet(this, slider_defTimeout);
+        super({
+            props: {
+                "targets": { corrector: joinWithScopeSelector }
+            }
+        });
+        this.targets = joinWithScopeSelector(SWITCH_DEFAULT_TARGETS);
         this.links = "";
         this.autoTimeout = -1;
         this.height = "";
-        this.animation = "";
+        this.animation = "slide";
         this.loop = false;
-    }
-    parse(args) {
-        this.targets = SCOPE_SELECTOR + getStringOrDefault(args.targets, SWITCH_DEFAULT_TARGETS);
-        this.timeout = getIntOrDefault(args.timeout, slider_classPrivateFieldGet(this, slider_defTimeout));
-        this.links = args.links;
-        this.autoTimeout = getIntOrDefault(args.autoTimeout, -1);
-        this.height = getStringOrDefault(args.height, 'auto');
-        this.animation = getStringOrDefault(args.animation, 'slide');
-        this.loop = boolStringOrDefault(args.loop, false);
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
     }
 }
-slider_prefix = new WeakMap(), slider_defTimeout = new WeakMap();
 class CuiSliderComponent {
     constructor(prefix) {
         this.attribute = `${prefix !== null && prefix !== void 0 ? prefix : 'cui'}-slider`;
@@ -9029,6 +9052,7 @@ class slider_CuiSliderHandler extends base_CuiMutableHandler {
     switch(index) {
         return slider_awaiter(this, void 0, void 0, function* () {
             if (this.isLocked) {
+                console.log("Locked");
                 return false;
             }
             this.onPushSwitch(index);
@@ -9187,7 +9211,8 @@ var switch_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet
     }
     return privateMap.get(receiver);
 };
-var switch_prefix, switch_defTimeout, switch_targets, switch_currentIdx, switch_links, _switches, switch_task, switch_switchEventId, _actionsIn, _actionsOut;
+var switch_targets, switch_currentIdx, switch_links, _switches, switch_task, switch_switchEventId, _actionsIn, _actionsOut;
+
 
 
 
@@ -9196,35 +9221,24 @@ var switch_prefix, switch_defTimeout, switch_targets, switch_currentIdx, switch_
 const SWITCH_DEFAULT_ACTION_IN = ".{prefix}-switch-animation-default-in";
 const SWITCH_DEFAULT_ACTION_OUT = ".{prefix}-switch-animation-default-out";
 const switch_SWITCH_DEFAULT_TARGETS = " > *";
-class switch_CuiSwitchArgs {
+class switch_CuiSwitchArgs extends arguments_CuiAutoParseArgs {
     constructor(prefix, timeout) {
-        switch_prefix.set(this, void 0);
-        switch_defTimeout.set(this, void 0);
-        switch_classPrivateFieldSet(this, switch_prefix, prefix);
-        switch_classPrivateFieldSet(this, switch_defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
-        this.targets = "";
-        this.in = "";
-        this.out = "";
-        this.timeout = switch_classPrivateFieldGet(this, switch_defTimeout);
+        super({
+            props: {
+                "targets": { corrector: joinWithScopeSelector }
+            }
+        });
+        this.targets = joinWithScopeSelector(switch_SWITCH_DEFAULT_TARGETS);
+        this.in = replacePrefix(SWITCH_DEFAULT_ACTION_IN, prefix);
+        this.out = replacePrefix(SWITCH_DEFAULT_ACTION_OUT, prefix);
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
         this.links = "";
         this.switch = "";
         this.autoTimeout = -1;
-        this.height = "";
+        this.height = "auto";
         this.loop = false;
     }
-    parse(args) {
-        this.targets = is(args.targets) ? SCOPE_SELECTOR + args.targets : SCOPE_SELECTOR + switch_SWITCH_DEFAULT_TARGETS;
-        this.in = getStringOrDefault(args.in, replacePrefix(SWITCH_DEFAULT_ACTION_IN, switch_classPrivateFieldGet(this, switch_prefix)));
-        this.out = getStringOrDefault(args.out, replacePrefix(SWITCH_DEFAULT_ACTION_OUT, switch_classPrivateFieldGet(this, switch_prefix)));
-        this.timeout = getIntOrDefault(args.timeout, switch_classPrivateFieldGet(this, switch_defTimeout));
-        this.links = getStringOrDefault(args.links, "");
-        this.switch = getStringOrDefault(args.switch, "");
-        this.autoTimeout = getIntOrDefault(args.autoTimeout, -1);
-        this.height = getStringOrDefault(args.height, 'auto');
-        this.loop = isStringTrue(args.loop);
-    }
 }
-switch_prefix = new WeakMap(), switch_defTimeout = new WeakMap();
 class CuiSwitchComponent {
     constructor(prefix) {
         this.attribute = `${prefix !== null && prefix !== void 0 ? prefix : 'cui'}-switch`;
@@ -9408,6 +9422,15 @@ class switch_CuiSwitchHandler extends base_CuiMutableHandler {
 switch_targets = new WeakMap(), switch_currentIdx = new WeakMap(), switch_links = new WeakMap(), _switches = new WeakMap(), switch_task = new WeakMap(), switch_switchEventId = new WeakMap(), _actionsIn = new WeakMap(), _actionsOut = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/switch/switcher.ts
+var switcher_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var switcher_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -9425,18 +9448,13 @@ var _targetId, _isList, _listeners;
 
 
 
+
 const SWITCHER_LIST_ITEM_SELECTOR = "li > a";
-class switcher_CuiSwitcherArgs {
+class switcher_CuiSwitcherArgs extends arguments_CuiAutoParseArgs {
     constructor() {
+        super();
         this.index = "";
         this.target = "";
-    }
-    parse(args) {
-        if (!is(args)) {
-            return;
-        }
-        this.target = args.target;
-        this.index = args.index;
     }
 }
 class CuiSwitcherComponent {
@@ -9450,7 +9468,7 @@ class CuiSwitcherComponent {
         return new switcher_CuiSwitcherHandler(element, utils, this.attribute);
     }
 }
-class switcher_CuiSwitcherHandler extends CuiHandler {
+class switcher_CuiSwitcherHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiSwitcherHandler", element, attribute, new switcher_CuiSwitcherArgs(), utils);
         _targetId.set(this, void 0);
@@ -9461,15 +9479,24 @@ class switcher_CuiSwitcherHandler extends CuiHandler {
         this.onClickEvent = this.onClickEvent.bind(this);
         switcher_classPrivateFieldSet(this, _listeners, []);
     }
-    onInit() {
-        this.setEvents();
-        this.getTarget();
+    onHandle() {
+        return switcher_awaiter(this, void 0, void 0, function* () {
+            this.setEvents();
+            this.getTarget();
+            return true;
+        });
     }
-    onUpdate() {
-        this.getTarget();
+    onRefresh() {
+        return switcher_awaiter(this, void 0, void 0, function* () {
+            this.getTarget();
+            return true;
+        });
     }
-    onDestroy() {
-        this.removeEvents();
+    onRemove() {
+        return switcher_awaiter(this, void 0, void 0, function* () {
+            this.removeEvents();
+            return true;
+        });
     }
     getTarget() {
         if (!is(this.args.target)) {
@@ -9530,6 +9557,15 @@ class switcher_CuiSwitcherHandler extends CuiHandler {
 _targetId = new WeakMap(), _isList = new WeakMap(), _listeners = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/toggle/toggle.ts
+var toggle_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var toggle_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -9548,19 +9584,13 @@ var toggle_target, toggle_utils, _toggleEventId, toggle_actions;
 
 
 
-class toggle_CuiToggleArgs {
+class toggle_CuiToggleArgs extends arguments_CuiAutoParseArgs {
     constructor() {
+        super({
+            main: "action"
+        });
         this.action = "";
         this.target = "";
-    }
-    parse(args) {
-        if (is(args) && isString(args)) {
-            this.action = args;
-        }
-        else {
-            this.target = getStringOrDefault(args.target, "");
-            this.action = args.action;
-        }
     }
 }
 class CuiToggleComponent {
@@ -9574,7 +9604,7 @@ class CuiToggleComponent {
         return new toggle_CuiToggleHandler(element, utils, this.attribute);
     }
 }
-class toggle_CuiToggleHandler extends CuiHandler {
+class toggle_CuiToggleHandler extends base_CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiToggleHandler", element, attribute, new toggle_CuiToggleArgs(), utils);
         toggle_target.set(this, void 0);
@@ -9587,19 +9617,28 @@ class toggle_CuiToggleHandler extends CuiHandler {
         toggle_classPrivateFieldSet(this, toggle_actions, []);
         this.onClick = this.onClick.bind(this);
     }
-    onInit() {
-        toggle_classPrivateFieldSet(this, toggle_target, this.getTarget());
-        toggle_classPrivateFieldSet(this, toggle_actions, actions_CuiActionsListFactory.get(this.args.action));
-        this.element.addEventListener('click', this.onClick);
-        toggle_classPrivateFieldSet(this, _toggleEventId, this.onEvent(EVENTS.TOGGLE, this.toggle.bind(this)));
+    onHandle() {
+        return toggle_awaiter(this, void 0, void 0, function* () {
+            toggle_classPrivateFieldSet(this, toggle_target, this.getTarget());
+            toggle_classPrivateFieldSet(this, toggle_actions, actions_CuiActionsListFactory.get(this.args.action));
+            this.element.addEventListener('click', this.onClick);
+            toggle_classPrivateFieldSet(this, _toggleEventId, this.onEvent(EVENTS.TOGGLE, this.toggle.bind(this)));
+            return true;
+        });
     }
-    onUpdate() {
-        toggle_classPrivateFieldSet(this, toggle_target, this.getTarget());
-        toggle_classPrivateFieldSet(this, toggle_actions, actions_CuiActionsListFactory.get(this.args.action));
+    onRefresh() {
+        return toggle_awaiter(this, void 0, void 0, function* () {
+            toggle_classPrivateFieldSet(this, toggle_target, this.getTarget());
+            toggle_classPrivateFieldSet(this, toggle_actions, actions_CuiActionsListFactory.get(this.args.action));
+            return true;
+        });
     }
-    onDestroy() {
-        this.element.removeEventListener('click', this.onClick);
-        this.detachEvent(EVENTS.TOGGLE, toggle_classPrivateFieldGet(this, _toggleEventId));
+    onRemove() {
+        return toggle_awaiter(this, void 0, void 0, function* () {
+            this.element.removeEventListener('click', this.onClick);
+            this.detachEvent(EVENTS.TOGGLE, toggle_classPrivateFieldGet(this, _toggleEventId));
+            return true;
+        });
     }
     toggle() {
         if (!toggle_classPrivateFieldGet(this, toggle_target)) {
@@ -9628,6 +9667,15 @@ class toggle_CuiToggleHandler extends CuiHandler {
 toggle_target = new WeakMap(), toggle_utils = new WeakMap(), _toggleEventId = new WeakMap(), toggle_actions = new WeakMap();
 
 // CONCATENATED MODULE: ./src/components/tooltip/tooltip.ts
+var tooltip_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var tooltip_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -9641,7 +9689,8 @@ var tooltip_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGe
     }
     return privateMap.get(receiver);
 };
-var _defAct, tooltip_prefix, tooltip_hoverListener, _tooltip, tooltip_margin, tooltip_positionCalculator, _tooltipDataCls, tooltip_actions, tooltip_task;
+var tooltip_prefix, tooltip_hoverListener, _tooltip, tooltip_margin, tooltip_positionCalculator, _tooltipDataCls, tooltip_actions, tooltip_task;
+
 
 
 
@@ -9651,31 +9700,19 @@ var _defAct, tooltip_prefix, tooltip_hoverListener, _tooltip, tooltip_margin, to
 
 const TOOLTIP_ACTION = ".{prefix}-animation-tooltip-in";
 const TOOLTIP_DATA = "{prefix}-tooltip-data";
-class tooltip_CuiTooltipArgs {
+class tooltip_CuiTooltipArgs extends arguments_CuiAutoParseArgs {
     constructor(prefix) {
-        _defAct.set(this, void 0);
-        tooltip_classPrivateFieldSet(this, _defAct, replacePrefix(TOOLTIP_ACTION, prefix));
+        super({
+            main: "content"
+        });
         this.content = "";
         this.width = 150;
         this.margin = 8;
         this.timeout = 2000;
         this.pos = "";
-        this.action = tooltip_classPrivateFieldGet(this, _defAct);
-    }
-    parse(val) {
-        if (isString(val)) {
-            this.content = getStringOrDefault(val, "");
-            return;
-        }
-        this.content = getStringOrDefault(val.content, "");
-        this.width = getIntOrDefault(val.width, 150);
-        this.margin = getIntOrDefault(val.margin, 8);
-        this.pos = getStringOrDefault(val.pos, "");
-        this.action = getStringOrDefault(val.action, tooltip_classPrivateFieldGet(this, _defAct));
-        this.timeout = getIntOrDefault(val.timeout, 2000);
+        this.action = replacePrefix(TOOLTIP_ACTION, prefix);
     }
 }
-_defAct = new WeakMap();
 class CuiTooltipComponent {
     constructor(prefix) {
         tooltip_prefix.set(this, void 0);
@@ -9690,7 +9727,7 @@ class CuiTooltipComponent {
     }
 }
 tooltip_prefix = new WeakMap();
-class tooltip_CuiTooltipHandler extends CuiHandler {
+class tooltip_CuiTooltipHandler extends base_CuiHandlerBase {
     constructor(element, attribute, utils, prefix) {
         super("CuiTooltipHandler", element, attribute, new tooltip_CuiTooltipArgs(prefix), utils);
         tooltip_hoverListener.set(this, void 0);
@@ -9710,19 +9747,28 @@ class tooltip_CuiTooltipHandler extends CuiHandler {
         tooltip_classPrivateFieldSet(this, tooltip_positionCalculator, new calculator_CuiBasePositionCalculator());
         tooltip_classPrivateFieldGet(this, tooltip_positionCalculator).setPreferred("top-center");
     }
-    onInit() {
-        tooltip_classPrivateFieldGet(this, tooltip_hoverListener).attach();
-        this.getDataFromArgs();
-        tooltip_classPrivateFieldSet(this, tooltip_task, new task_CuiTaskRunner(this.args.timeout, false, this.removeTooltip.bind(this)));
+    onHandle() {
+        return tooltip_awaiter(this, void 0, void 0, function* () {
+            tooltip_classPrivateFieldGet(this, tooltip_hoverListener).attach();
+            this.getDataFromArgs();
+            tooltip_classPrivateFieldSet(this, tooltip_task, new task_CuiTaskRunner(this.args.timeout, false, this.removeTooltip.bind(this)));
+            return true;
+        });
     }
-    onUpdate() {
-        this.getDataFromArgs();
-        if (tooltip_classPrivateFieldGet(this, tooltip_task))
-            tooltip_classPrivateFieldGet(this, tooltip_task).setTimeout(this.args.timeout);
+    onRefresh() {
+        return tooltip_awaiter(this, void 0, void 0, function* () {
+            this.getDataFromArgs();
+            if (tooltip_classPrivateFieldGet(this, tooltip_task))
+                tooltip_classPrivateFieldGet(this, tooltip_task).setTimeout(this.args.timeout);
+            return true;
+        });
     }
-    onDestroy() {
-        this.removeTooltip();
-        tooltip_classPrivateFieldGet(this, tooltip_hoverListener).detach();
+    onRemove() {
+        return tooltip_awaiter(this, void 0, void 0, function* () {
+            this.removeTooltip();
+            tooltip_classPrivateFieldGet(this, tooltip_hoverListener).detach();
+            return true;
+        });
     }
     onHover(ev) {
         if (ev.isHovering) {
@@ -9942,20 +9988,20 @@ class builder_DialogBuilder {
 _header = new WeakMap(), _body = new WeakMap(), _footer = new WeakMap(), builder_prefix = new WeakMap(), builder_switches = new WeakMap(), _reverse = new WeakMap();
 
 // CONCATENATED MODULE: ./src/plugins/alert/handler.ts
-var handler_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+var alert_handler_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
     }
     privateMap.set(receiver, value);
     return value;
 };
-var handler_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
+var alert_handler_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to get private field on non-instance");
     }
     return privateMap.get(receiver);
 };
-var _callbacks, handler_utils, handler_id, _manager, _attid, _id_1, _id_2, _id_3;
+var _callbacks, alert_handler_utils, handler_id, _manager, _attid, _id_1, _id_2, _id_3;
 
 
 
@@ -9963,11 +10009,11 @@ var _callbacks, handler_utils, handler_id, _manager, _attid, _id_1, _id_2, _id_3
 class handler_CuiAlertHandlerBase {
     constructor(setup, id, data) {
         _callbacks.set(this, void 0);
-        handler_utils.set(this, void 0);
+        alert_handler_utils.set(this, void 0);
         handler_id.set(this, void 0);
         _manager.set(this, void 0);
         _attid.set(this, void 0);
-        handler_classPrivateFieldSet(this, _callbacks, {
+        alert_handler_classPrivateFieldSet(this, _callbacks, {
             "yes": data.onYes,
             "no": data.onNo,
             "cancel": data.onCancel,
@@ -9976,25 +10022,25 @@ class handler_CuiAlertHandlerBase {
         this.content = data.message;
         this.title = data.title;
         this.prefix = setup.setup.prefix;
-        handler_classPrivateFieldSet(this, handler_utils, setup);
-        handler_classPrivateFieldSet(this, handler_id, id);
+        alert_handler_classPrivateFieldSet(this, alert_handler_utils, setup);
+        alert_handler_classPrivateFieldSet(this, handler_id, id);
         this.reverse = false;
-        handler_classPrivateFieldSet(this, _attid, null);
-        this.closeStr = `${handler_classPrivateFieldGet(this, handler_utils).setup.prefix}-close`;
-        this.iconStr = `${handler_classPrivateFieldGet(this, handler_utils).setup.prefix}-icon`;
-        handler_classPrivateFieldSet(this, _manager, undefined);
+        alert_handler_classPrivateFieldSet(this, _attid, null);
+        this.closeStr = `${alert_handler_classPrivateFieldGet(this, alert_handler_utils).setup.prefix}-close`;
+        this.iconStr = `${alert_handler_classPrivateFieldGet(this, alert_handler_utils).setup.prefix}-icon`;
+        alert_handler_classPrivateFieldSet(this, _manager, undefined);
     }
     getId() {
-        return handler_classPrivateFieldGet(this, handler_id);
+        return alert_handler_classPrivateFieldGet(this, handler_id);
     }
     show(root) {
-        if (!handler_classPrivateFieldGet(this, handler_utils)) {
+        if (!alert_handler_classPrivateFieldGet(this, alert_handler_utils)) {
             return;
         }
-        let element = document.getElementById(handler_classPrivateFieldGet(this, handler_id));
+        let element = document.getElementById(alert_handler_classPrivateFieldGet(this, handler_id));
         if (!is(element)) {
             element = this.createElement();
-            handler_classPrivateFieldGet(this, handler_utils).interactions.mutate(() => {
+            alert_handler_classPrivateFieldGet(this, alert_handler_utils).interactions.mutate(() => {
                 // @ts-ignore - already checked
                 root.appendChild(element);
             }, null);
@@ -10005,17 +10051,17 @@ class handler_CuiAlertHandlerBase {
         }
         setTimeout(() => {
             // @ts-ignore - already checked
-            handler_classPrivateFieldSet(this, _manager, new element_ElementManager([element], handler_classPrivateFieldGet(this, handler_utils)));
-            let ids = handler_classPrivateFieldGet(this, _manager).on('closed', this.onClose.bind(this));
-            handler_classPrivateFieldSet(this, _attid, ids.length > 0 ? ids[0] : null);
-            handler_classPrivateFieldGet(this, _manager).emit("open");
+            alert_handler_classPrivateFieldSet(this, _manager, new element_ElementManager([element], alert_handler_classPrivateFieldGet(this, alert_handler_utils)));
+            let ids = alert_handler_classPrivateFieldGet(this, _manager).on('closed', this.onClose.bind(this));
+            alert_handler_classPrivateFieldSet(this, _attid, ids.length > 0 ? ids[0] : null);
+            alert_handler_classPrivateFieldGet(this, _manager).emit("open");
         }, 50);
     }
     updateElement(element) {
-        handler_classPrivateFieldGet(this, handler_utils).interactions.fetch(() => {
+        alert_handler_classPrivateFieldGet(this, alert_handler_utils).interactions.fetch(() => {
             let title = element.querySelector(`.${this.prefix}-dialog-title`);
             let content = element.querySelector(`.${this.prefix}-dialog-body>p`);
-            handler_classPrivateFieldGet(this, handler_utils).interactions.mutate(() => {
+            alert_handler_classPrivateFieldGet(this, alert_handler_utils).interactions.mutate(() => {
                 if (title) {
                     title.innerHTML = this.title;
                 }
@@ -10027,9 +10073,9 @@ class handler_CuiAlertHandlerBase {
     }
     onClose(arg) {
         try {
-            if (is(arg) && arg.state && handler_classPrivateFieldGet(this, _callbacks)) {
-                if (is(handler_classPrivateFieldGet(this, _callbacks)[arg.state])) {
-                    let callback = handler_classPrivateFieldGet(this, _callbacks)[arg.state];
+            if (is(arg) && arg.state && alert_handler_classPrivateFieldGet(this, _callbacks)) {
+                if (is(alert_handler_classPrivateFieldGet(this, _callbacks)[arg.state])) {
+                    let callback = alert_handler_classPrivateFieldGet(this, _callbacks)[arg.state];
                     if (callback) {
                         callback();
                     }
@@ -10037,22 +10083,22 @@ class handler_CuiAlertHandlerBase {
             }
         }
         finally {
-            if (handler_classPrivateFieldGet(this, _attid) != null) {
-                if (handler_classPrivateFieldGet(this, _manager))
-                    handler_classPrivateFieldGet(this, _manager).detach('closed', handler_classPrivateFieldGet(this, _attid));
-                handler_classPrivateFieldSet(this, _attid, null);
+            if (alert_handler_classPrivateFieldGet(this, _attid) != null) {
+                if (alert_handler_classPrivateFieldGet(this, _manager))
+                    alert_handler_classPrivateFieldGet(this, _manager).detach('closed', alert_handler_classPrivateFieldGet(this, _attid));
+                alert_handler_classPrivateFieldSet(this, _attid, null);
             }
-            handler_classPrivateFieldSet(this, _manager, undefined);
+            alert_handler_classPrivateFieldSet(this, _manager, undefined);
         }
     }
 }
-_callbacks = new WeakMap(), handler_utils = new WeakMap(), handler_id = new WeakMap(), _manager = new WeakMap(), _attid = new WeakMap();
+_callbacks = new WeakMap(), alert_handler_utils = new WeakMap(), handler_id = new WeakMap(), _manager = new WeakMap(), _attid = new WeakMap();
 class handler_CuiAlertHandler extends handler_CuiAlertHandlerBase {
     constructor(setup, id, data) {
         var _a;
         super(setup, id, data);
         _id_1.set(this, void 0);
-        handler_classPrivateFieldSet(this, _id_1, id);
+        alert_handler_classPrivateFieldSet(this, _id_1, id);
         this.reverse = (_a = data.reverse) !== null && _a !== void 0 ? _a : false;
     }
     createElement() {
@@ -10070,7 +10116,7 @@ class handler_CuiAlertHandler extends handler_CuiAlertHandlerBase {
             new element_ElementBuilder('button').setClasses(`${this.prefix}-button`, `${this.prefix}-margin-small-right`).setAttributes({ [this.closeStr]: "state: cancel" }).build("Cancel"),
             new element_ElementBuilder('button').setClasses(`${this.prefix}-button`, `${this.prefix}-accent`).setAttributes({ [this.closeStr]: "state: ok" }).build("Ok")
         ]);
-        return dialogBuilder.build(handler_classPrivateFieldGet(this, _id_1));
+        return dialogBuilder.build(alert_handler_classPrivateFieldGet(this, _id_1));
     }
 }
 _id_1 = new WeakMap();
@@ -10079,7 +10125,7 @@ class handler_CuiInfoAlertUpHandler extends handler_CuiAlertHandlerBase {
         var _a;
         super(setup, id, data);
         _id_2.set(this, void 0);
-        handler_classPrivateFieldSet(this, _id_2, id);
+        alert_handler_classPrivateFieldSet(this, _id_2, id);
         this.content = data.message;
         ;
         this.title = data.title;
@@ -10095,7 +10141,7 @@ class handler_CuiInfoAlertUpHandler extends handler_CuiAlertHandlerBase {
         dialogBuilder.createFooter([`${this.prefix}-flex`, `${this.prefix}-right`], [
             new element_ElementBuilder('button').setClasses(`${this.prefix}-button`, `${this.prefix}-accent`).setAttributes({ [this.closeStr]: "state: ok" }).build("Ok")
         ]);
-        return dialogBuilder.build(handler_classPrivateFieldGet(this, _id_2));
+        return dialogBuilder.build(alert_handler_classPrivateFieldGet(this, _id_2));
     }
 }
 _id_2 = new WeakMap();
@@ -10104,7 +10150,7 @@ class handler_CuiYesNoPopUpHandler extends handler_CuiAlertHandlerBase {
         var _a;
         super(setup, id, data);
         _id_3.set(this, void 0);
-        handler_classPrivateFieldSet(this, _id_3, id);
+        alert_handler_classPrivateFieldSet(this, _id_3, id);
         this.content = data.message;
         this.title = data.title;
         this.prefix = setup.setup.prefix;
@@ -10125,7 +10171,7 @@ class handler_CuiYesNoPopUpHandler extends handler_CuiAlertHandlerBase {
             new element_ElementBuilder('button').setClasses(`${this.prefix}-button`, `${this.prefix}-margin-small-right`).setAttributes({ [this.closeStr]: "state: no" }).build("No"),
             new element_ElementBuilder('button').setClasses(`${this.prefix}-button`, `${this.prefix}-accent`).setAttributes({ [this.closeStr]: "state: yes" }).build("Yes")
         ]);
-        return dialogBuilder.build(handler_classPrivateFieldGet(this, _id_3));
+        return dialogBuilder.build(alert_handler_classPrivateFieldGet(this, _id_3));
     }
 }
 _id_3 = new WeakMap();
@@ -10248,7 +10294,12 @@ class click_CuiWindowClickPlugin {
     }
     onWindowClick(ev) {
         if (click_classPrivateFieldGet(this, _bus))
-            click_classPrivateFieldGet(this, _bus).emit(EVENTS.WINDOW_CLICK, null, ev);
+            click_classPrivateFieldGet(this, _bus).emit(EVENTS.WINDOW_CLICK, null, {
+                ev: ev,
+                source: "CuiWindowClickPlugin",
+                timestamp: Date.now(),
+                name: EVENTS.WINDOW_CLICK
+            });
     }
 }
 _bus = new WeakMap(), _boundClick = new WeakMap();
@@ -11140,778 +11191,6 @@ class print_CuiAutoPrintModePlugin {
 }
 print_listener = new WeakMap(), print_utils = new WeakMap();
 
-// CONCATENATED MODULE: ./src/core/models/colors.ts
-var models_colors_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var models_colors_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _red, _green, _blue, _alpha, _colorStr, _colorStr_1;
-
-
-class colors_CuiColor {
-    constructor(red, green, blue, alpha) {
-        _red.set(this, void 0);
-        _green.set(this, void 0);
-        _blue.set(this, void 0);
-        _alpha.set(this, void 0);
-        models_colors_classPrivateFieldSet(this, _red, 0);
-        models_colors_classPrivateFieldSet(this, _blue, 0);
-        models_colors_classPrivateFieldSet(this, _green, 0);
-        models_colors_classPrivateFieldSet(this, _alpha, 0);
-        this.set(red, green, blue, alpha);
-    }
-    static create(colorStr) {
-        if (!is(colorStr)) {
-            throw new CuiColorError(`Given color value is not in a valid format`);
-        }
-        let parser;
-        if (colorStr.startsWith("#")) {
-            parser = new colors_HexColorParser(colorStr);
-        }
-        else if (colorStr.startsWith("rgb")) {
-            parser = new colors_RgbColorParser(colorStr);
-        }
-        else {
-            throw new CuiColorError("Unknown color string format");
-        }
-        let res = parser.parse();
-        if (!res) {
-            throw new CuiColorError("Color was not parsed");
-        }
-        return res;
-    }
-    set(red, green, blue, alpha) {
-        models_colors_classPrivateFieldSet(this, _alpha, getRangeValue(alpha !== null && alpha !== void 0 ? alpha : 1, 0, 1));
-        models_colors_classPrivateFieldSet(this, _blue, getRangeValue(blue, 0, 255));
-        models_colors_classPrivateFieldSet(this, _red, getRangeValue(red, 0, 255));
-        models_colors_classPrivateFieldSet(this, _green, getRangeValue(green, 0, 255));
-    }
-    setRed(red) {
-        models_colors_classPrivateFieldSet(this, _red, getRangeValue(red, 0, 255));
-    }
-    setGreen(green) {
-        models_colors_classPrivateFieldSet(this, _green, getRangeValue(green, 0, 255));
-    }
-    setBlue(blue) {
-        models_colors_classPrivateFieldSet(this, _blue, getRangeValue(blue, 0, 255));
-    }
-    opacity(val) {
-        models_colors_classPrivateFieldSet(this, _alpha, getRangeValue(val, 0, 1));
-        return this;
-    }
-    lighten(amount) {
-        this.shade(amount);
-        return this;
-    }
-    darken(amount) {
-        this.shade(-amount);
-        return this;
-    }
-    invert() {
-        models_colors_classPrivateFieldSet(this, _blue, 255 - models_colors_classPrivateFieldGet(this, _blue));
-        models_colors_classPrivateFieldSet(this, _red, 255 - models_colors_classPrivateFieldGet(this, _red));
-        models_colors_classPrivateFieldSet(this, _green, 255 - models_colors_classPrivateFieldGet(this, _green));
-        return this;
-    }
-    getColorValue(type) {
-        const t = type ? type.toLowerCase() : '#';
-        switch (type) {
-            case 'red':
-                return models_colors_classPrivateFieldGet(this, _red);
-            case 'green':
-                return models_colors_classPrivateFieldGet(this, _green);
-            case 'blue':
-                return models_colors_classPrivateFieldGet(this, _blue);
-            case 'alpha':
-                return models_colors_classPrivateFieldGet(this, _alpha);
-        }
-        return -1;
-    }
-    toCssString() {
-        return `rgba(${models_colors_classPrivateFieldGet(this, _red)}, ${models_colors_classPrivateFieldGet(this, _green)}, ${models_colors_classPrivateFieldGet(this, _blue)}, ${models_colors_classPrivateFieldGet(this, _alpha)})`;
-    }
-    shade(percent, self = true) {
-        models_colors_classPrivateFieldSet(this, _red, this.shadeSingle(models_colors_classPrivateFieldGet(this, _red), percent, self));
-        models_colors_classPrivateFieldSet(this, _green, this.shadeSingle(models_colors_classPrivateFieldGet(this, _green), percent, self));
-        models_colors_classPrivateFieldSet(this, _blue, this.shadeSingle(models_colors_classPrivateFieldGet(this, _blue), percent, self));
-    }
-    shadeSingle(val, percent, self = true) {
-        let rel = self ? val : 255;
-        let prop = (rel * percent) / 100;
-        let newVal = val + Math.round(prop);
-        return getRangeValue(newVal, 0, 255);
-    }
-    clone() {
-        return new colors_CuiColor(models_colors_classPrivateFieldGet(this, _red), models_colors_classPrivateFieldGet(this, _green), models_colors_classPrivateFieldGet(this, _blue), models_colors_classPrivateFieldGet(this, _alpha));
-    }
-}
-_red = new WeakMap(), _green = new WeakMap(), _blue = new WeakMap(), _alpha = new WeakMap();
-class colors_HexColorParser {
-    constructor(colorStr) {
-        _colorStr.set(this, void 0);
-        models_colors_classPrivateFieldSet(this, _colorStr, colorStr);
-    }
-    trim() {
-        models_colors_classPrivateFieldSet(this, _colorStr, models_colors_classPrivateFieldGet(this, _colorStr) ? models_colors_classPrivateFieldGet(this, _colorStr).trim() : "");
-        return;
-    }
-    isValid() {
-        return is(models_colors_classPrivateFieldGet(this, _colorStr)) && models_colors_classPrivateFieldGet(this, _colorStr).startsWith("#");
-    }
-    parse() {
-        let red = 0;
-        let blue = 0;
-        let green = 0;
-        let alpha = 1;
-        let length = models_colors_classPrivateFieldGet(this, _colorStr).length;
-        if (models_colors_classPrivateFieldGet(this, _colorStr).length === 4) {
-            red = parseInt(models_colors_classPrivateFieldGet(this, _colorStr)[1] + models_colors_classPrivateFieldGet(this, _colorStr)[1], 16);
-            green = parseInt(models_colors_classPrivateFieldGet(this, _colorStr)[2] + models_colors_classPrivateFieldGet(this, _colorStr)[2], 16);
-            blue = parseInt(models_colors_classPrivateFieldGet(this, _colorStr)[3] + models_colors_classPrivateFieldGet(this, _colorStr)[3], 16);
-        }
-        else {
-            red = parseInt(models_colors_classPrivateFieldGet(this, _colorStr)[1] + models_colors_classPrivateFieldGet(this, _colorStr)[2], 16);
-            green = parseInt(models_colors_classPrivateFieldGet(this, _colorStr)[3] + models_colors_classPrivateFieldGet(this, _colorStr)[4], 16);
-            blue = parseInt(models_colors_classPrivateFieldGet(this, _colorStr)[5] + models_colors_classPrivateFieldGet(this, _colorStr)[6], 16);
-            if (length > 7) {
-                let alphaHex = parseInt(models_colors_classPrivateFieldGet(this, _colorStr)[7] + models_colors_classPrivateFieldGet(this, _colorStr)[8], 16);
-                alpha = parseFloat((alphaHex / 255).toFixed(2));
-            }
-        }
-        return new colors_CuiColor(red, green, blue, alpha);
-    }
-}
-_colorStr = new WeakMap();
-class colors_RgbColorParser {
-    constructor(colorStr) {
-        _colorStr_1.set(this, void 0);
-        models_colors_classPrivateFieldSet(this, _colorStr_1, colorStr);
-    }
-    trim() {
-        models_colors_classPrivateFieldSet(this, _colorStr_1, is(models_colors_classPrivateFieldGet(this, _colorStr_1)) ? models_colors_classPrivateFieldGet(this, _colorStr_1).trim() : "");
-    }
-    isValid() {
-        return is(models_colors_classPrivateFieldGet(this, _colorStr_1)) && models_colors_classPrivateFieldGet(this, _colorStr_1).startsWith("rgb");
-    }
-    parse() {
-        let len = models_colors_classPrivateFieldGet(this, _colorStr_1).length;
-        let str = models_colors_classPrivateFieldGet(this, _colorStr_1).startsWith("rgba") ? models_colors_classPrivateFieldGet(this, _colorStr_1).substring(5, len - 1) : models_colors_classPrivateFieldGet(this, _colorStr_1).substring(4, len - 1);
-        let split = str.split(",");
-        if (!isInRange(split.length, 3, 4)) {
-            return undefined;
-        }
-        let red = parseInt(split[0]);
-        let green = parseInt(split[1]);
-        let blue = parseInt(split[2]);
-        let alpha = split.length === 4 ? parseFloat(split[3]) : 1;
-        return new colors_CuiColor(red, green, blue, alpha);
-    }
-}
-_colorStr_1 = new WeakMap();
-
-// CONCATENATED MODULE: ./src/plugins/properties/colors.ts
-var properties_colors_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var properties_colors_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _set, _setter, _setter_1, _set_1;
-
-const baseColorSets = {
-    "light": {
-        background: CSS_VARIABLES.colorLightBackground,
-        base: CSS_VARIABLES.colorLightBase,
-        active: CSS_VARIABLES.colorLightActive,
-        muted: CSS_VARIABLES.colorLightMuted,
-    },
-    "dark": {
-        background: CSS_VARIABLES.colorDarkBackground,
-        base: CSS_VARIABLES.colorDarkBase,
-        active: CSS_VARIABLES.colorDarkActive,
-        muted: CSS_VARIABLES.colorDarkMuted,
-    }
-};
-const themeColors = {
-    'accent': {
-        base: CSS_VARIABLES.colorAccent,
-        muted: CSS_VARIABLES.colorAccentMuted,
-        active: CSS_VARIABLES.colorAccentActive,
-        shade: CSS_VARIABLES.colorAccentShade,
-        shadeDark: CSS_VARIABLES.colorAccentShadeDark
-    },
-    'secondary': {
-        base: CSS_VARIABLES.colorSecondary,
-        muted: CSS_VARIABLES.colorSecondaryMuted,
-        active: CSS_VARIABLES.colorSecondaryActive,
-        shade: CSS_VARIABLES.colorSecondaryShade,
-        shadeDark: CSS_VARIABLES.colorSecondaryShadeDark
-    },
-    'error': {
-        base: CSS_VARIABLES.colorError,
-        muted: CSS_VARIABLES.colorErrorMuted,
-        active: CSS_VARIABLES.colorErrorActive,
-        shade: CSS_VARIABLES.colorErrorShade,
-        shadeDark: CSS_VARIABLES.colorErrorShadeDark
-    },
-    'warning': {
-        base: CSS_VARIABLES.colorWarning,
-        muted: CSS_VARIABLES.colorWarningMuted,
-        active: CSS_VARIABLES.colorWarningActive,
-        shade: CSS_VARIABLES.colorWarningShade,
-        shadeDark: CSS_VARIABLES.colorWarningShadeDark
-    },
-    'success': {
-        base: CSS_VARIABLES.colorSuccess,
-        muted: CSS_VARIABLES.colorSuccessMuted,
-        active: CSS_VARIABLES.colorSuccessActive,
-        shade: CSS_VARIABLES.colorSuccessShade,
-        shadeDark: CSS_VARIABLES.colorSuccessShadeDark
-    }
-};
-class CuiBaseColorsSetter {
-    constructor(colorSet, setter) {
-        _set.set(this, void 0);
-        _setter.set(this, void 0);
-        properties_colors_classPrivateFieldSet(this, _set, baseColorSets[colorSet]);
-        properties_colors_classPrivateFieldSet(this, _setter, setter);
-    }
-    setBackgroundColor(color) {
-        this.setColor(properties_colors_classPrivateFieldGet(this, _set).background, color);
-    }
-    setBaseColor(color) {
-        this.setColor(properties_colors_classPrivateFieldGet(this, _set).base, color);
-    }
-    setActiveColor(color) {
-        this.setColor(properties_colors_classPrivateFieldGet(this, _set).active, color);
-    }
-    setMutedColor(color) {
-        this.setColor(properties_colors_classPrivateFieldGet(this, _set).muted, color);
-    }
-    setBaseColors(colors) {
-        if (!properties_colors_classPrivateFieldGet(this, _set)) {
-            return;
-        }
-        let set = {};
-        set[properties_colors_classPrivateFieldGet(this, _set).background] = colors.background ? colors.background.toCssString() : "";
-        set[properties_colors_classPrivateFieldGet(this, _set).active] = colors.active ? colors.active.toCssString() : "";
-        set[properties_colors_classPrivateFieldGet(this, _set).muted] = colors.muted ? colors.muted.toCssString() : "";
-        set[properties_colors_classPrivateFieldGet(this, _set).base] = colors.base ? colors.base.toCssString() : "";
-        properties_colors_classPrivateFieldGet(this, _setter).setProperties(set);
-    }
-    setColor(color, value) {
-        properties_colors_classPrivateFieldGet(this, _setter).setProperty(color, value.toCssString());
-    }
-}
-_set = new WeakMap(), _setter = new WeakMap();
-class CuiThemeColorsSetter {
-    constructor(set, setter) {
-        _setter_1.set(this, void 0);
-        _set_1.set(this, void 0);
-        properties_colors_classPrivateFieldSet(this, _setter_1, setter);
-        properties_colors_classPrivateFieldSet(this, _set_1, themeColors[set]);
-    }
-    setBaseColor(color) {
-        this.setColor(properties_colors_classPrivateFieldGet(this, _set_1).base, color);
-    }
-    setMutedColor(color) {
-        this.setColor(properties_colors_classPrivateFieldGet(this, _set_1).muted, color);
-    }
-    setActiveColor(color) {
-        this.setColor(properties_colors_classPrivateFieldGet(this, _set_1).active, color);
-    }
-    setShadeColor(color) {
-        this.setColor(properties_colors_classPrivateFieldGet(this, _set_1).shade, color);
-    }
-    setShadeDarkColor(color) {
-        this.setColor(properties_colors_classPrivateFieldGet(this, _set_1).shadeDark, color);
-    }
-    setColors(colors) {
-        if (!properties_colors_classPrivateFieldGet(this, _set_1)) {
-            return;
-        }
-        let set = {};
-        set[properties_colors_classPrivateFieldGet(this, _set_1).shade] = colors.shade ? colors.shade.toCssString() : "";
-        set[properties_colors_classPrivateFieldGet(this, _set_1).shadeDark] = colors.shadeDark ? colors.shadeDark.toCssString() : "";
-        set[properties_colors_classPrivateFieldGet(this, _set_1).active] = colors.active ? colors.active.toCssString() : "";
-        set[properties_colors_classPrivateFieldGet(this, _set_1).muted] = colors.muted ? colors.muted.toCssString() : "";
-        set[properties_colors_classPrivateFieldGet(this, _set_1).base] = colors.base ? colors.base.toCssString() : "";
-        properties_colors_classPrivateFieldGet(this, _setter_1).setProperties(set);
-    }
-    setAutoColors(base) {
-        let set = {};
-        set[properties_colors_classPrivateFieldGet(this, _set_1).base] = base.toCssString();
-        set[properties_colors_classPrivateFieldGet(this, _set_1).shade] = base.lighten(30).toCssString();
-        set[properties_colors_classPrivateFieldGet(this, _set_1).shadeDark] = base.darken(30).toCssString();
-        set[properties_colors_classPrivateFieldGet(this, _set_1).active] = base.darken(10).toCssString();
-        set[properties_colors_classPrivateFieldGet(this, _set_1).muted] = base.lighten(10).toCssString();
-        properties_colors_classPrivateFieldGet(this, _setter_1).setProperties(set);
-    }
-    setColor(color, value) {
-        properties_colors_classPrivateFieldGet(this, _setter_1).setProperty(color, value.toCssString());
-    }
-}
-_setter_1 = new WeakMap(), _set_1 = new WeakMap();
-
-// CONCATENATED MODULE: ./src/plugins/properties/setter.ts
-var setter_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var setter_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var setter_utils;
-
-class setter_PropertySetter {
-    constructor(utils) {
-        setter_utils.set(this, void 0);
-        setter_classPrivateFieldSet(this, setter_utils, utils);
-    }
-    setProperty(property, value) {
-        if (!are(property, value)) {
-            return;
-        }
-        setter_classPrivateFieldGet(this, setter_utils).interactions.mutate(() => {
-            setter_classPrivateFieldGet(this, setter_utils).setProperty(property, value);
-        }, null);
-    }
-    setProperties(set) {
-        if (!is(set)) {
-            return;
-        }
-        setter_classPrivateFieldGet(this, setter_utils).interactions.mutate(() => {
-            for (let property in set) {
-                if (is(set[property]))
-                    setter_classPrivateFieldGet(this, setter_utils).setProperty(property, set[property]);
-            }
-        }, null);
-    }
-}
-setter_utils = new WeakMap();
-
-// CONCATENATED MODULE: ./src/plugins/properties/handler.ts
-var properties_handler_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var properties_handler_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var handler_setter;
-
-
-
-
-class handler_CuiPropertiesHandler {
-    constructor(utils) {
-        handler_setter.set(this, void 0);
-        properties_handler_classPrivateFieldSet(this, handler_setter, new setter_PropertySetter(utils));
-    }
-    /**
-     * Sets main font size
-     * @param {number} value numeric value
-     * @param {string} unit optional - size unit, px if not provided
-     */
-    setBaseFontSize(value, unit) {
-        this.setBaseUnitValue(CSS_VARIABLES.fontSize, value, unit);
-    }
-    /**
-     * Sets base animation time
-     * @param {number} value - time value
-     * @param {string} unit  - optional - ms is passed when no provided
-     */
-    setAnimationTime(value, unit) {
-        this.setBaseUnitValue(CSS_VARIABLES.animationTime, value, unit !== null && unit !== void 0 ? unit : 'ms');
-    }
-    /**
-    * Sets long animation time
-    * @param {number} value - time value
-    * @param {string} unit  - optional - ms is passed when no provided
-    */
-    setAnimationTimeLong(value, unit) {
-        this.setBaseUnitValue(CSS_VARIABLES.setAnimationTimeLong, value, unit !== null && unit !== void 0 ? unit : 'ms');
-    }
-    /**
-    * Sets short animation time
-    * @param {number} value - time value
-    * @param {string} unit  - optional - ms is passed when no provided
-    */
-    setAnimationTimeShort(value, unit) {
-        this.setBaseUnitValue(CSS_VARIABLES.setAnimationTimeShort, value, unit !== null && unit !== void 0 ? unit : 'ms');
-    }
-    /**
-    * Sets main line size
-    * @param {number} value numeric value
-    * @param {string} unit optional - size unit, px if not provided
-    */
-    setBaseLineHeight(value, unit) {
-        this.setBaseUnitValue(CSS_VARIABLES.lineHeight, value, unit);
-    }
-    /**
-     * Sets base margin value
-     * @param {number} value - margin value
-     * @param {string} unit - optional - margin unit (px default)
-     */
-    setBaseMargin(value, unit) {
-        this.setBaseUnitValue(CSS_VARIABLES.margin, value, unit);
-    }
-    /**
-    * Sets base padding value
-    * @param {number} value - padding value
-    * @param {string} unit - optional - padding unit (px default)
-    */
-    setBasePadding(value, unit) {
-        this.setBaseUnitValue(CSS_VARIABLES.padding, value, unit);
-    }
-    /**
-    * Sets base border radius
-    * @param {number} value - border value
-    * @param {string} unit - optional - border unit (px default)
-    */
-    setBaseBorderRadius(value, unit) {
-        this.setBaseUnitValue(CSS_VARIABLES.borderRadius, value, unit);
-    }
-    /**
-   * Sets component space
-   * @param {number} value - space value
-   * @param {string} unit - optional - space unit (px default)
-   */
-    setComponentSpace(value, unit) {
-        this.setBaseUnitValue(CSS_VARIABLES.componentSpace, value, unit);
-    }
-    /**
-     * Sets new accordion chevron icon
-     * @param value A SVG formatted to be replaced default value
-     */
-    setAccordionIcon(value) {
-        if (!is(value)) {
-            return;
-        }
-        this.setCSSVariable(CSS_VARIABLES.accordionIcon, value);
-    }
-    /**
-    * Sets a scrollbar width
-    * @param value A SVG formatted to be replaced default value
-    */
-    setScrollbarWidth(value, unit) {
-        this.setBaseUnitValue(CSS_VARIABLES.scrollbarWidth, value, unit);
-    }
-    /**
-     * Sets app viewport light background color
-     * @param color color to be set
-     */
-    setAppBackgroundColor(color) {
-        if (!is(color)) {
-            return;
-        }
-        this.setCSSVariable(CSS_VARIABLES.colorLightAppBackground, color.toCssString());
-    }
-    /**
-    * Sets app viewport dark background color
-    * @param color color to be set
-    */
-    setDarkAppBackgroundColor(color) {
-        if (!is(color)) {
-            return;
-        }
-        this.setCSSVariable(CSS_VARIABLES.colorDarkAppBackground, color.toCssString());
-    }
-    getBaseColorsSetter() {
-        return new CuiBaseColorsSetter("light", properties_handler_classPrivateFieldGet(this, handler_setter));
-    }
-    getDarkBaseColorsSetter() {
-        return new CuiBaseColorsSetter("dark", properties_handler_classPrivateFieldGet(this, handler_setter));
-    }
-    getAccentThemeColorsSetter() {
-        return new CuiThemeColorsSetter("accent", properties_handler_classPrivateFieldGet(this, handler_setter));
-    }
-    getSecondaryThemeColorsSetter() {
-        return new CuiThemeColorsSetter("secondary", properties_handler_classPrivateFieldGet(this, handler_setter));
-    }
-    getErrorThemeColorsSetter() {
-        return new CuiThemeColorsSetter("error", properties_handler_classPrivateFieldGet(this, handler_setter));
-    }
-    getWarningThemeColorsSetter() {
-        return new CuiThemeColorsSetter("warning", properties_handler_classPrivateFieldGet(this, handler_setter));
-    }
-    getSuccessThemeColorsSetter() {
-        return new CuiThemeColorsSetter("success", properties_handler_classPrivateFieldGet(this, handler_setter));
-    }
-    /**
-     * Sets property in interactive way
-     * @param {string} name property name - value of {prefix} is replaced by current prefix
-     * @param {string} value - property value
-     */
-    setCSSVariable(name, value) {
-        properties_handler_classPrivateFieldGet(this, handler_setter).setProperty(name, value);
-    }
-    /**
-     * Sets unit type CSS variable property
-     * @param name Variable name
-     * @param value numeric value
-     * @param unit unit - optional - px is default value
-     */
-    setBaseUnitValue(name, value, unit) {
-        if (!is(value)) {
-            return;
-        }
-        let strVal = `${value}${unit !== null && unit !== void 0 ? unit : "px"}`;
-        this.setCSSVariable(name, strVal);
-    }
-}
-handler_setter = new WeakMap();
-
-// CONCATENATED MODULE: ./src/plugins/properties/properties.ts
-var properties_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var properties_classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var properties_log;
-
-
-
-
-class properties_CuiCSSVariablesPlugin {
-    constructor(keySetup) {
-        this.name = 'css-variables-plugin';
-        properties_log.set(this, void 0);
-        this.description = "CuiCSSVariablesPlugin";
-        this.setup = keySetup;
-        //@ts-ignore
-        properties_classPrivateFieldSet(this, properties_log, null);
-        this.handler = undefined;
-    }
-    init(utils) {
-        this.handler = new handler_CuiPropertiesHandler(utils);
-        properties_classPrivateFieldSet(this, properties_log, factory_CuiDevtoolFactory.get("CuiCSSVariablesPlugin"));
-        utils.bus.on("csschange", this.onCssChange.bind(this));
-    }
-    destroy() {
-    }
-    onCssChange(event) {
-        if (!this.handler) {
-            return;
-        }
-        let setter = null;
-        let accentSetter = null;
-        switch (event.method) {
-            case "baseFontSize":
-                if (!this.isArgNumber(event.arg))
-                    return;
-                this.handler.setBaseFontSize(event.arg.value, event.arg.unit);
-                break;
-            case "baseLineHeight":
-                if (!this.isArgNumber(event.arg))
-                    return;
-                this.handler.setBaseLineHeight(event.arg.value, event.arg.unit);
-                break;
-            case "animationTime":
-                if (!this.isArgNumber(event.arg))
-                    return;
-                this.handler.setAnimationTime(event.arg.value, event.arg.unit);
-                break;
-            case "animationTimeLong":
-                if (!this.isArgNumber(event.arg))
-                    return;
-                this.handler.setAnimationTimeLong(event.arg.value, event.arg.unit);
-                break;
-            case "animationTimeShort":
-                if (!this.isArgNumber(event.arg))
-                    return;
-                this.handler.setAnimationTimeShort(event.arg.value, event.arg.unit);
-                break;
-            case "margin":
-                if (!this.isArgNumber(event.arg))
-                    return;
-                this.handler.setBaseMargin(event.arg.value, event.arg.unit);
-                break;
-            case "padding":
-                if (!this.isArgNumber(event.arg))
-                    return;
-                this.handler.setBasePadding(event.arg.value, event.arg.unit);
-                break;
-            case "borderRadius":
-                if (!this.isArgNumber(event.arg))
-                    return;
-                this.handler.setBaseBorderRadius(event.arg.value, event.arg.unit);
-                break;
-            case "componentSpace":
-                if (!this.isArgNumber(event.arg))
-                    return;
-                this.handler.setComponentSpace(event.arg.value, event.arg.unit);
-                break;
-            case "scrollbarWidth":
-                if (!this.isArgNumber(event.arg))
-                    return;
-                this.handler.setScrollbarWidth(event.arg.value, event.arg.unit);
-                break;
-            case "accordionIcon":
-                if (!is(event.arg))
-                    return;
-                this.handler.setAccordionIcon(event.arg);
-                break;
-            case "appLightBackground":
-                if (!is(event.arg))
-                    return;
-                this.handler.setAppBackgroundColor(colors_CuiColor.create(event.arg));
-                break;
-            case "appDarkBackground":
-                if (!is(event.arg))
-                    return;
-                this.handler.setDarkAppBackgroundColor(colors_CuiColor.create(event.arg));
-                break;
-            case "appDarkBackground":
-                if (!is(event.arg))
-                    return;
-                this.handler.setDarkAppBackgroundColor(colors_CuiColor.create(event.arg));
-                break;
-            case "mainColorBackground":
-                if (!this.isArgColor(event.arg))
-                    return;
-                setter = this.getBaseColorSetter(event.arg.palette);
-                if (setter)
-                    setter.setBackgroundColor(colors_CuiColor.create(event.arg.color));
-                break;
-            case "mainColor":
-                if (!this.isArgColor(event.arg))
-                    return;
-                setter = this.getBaseColorSetter(event.arg.palette);
-                if (setter)
-                    setter.setBaseColor(colors_CuiColor.create(event.arg.color));
-                break;
-            case "mainColorMuted":
-                if (!this.isArgColor(event.arg))
-                    return;
-                setter = this.getBaseColorSetter(event.arg.palette);
-                if (setter)
-                    setter.setMutedColor(colors_CuiColor.create(event.arg.color));
-                break;
-            case "mainColorActive":
-                if (!this.isArgColor(event.arg))
-                    return;
-                setter = this.getBaseColorSetter(event.arg.palette);
-                if (setter)
-                    setter.setActiveColor(colors_CuiColor.create(event.arg.color));
-                break;
-            case "themeAutoColor":
-                if (!this.isArgColor(event.arg))
-                    return;
-                accentSetter = this.getAccentColorSetter(event.arg.palette);
-                if (accentSetter)
-                    accentSetter.setAutoColors(colors_CuiColor.create(event.arg.color));
-            case "themeBaseColor":
-                if (!this.isArgColor(event.arg))
-                    return;
-                accentSetter = this.getAccentColorSetter(event.arg.palette);
-                if (accentSetter)
-                    accentSetter.setAutoColors(colors_CuiColor.create(event.arg.color));
-            case "themeMutedColor":
-                if (!this.isArgColor(event.arg))
-                    return;
-                accentSetter = this.getAccentColorSetter(event.arg.palette);
-                if (accentSetter)
-                    accentSetter.setMutedColor(colors_CuiColor.create(event.arg.color));
-            case "themeActiveColor":
-                if (!this.isArgColor(event.arg))
-                    return;
-                accentSetter = this.getAccentColorSetter(event.arg.palette);
-                if (accentSetter)
-                    accentSetter.setActiveColor(colors_CuiColor.create(event.arg.color));
-            case "themeShadeColor":
-                if (!this.isArgColor(event.arg))
-                    return;
-                accentSetter = this.getAccentColorSetter(event.arg.palette);
-                if (accentSetter)
-                    accentSetter.setShadeColor(colors_CuiColor.create(event.arg.color));
-            case "themeShadeDarkColor":
-                if (!this.isArgColor(event.arg))
-                    return;
-                accentSetter = this.getAccentColorSetter(event.arg.palette);
-                if (accentSetter)
-                    accentSetter.setShadeDarkColor(colors_CuiColor.create(event.arg.color));
-            default:
-                properties_classPrivateFieldGet(this, properties_log).warning("Unknown event method", "onCssChange");
-        }
-    }
-    isArgNumber(arg) {
-        return is(arg) && is(arg.value);
-    }
-    isArgColor(arg) {
-        return is(arg) && is(arg.palette) && is(arg.color);
-    }
-    getBaseColorSetter(pallete) {
-        if (!this.handler) {
-            return undefined;
-        }
-        let prerp = pallete.trim().toLowerCase();
-        switch (prerp) {
-            case "light":
-                return this.handler.getBaseColorsSetter();
-            case "dark":
-                return this.handler.getDarkBaseColorsSetter();
-        }
-    }
-    getAccentColorSetter(pallete) {
-        if (!this.handler) {
-            return undefined;
-        }
-        let prerp = pallete.trim().toLowerCase();
-        switch (prerp) {
-            case "accent":
-                return this.handler.getAccentThemeColorsSetter();
-            case "secondary":
-                return this.handler.getSecondaryThemeColorsSetter();
-            case "error":
-                return this.handler.getErrorThemeColorsSetter();
-            case "warning":
-                return this.handler.getWarningThemeColorsSetter();
-            case "success":
-                return this.handler.getSuccessThemeColorsSetter();
-            default:
-                return undefined;
-        }
-    }
-}
-properties_log = new WeakMap();
-
 // CONCATENATED MODULE: ./src/plugins/resize/observer.ts
 var resize_observer_classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
@@ -12042,7 +11321,7 @@ class resize_CuiResizeObserverPlugin {
 _resizeObserver = new WeakMap();
 
 // CONCATENATED MODULE: ./src/plugins/toast/handler.ts
-var handler_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+var toast_handler_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -12087,7 +11366,7 @@ class handler_CuiToastHandler {
         toast_handler_classPrivateFieldSet(this, _animClsOut, `${prefix}-toast-animation-out`);
     }
     show(message) {
-        return handler_awaiter(this, void 0, void 0, function* () {
+        return toast_handler_awaiter(this, void 0, void 0, function* () {
             if (toast_handler_classPrivateFieldGet(this, handler_lock)) {
                 return false;
             }
@@ -12205,7 +11484,7 @@ _toastHandler = new WeakMap(), toast_eventId = new WeakMap(), toast_utils = new 
 
 
 
-
+//import { CuiCSSVariablesPlugin } from "./properties/properties";
 
 
 function GetPlugins(init) {
@@ -12217,7 +11496,7 @@ function GetPlugins(init) {
         new print_CuiAutoPrintModePlugin({ autoPrint: print }),
         new keys_CuiKeysObserverPlugin({}),
         new click_CuiWindowClickPlugin(),
-        new properties_CuiCSSVariablesPlugin({}),
+        //  new CuiCSSVariablesPlugin({}),
         new move_CuiMoveObserverPlugin(),
         new resize_CuiResizeObserverPlugin({}),
         new toast_CuiToastPlugin({}),
@@ -12298,7 +11577,7 @@ init_isInitialized = new WeakMap();
 
 // CONCATENATED MODULE: ./src/index.ts
 
-const CUI_LIGHT_VERSION = "0.3.9";
+const CUI_LIGHT_VERSION = "0.4.1";
 
 window.cuiInit = new init_CuiInit();
 

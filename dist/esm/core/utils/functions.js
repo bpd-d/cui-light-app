@@ -1,5 +1,5 @@
 import { ArgumentError } from "../models/errors";
-import { COMPONENTS_COUNTER, SCREEN_SIZE_LARGE, SCREEN_SIZE_MEDIUM, SCREEN_SIZE_SMALL, SCREEN_SIZE_XLARGE } from "./statics";
+import { COMPONENTS_COUNTER, MEASUREMENT, SCOPE_SELECTOR, SCREEN_SIZE_LARGE, SCREEN_SIZE_MEDIUM, SCREEN_SIZE_SMALL, SCREEN_SIZE_XLARGE } from "./statics";
 /**
  * Checks if value is defined an is not null
  * Additionally with type check it can check value if it is not empty string or collection or object
@@ -494,3 +494,31 @@ export function splitColon(text) {
     // @ts-ignore tag is always defined
     return [tag, split.join(":")];
 }
+export function getEnumOrDefault(value, defVal, ...values) {
+    if (values.includes(value)) {
+        return value;
+    }
+    return defVal;
+}
+export function joinWithScopeSelector(value) {
+    return SCOPE_SELECTOR + value;
+}
+export function measure(name) {
+    const optName = name !== null && name !== void 0 ? name : "";
+    return function (target, propertyKey, descriptor) {
+        const originalMethod = descriptor.value;
+        descriptor.value = function (...args) {
+            const start = performance.now();
+            const result = originalMethod.apply(this, args);
+            const finish = performance.now();
+            MEASUREMENT.push({
+                target: optName,
+                method: propertyKey,
+                time: finish - start
+            });
+            return result;
+        };
+        return descriptor;
+    };
+}
+;

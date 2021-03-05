@@ -1,5 +1,14 @@
 # bpd cUI Light changelog
 
+# [0.4.1] 2021-03-05
+* [Fixed] Small adjustments
+# [0.4.0] 2021-03-05
+* [Added] API methods allowing for creation, update, destroy handlers - for cases where components are out of root scope
+* [Changed] Bus bahavior - it is emits and callbacks are now typescript compatible
+* [Changed] Args behavior - component args are now automated - function automatically parses arguments and assignes values where needed
+* [Changed] Component handler - removed one base class and moved methods to upper base class - lifecycle methods are now Promises
+* [Changed] Project structure - interfaces/models go to feature specific folder rather than common global module
+* [Changed] Logger/development module - logger has been removed in favor of development module
 # [0.3.9] 2021-02-22
 * [Fixed] Instance method **on** now returns event id
 * [Changed] Logger has been removed - introduced devtool

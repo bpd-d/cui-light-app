@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -11,41 +20,30 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _defAct, _prefix, _hoverListener, _tooltip, _margin, _positionCalculator, _tooltipDataCls, _actions, _task;
+var _prefix, _hoverListener, _tooltip, _margin, _positionCalculator, _tooltipDataCls, _actions, _task;
 import { ElementBuilder } from "../../core/builders/element";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiHoverListener } from "../../core/listeners/hover";
 import { CuiBasePositionCalculator } from "../../core/position/calculator";
 import { CuiTaskRunner } from "../../core/utils/task";
 import { CuiActionsListFactory } from "../../core/utils/actions";
-import { replacePrefix, isString, getStringOrDefault, getIntOrDefault, is } from "../../core/utils/functions";
+import { replacePrefix, is } from "../../core/utils/functions";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const TOOLTIP_ACTION = ".{prefix}-animation-tooltip-in";
 const TOOLTIP_DATA = "{prefix}-tooltip-data";
-export class CuiTooltipArgs {
+export class CuiTooltipArgs extends CuiAutoParseArgs {
     constructor(prefix) {
-        _defAct.set(this, void 0);
-        __classPrivateFieldSet(this, _defAct, replacePrefix(TOOLTIP_ACTION, prefix));
+        super({
+            main: "content"
+        });
         this.content = "";
         this.width = 150;
         this.margin = 8;
         this.timeout = 2000;
         this.pos = "";
-        this.action = __classPrivateFieldGet(this, _defAct);
-    }
-    parse(val) {
-        if (isString(val)) {
-            this.content = getStringOrDefault(val, "");
-            return;
-        }
-        this.content = getStringOrDefault(val.content, "");
-        this.width = getIntOrDefault(val.width, 150);
-        this.margin = getIntOrDefault(val.margin, 8);
-        this.pos = getStringOrDefault(val.pos, "");
-        this.action = getStringOrDefault(val.action, __classPrivateFieldGet(this, _defAct));
-        this.timeout = getIntOrDefault(val.timeout, 2000);
+        this.action = replacePrefix(TOOLTIP_ACTION, prefix);
     }
 }
-_defAct = new WeakMap();
 export class CuiTooltipComponent {
     constructor(prefix) {
         _prefix.set(this, void 0);
@@ -60,7 +58,7 @@ export class CuiTooltipComponent {
     }
 }
 _prefix = new WeakMap();
-export class CuiTooltipHandler extends CuiHandler {
+export class CuiTooltipHandler extends CuiHandlerBase {
     constructor(element, attribute, utils, prefix) {
         super("CuiTooltipHandler", element, attribute, new CuiTooltipArgs(prefix), utils);
         _hoverListener.set(this, void 0);
@@ -80,19 +78,28 @@ export class CuiTooltipHandler extends CuiHandler {
         __classPrivateFieldSet(this, _positionCalculator, new CuiBasePositionCalculator());
         __classPrivateFieldGet(this, _positionCalculator).setPreferred("top-center");
     }
-    onInit() {
-        __classPrivateFieldGet(this, _hoverListener).attach();
-        this.getDataFromArgs();
-        __classPrivateFieldSet(this, _task, new CuiTaskRunner(this.args.timeout, false, this.removeTooltip.bind(this)));
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldGet(this, _hoverListener).attach();
+            this.getDataFromArgs();
+            __classPrivateFieldSet(this, _task, new CuiTaskRunner(this.args.timeout, false, this.removeTooltip.bind(this)));
+            return true;
+        });
     }
-    onUpdate() {
-        this.getDataFromArgs();
-        if (__classPrivateFieldGet(this, _task))
-            __classPrivateFieldGet(this, _task).setTimeout(this.args.timeout);
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.getDataFromArgs();
+            if (__classPrivateFieldGet(this, _task))
+                __classPrivateFieldGet(this, _task).setTimeout(this.args.timeout);
+            return true;
+        });
     }
-    onDestroy() {
-        this.removeTooltip();
-        __classPrivateFieldGet(this, _hoverListener).detach();
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.removeTooltip();
+            __classPrivateFieldGet(this, _hoverListener).detach();
+            return true;
+        });
     }
     onHover(ev) {
         if (ev.isHovering) {

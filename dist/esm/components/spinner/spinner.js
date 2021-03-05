@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -12,23 +21,18 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _prefix, _pauseEventId, _animationPauseClass;
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { EVENTS, ICONS } from "../../core/utils/statics";
-import { is, isString, getStringOrDefault, getIntOrDefault, replacePrefix } from "../../core/utils/functions";
+import { is, replacePrefix } from "../../core/utils/functions";
 import { IconBuilder } from "../../core/builders/icon";
-export class CuiSpinnerArgs {
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export class CuiSpinnerArgs extends CuiAutoParseArgs {
     constructor() {
+        super({
+            main: "spinner"
+        });
         this.spinner = "circle";
         this.scale = 1;
-    }
-    parse(args) {
-        if (isString(args)) {
-            this.spinner = getStringOrDefault(args, "circle");
-        }
-        else {
-            this.spinner = getStringOrDefault(args.spinner, "circle");
-            this.scale = getIntOrDefault(args.scale, 1);
-        }
     }
 }
 export class CuiSpinnerComponent {
@@ -47,7 +51,7 @@ export class CuiSpinnerComponent {
     }
 }
 _prefix = new WeakMap();
-export class CuiSpinnerHandler extends CuiHandler {
+export class CuiSpinnerHandler extends CuiHandlerBase {
     constructor(element, utils, attribute, prefix) {
         super("CuiSpinnerHandler", element, attribute, new CuiSpinnerArgs(), utils);
         _pauseEventId.set(this, void 0);
@@ -55,18 +59,27 @@ export class CuiSpinnerHandler extends CuiHandler {
         __classPrivateFieldSet(this, _pauseEventId, null);
         __classPrivateFieldSet(this, _animationPauseClass, replacePrefix("{prefix}-animation-pause", prefix));
     }
-    onInit() {
-        __classPrivateFieldSet(this, _pauseEventId, this.onEvent(EVENTS.PAUSE, this.onPause.bind(this)));
-        this.add();
-    }
-    onUpdate() {
-        if (this.prevArgs && this.args.spinner !== this.prevArgs.spinner) {
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldSet(this, _pauseEventId, this.onEvent(EVENTS.PAUSE, this.onPause.bind(this)));
             this.add();
-        }
+            return true;
+        });
     }
-    onDestroy() {
-        this.removeIfAnyExisists();
-        this.detachEvent(EVENTS.PAUSE, __classPrivateFieldGet(this, _pauseEventId));
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.prevArgs && this.args.spinner !== this.prevArgs.spinner) {
+                this.add();
+            }
+            return true;
+        });
+    }
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.removeIfAnyExisists();
+            this.detachEvent(EVENTS.PAUSE, __classPrivateFieldGet(this, _pauseEventId));
+            return true;
+        });
     }
     addSpinner(iconElement, name) {
         this.element.appendChild(iconElement);

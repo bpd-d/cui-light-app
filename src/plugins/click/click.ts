@@ -1,4 +1,6 @@
-import { ICuiPlugin, ICuiEventBus } from "../../core/models/interfaces";
+import { ICuiEventBus } from "src/core/bus/interfaces";
+import { GlobalClickEvent } from "src/core/models/events";
+import { ICuiPlugin } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { EVENTS } from "../../core/utils/statics";
 
@@ -26,6 +28,11 @@ export class CuiWindowClickPlugin implements ICuiPlugin {
 
     onWindowClick(ev: MouseEvent) {
         if (this.#bus)
-            this.#bus.emit(EVENTS.WINDOW_CLICK, null, ev)
+            this.#bus.emit<GlobalClickEvent>(EVENTS.WINDOW_CLICK, null, {
+                ev: ev,
+                source: "CuiWindowClickPlugin",
+                timestamp: Date.now(),
+                name: EVENTS.WINDOW_CLICK
+            })
     }
 }

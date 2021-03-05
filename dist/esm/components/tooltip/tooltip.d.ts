@@ -1,9 +1,8 @@
-import { CuiHandler } from "../../core/handlers/base";
-import { CuiHoverEvent } from "../../core/listeners/hover";
-import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-export declare class CuiTooltipArgs implements ICuiParsable {
-    #private;
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export declare class CuiTooltipArgs extends CuiAutoParseArgs {
     content: string;
     width: number;
     pos: string;
@@ -11,7 +10,6 @@ export declare class CuiTooltipArgs implements ICuiParsable {
     action: string;
     timeout: number;
     constructor(prefix: string);
-    parse(val: any): void;
 }
 export declare class CuiTooltipComponent implements ICuiComponent {
     #private;
@@ -20,13 +18,13 @@ export declare class CuiTooltipComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, sutils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiTooltipHandler extends CuiHandler<CuiTooltipArgs> {
+export declare class CuiTooltipHandler extends CuiHandlerBase<CuiTooltipArgs> {
     #private;
     constructor(element: HTMLElement, attribute: string, utils: CuiUtils, prefix: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
-    onHover(ev: CuiHoverEvent): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
+    private onHover;
     private createTooltip;
     private removeTooltip;
     private getDataFromArgs;

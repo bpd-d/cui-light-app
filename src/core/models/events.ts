@@ -1,5 +1,6 @@
 import { ICuiMoveData } from "../listeners/move";
 import { ICuiComponentAction } from "../utils/actions";
+import { CuiWindowSize } from "../utils/types";
 import { CuiHTMLElement } from "./interfaces";
 
 export interface EventBase {
@@ -35,4 +36,26 @@ export interface CuiScrollByEvent extends EventBase {
     by: number;
     target: Element;
     parent: Element;
+}
+
+export interface CuiResizeData extends EventBase {
+    current: CuiWindowSize;
+    previous: CuiWindowSize;
+    width: number;
+    height: number;
+}
+
+export interface CuiScrollspyScrollEvent extends EventBase {
+    top: number;
+    left: number;
+    scrolling: boolean;
+    initial: boolean;
+}
+
+export interface KeyDownEvent extends EventBase {
+    event: KeyboardEvent;
+}
+
+export interface GlobalClickEvent extends EventBase {
+    ev: MouseEvent;
 }

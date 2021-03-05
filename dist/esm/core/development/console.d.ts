@@ -12,6 +12,7 @@ export declare class CuiConsoleDevelopementTool implements ICuiDevelopmentTool {
     warning(message: string, functionName?: string): void;
     error(message: string, functionName?: string): void;
     exception(e: Error, functionName?: string): void;
+    setId(id: string): void;
     private prepString;
     private logByType;
 }

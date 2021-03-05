@@ -11,48 +11,38 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _defTimeout, _prefix, _prefix_1, _bodyClass, _scrollY;
-import { replacePrefix, isStringTrue, getStringOrDefault, getIntOrDefault } from "../../core/utils/functions";
+var _prefix, _bodyClass, _scrollY;
+import { replacePrefix } from "../../core/utils/functions";
 import { AriaAttributes } from "../../core/utils/aria";
 import { CuiInteractableHandler } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const COVER_OPEN_ANIMATION_CLASS = '.{prefix}-dialog-default-in';
 const COVER_CLOSE_ANIMATION_CLASS = '.{prefix}-dialog-default-out';
 const bodyClass = '{prefix}-cover-open';
-export class CuiCoverArgs {
+export class CuiCoverArgs extends CuiAutoParseArgs {
     constructor(prefix, defTimeout) {
-        _defTimeout.set(this, void 0);
-        _prefix.set(this, void 0);
-        __classPrivateFieldSet(this, _defTimeout, defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300);
-        __classPrivateFieldSet(this, _prefix, prefix);
+        super();
         this.escClose = false;
-        this.timeout = __classPrivateFieldGet(this, _defTimeout);
-        this.openAct = "";
-        this.closeAct = "";
+        this.timeout = defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300;
+        this.openAct = replacePrefix(COVER_OPEN_ANIMATION_CLASS, prefix);
+        this.closeAct = replacePrefix(COVER_CLOSE_ANIMATION_CLASS, prefix);
         this.keyClose = "";
     }
-    parse(args) {
-        this.escClose = isStringTrue(args.escClose);
-        this.keyClose = args.keyClose;
-        this.timeout = getIntOrDefault(args.timeout, __classPrivateFieldGet(this, _defTimeout));
-        this.openAct = getStringOrDefault(args.openAct, replacePrefix(COVER_OPEN_ANIMATION_CLASS, __classPrivateFieldGet(this, _prefix)));
-        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(COVER_CLOSE_ANIMATION_CLASS, __classPrivateFieldGet(this, _prefix)));
-    }
 }
-_defTimeout = new WeakMap(), _prefix = new WeakMap();
 export class CuiCoverComponent {
     constructor(prefix) {
-        _prefix_1.set(this, void 0);
-        __classPrivateFieldSet(this, _prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${__classPrivateFieldGet(this, _prefix_1)}-cover`;
+        _prefix.set(this, void 0);
+        __classPrivateFieldSet(this, _prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${__classPrivateFieldGet(this, _prefix)}-cover`;
     }
     getStyle() {
         return null;
     }
     get(element, utils) {
-        return new CuiCoverHandler(element, utils, this.attribute, __classPrivateFieldGet(this, _prefix_1));
+        return new CuiCoverHandler(element, utils, this.attribute, __classPrivateFieldGet(this, _prefix));
     }
 }
-_prefix_1 = new WeakMap();
+_prefix = new WeakMap();
 export class CuiCoverHandler extends CuiInteractableHandler {
     constructor(element, utils, attribute, prefix) {
         super("CuiDialogHandler", element, attribute, new CuiCoverArgs(prefix, utils.setup.animationTimeLong), utils);

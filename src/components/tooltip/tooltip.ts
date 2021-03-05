@@ -1,46 +1,35 @@
 import { ElementBuilder } from "../../core/builders/element";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiHoverEvent, CuiHoverListener } from "../../core/listeners/hover";
 import { CuiBasePositionCalculator } from "../../core/position/calculator";
 import { ICuiPositionCalculator } from "../../core/position/interfaces";
 import { CuiTaskRunner, ICuiTask } from "../../core/utils/task";
-import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { ICuiComponentAction, CuiActionsListFactory } from "../../core/utils/actions";
-import { replacePrefix, isString, getStringOrDefault, getIntOrDefault, is } from "../../core/utils/functions";
+import { replacePrefix, is } from "../../core/utils/functions";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 const TOOLTIP_ACTION = ".{prefix}-animation-tooltip-in";
 const TOOLTIP_DATA = "{prefix}-tooltip-data";
 
-export class CuiTooltipArgs implements ICuiParsable {
+export class CuiTooltipArgs extends CuiAutoParseArgs {
     content: string;
     width: number;
     pos: string;
     margin: number;
     action: string;
     timeout: number;
-    #defAct: string;
     constructor(prefix: string) {
-        this.#defAct = replacePrefix(TOOLTIP_ACTION, prefix)
+        super({
+            main: "content"
+        });
         this.content = "";
         this.width = 150;
         this.margin = 8;
         this.timeout = 2000;
         this.pos = "";
-        this.action = this.#defAct;
-    }
-
-    parse(val: any): void {
-        if (isString(val)) {
-            this.content = getStringOrDefault(val, "");
-            return;
-        }
-        this.content = getStringOrDefault(val.content, "");
-        this.width = getIntOrDefault(val.width, 150);
-        this.margin = getIntOrDefault(val.margin, 8);
-        this.pos = getStringOrDefault(val.pos, "");
-        this.action = getStringOrDefault(val.action, this.#defAct);
-        this.timeout = getIntOrDefault(val.timeout, 2000);
+        this.action = replacePrefix(TOOLTIP_ACTION, prefix);
     }
 }
 
@@ -63,7 +52,8 @@ export class CuiTooltipComponent implements ICuiComponent {
     }
 }
 
-export class CuiTooltipHandler extends CuiHandler<CuiTooltipArgs> {
+export class CuiTooltipHandler extends CuiHandlerBase<CuiTooltipArgs> {
+
     #hoverListener: CuiHoverListener;
     #tooltip: HTMLElement | undefined;
     #margin: number;
@@ -84,24 +74,27 @@ export class CuiTooltipHandler extends CuiHandler<CuiTooltipArgs> {
         this.#positionCalculator.setPreferred("top-center");
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         this.#hoverListener.attach();
         this.getDataFromArgs();
         this.#task = new CuiTaskRunner(this.args.timeout, false, this.removeTooltip.bind(this));
+        return true;
     }
 
-    onUpdate(): void {
+    async onRefresh(): Promise<boolean> {
         this.getDataFromArgs();
         if (this.#task)
             this.#task.setTimeout(this.args.timeout);
+        return true;
     }
 
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.removeTooltip();
         this.#hoverListener.detach();
+        return true;
     }
 
-    onHover(ev: CuiHoverEvent) {
+    private onHover(ev: CuiHoverEvent) {
         if (ev.isHovering) {
             this.createTooltip();
         } else {

@@ -1,5 +1,5 @@
+import { ICuiEventBus } from "src/core/bus/interfaces";
 import { CuiMoveEventListener, ICuiMoveData } from "../../core/listeners/move";
-import { ICuiEventBus } from "../../core/models/interfaces";
 import { EVENTS } from "../../core/utils/statics";
 
 const DEFAULT_GESTURE_TRESHOLD = 0.3;

@@ -20,38 +20,24 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _defTimeout, _prefix, _eventId;
-import { CuiHandler } from "../../core/handlers/base";
-import { getStringOrDefault, getIntOrDefault, is, isString, isStringTrue, getParentCuiElement, are } from "../../core/utils/functions";
+var _prefix, _eventId;
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { is, getParentCuiElement, are } from "../../core/utils/functions";
 import { CuiActionsListFactory } from "../../core/utils/actions";
 import { EVENTS } from "../../core/utils/statics";
-export class CuiCloseArgs {
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export class CuiCloseArgs extends CuiAutoParseArgs {
     constructor(timeout) {
-        _defTimeout.set(this, void 0);
+        super({
+            main: "target"
+        });
         this.target = "";
         this.action = "";
         this.prevent = false;
         this.state = "";
-        __classPrivateFieldSet(this, _defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
-        this.timeout = __classPrivateFieldGet(this, _defTimeout);
-    }
-    parse(args) {
-        if (is(args) && isString(args)) {
-            this.target = args;
-            this.action = "";
-            this.timeout = __classPrivateFieldGet(this, _defTimeout);
-            this.prevent = false;
-            this.state = "";
-            return;
-        }
-        this.target = getStringOrDefault(args.target, "");
-        this.action = args.action;
-        this.timeout = getIntOrDefault(args.timeout, __classPrivateFieldGet(this, _defTimeout));
-        this.prevent = args.prevent && isStringTrue(args.prevent);
-        this.state = args.state;
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
     }
 }
-_defTimeout = new WeakMap();
 export class CuiCloseComponent {
     constructor(prefix) {
         _prefix.set(this, void 0);
@@ -66,23 +52,31 @@ export class CuiCloseComponent {
     }
 }
 _prefix = new WeakMap();
-export class CuiCloseHandler extends CuiHandler {
+export class CuiCloseHandler extends CuiHandlerBase {
     constructor(element, utils, attribute, prefix) {
         super("CuiCloseHandler", element, attribute, new CuiCloseArgs(utils.setup.animationTime), utils);
         _eventId.set(this, void 0);
         __classPrivateFieldSet(this, _eventId, null);
         this.onClick = this.onClick.bind(this);
     }
-    onInit() {
-        this.element.addEventListener('click', this.onClick);
-        __classPrivateFieldSet(this, _eventId, this.onEvent(EVENTS.CLOSE, this.onClose.bind(this)));
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.element.addEventListener('click', this.onClick);
+            __classPrivateFieldSet(this, _eventId, this.onEvent(EVENTS.CLOSE, this.onClose.bind(this)));
+            return true;
+        });
     }
-    onUpdate() {
-        //
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return true;
+        });
     }
-    onDestroy() {
-        this.element.removeEventListener('click', this.onClick);
-        this.detachEvent(EVENTS.CLOSE, __classPrivateFieldGet(this, _eventId));
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.element.removeEventListener('click', this.onClick);
+            this.detachEvent(EVENTS.CLOSE, __classPrivateFieldGet(this, _eventId));
+            return true;
+        });
     }
     onClick(ev) {
         this.onClose(ev);

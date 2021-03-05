@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -12,23 +21,17 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _target, _utils, _toggleEventId, _actions;
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiActionsListFactory } from "../../core/utils/actions";
-import { is, isString, getStringOrDefault } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
-export class CuiToggleArgs {
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export class CuiToggleArgs extends CuiAutoParseArgs {
     constructor() {
+        super({
+            main: "action"
+        });
         this.action = "";
         this.target = "";
-    }
-    parse(args) {
-        if (is(args) && isString(args)) {
-            this.action = args;
-        }
-        else {
-            this.target = getStringOrDefault(args.target, "");
-            this.action = args.action;
-        }
     }
 }
 export class CuiToggleComponent {
@@ -42,7 +45,7 @@ export class CuiToggleComponent {
         return new CuiToggleHandler(element, utils, this.attribute);
     }
 }
-export class CuiToggleHandler extends CuiHandler {
+export class CuiToggleHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiToggleHandler", element, attribute, new CuiToggleArgs(), utils);
         _target.set(this, void 0);
@@ -55,19 +58,28 @@ export class CuiToggleHandler extends CuiHandler {
         __classPrivateFieldSet(this, _actions, []);
         this.onClick = this.onClick.bind(this);
     }
-    onInit() {
-        __classPrivateFieldSet(this, _target, this.getTarget());
-        __classPrivateFieldSet(this, _actions, CuiActionsListFactory.get(this.args.action));
-        this.element.addEventListener('click', this.onClick);
-        __classPrivateFieldSet(this, _toggleEventId, this.onEvent(EVENTS.TOGGLE, this.toggle.bind(this)));
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldSet(this, _target, this.getTarget());
+            __classPrivateFieldSet(this, _actions, CuiActionsListFactory.get(this.args.action));
+            this.element.addEventListener('click', this.onClick);
+            __classPrivateFieldSet(this, _toggleEventId, this.onEvent(EVENTS.TOGGLE, this.toggle.bind(this)));
+            return true;
+        });
     }
-    onUpdate() {
-        __classPrivateFieldSet(this, _target, this.getTarget());
-        __classPrivateFieldSet(this, _actions, CuiActionsListFactory.get(this.args.action));
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldSet(this, _target, this.getTarget());
+            __classPrivateFieldSet(this, _actions, CuiActionsListFactory.get(this.args.action));
+            return true;
+        });
     }
-    onDestroy() {
-        this.element.removeEventListener('click', this.onClick);
-        this.detachEvent(EVENTS.TOGGLE, __classPrivateFieldGet(this, _toggleEventId));
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.element.removeEventListener('click', this.onClick);
+            this.detachEvent(EVENTS.TOGGLE, __classPrivateFieldGet(this, _toggleEventId));
+            return true;
+        });
     }
     toggle() {
         if (!__classPrivateFieldGet(this, _target)) {

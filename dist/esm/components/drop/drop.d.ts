@@ -1,11 +1,11 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiOpenable, ICuiClosable, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler, ICuiOpenable, ICuiClosable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 export interface CuiDropEvent {
     timestamp: number;
 }
-export declare class CuiDropArgs implements ICuiParsable {
-    #private;
+export declare class CuiDropArgs extends CuiAutoParseArgs {
     mode: "click" | "hover";
     trigger: string;
     prevent: boolean;
@@ -16,7 +16,6 @@ export declare class CuiDropArgs implements ICuiParsable {
     timeout: number;
     margin: number;
     constructor(prefix: string);
-    parse(args: any): void;
 }
 export declare class CuiDropComponenet implements ICuiComponent {
     #private;
@@ -25,12 +24,12 @@ export declare class CuiDropComponenet implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiDropHandler extends CuiHandler<CuiDropArgs> implements ICuiOpenable, ICuiClosable {
+export declare class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiOpenable, ICuiClosable {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     /**
     * Api Method open
     */

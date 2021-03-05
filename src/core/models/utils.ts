@@ -1,4 +1,4 @@
-import { IUIInteractionProvider, ICuiEventBus, ICuiManager, CuiCachable } from "./interfaces";
+import { IUIInteractionProvider } from "./interfaces";
 import { CuiSetup, CuiSetupInit } from "./setup";
 import { CuiLightMode } from "../utils/types";
 import { CuiInteractionsFactory } from "../factories/interactions";
@@ -6,15 +6,16 @@ import { CuiEventBusFactory } from "../bus/bus";
 import { are, getName, is, replacePrefix } from "../utils/functions";
 import { CLASSES } from "../utils/statics";
 import { ICuiDocumentStyleAppender, CuiDocumentStyleAppender } from "../styles/appender";
-import { CuiInstanceColorHandler } from "../handlers/colors";
+//import { CuiInstanceColorHandler } from "../handlers/colors";
 import { CSSVariableError } from "./errors";
+import { ICuiEventBus } from "../bus/interfaces";
 
 export class CuiUtils {
     interactions: IUIInteractionProvider;
     bus: ICuiEventBus;
     setup: CuiSetup;
     // cache: ICuiManager<CuiCachable>;
-    colors: CuiInstanceColorHandler;
+    // colors: CuiInstanceColorHandler;
     styleAppender: ICuiDocumentStyleAppender;
     #plugins: string[];
     constructor(initialSetup: CuiSetupInit, plugins?: string[]) {
@@ -22,7 +23,7 @@ export class CuiUtils {
         this.interactions = CuiInteractionsFactory.get(initialSetup.interaction, this.onInteractionError.bind(this));
         // this.cache = new CuiCacheManager(this.setup.cacheSize);
         this.bus = CuiEventBusFactory.get(initialSetup.busSetup);
-        this.colors = new CuiInstanceColorHandler(this.interactions);
+        // this.colors = new CuiInstanceColorHandler(this.interactions);
 
         this.styleAppender = new CuiDocumentStyleAppender(this.interactions);
         this.#plugins = plugins ?? [];
@@ -69,7 +70,10 @@ export class CuiUtils {
             throw new CSSVariableError("Property or value was not provided");
         }
         let prop = replacePrefix(name, this.setup.prefix);
-        document.documentElement.style.setProperty(prop, value);
+        this.interactions.mutate(() => {
+            document.documentElement.style.setProperty(prop, value);
+        }, null)
+
     }
 
     isPlugin(name: string) {

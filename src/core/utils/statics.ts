@@ -1,7 +1,8 @@
 import { CuiLogLevel } from "./types";
-import { CuiColorPair } from "../models/colors";
+//import { CuiColorPair } from "../models/colors";
 import { counter } from "./functions";
 import { ICuiDevelopmentToolFactory } from "../development/interfaces";
+import { ICuiMeasure } from "../models/interfaces";
 export const CUID_ATTRIBUTE = "cuid";
 
 export const CLASSES = {
@@ -21,60 +22,60 @@ export const ICONS: any = {
     special_success: "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"special-success\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\"><path class=\"circle\" d=\"M 50,7 A 43,43 0 0 1 93,50 43,43 0 0 1 50,93 43,43 0 0 1 7,50 43,43 0 0 1 50,7 Z\"></path><path class=\"arm\" d=\"M 22.988405,48.234784 36.946233,72.410453 75.516456,33.84023\"></path></svg>",
 };
 
-export const COLORS = ['red', 'green', 'blue', 'alpha']
+// export const COLORS = ['red', 'green', 'blue', 'alpha']
 
-export const CSS_APP_BACKGROUND_COLORS: CuiColorPair = {
-    light: '--cui-color-light-app-background',
-    dark: '--cui-color-dark-app-background'
-}
+// export const CSS_APP_BACKGROUND_COLORS: CuiColorPair = {
+//     light: '--cui-color-light-app-background',
+//     dark: '--cui-color-dark-app-background'
+// }
 
-export const CSS_COMPONENT_BACKGROUND_COLORS: CuiColorPair = {
-    light: '--cui-color-light-background',
-    dark: '--cui-color-dark-background '
-}
+// export const CSS_COMPONENT_BACKGROUND_COLORS: CuiColorPair = {
+//     light: '--cui-color-light-background',
+//     dark: '--cui-color-dark-background '
+// }
 
-export const CSS_COMPONENT_BORDER_COLORS: CuiColorPair = {
-    light: '--cui-color-light-border',
-    dark: '--cui-color-dark-border'
-}
+// export const CSS_COMPONENT_BORDER_COLORS: CuiColorPair = {
+//     light: '--cui-color-light-border',
+//     dark: '--cui-color-dark-border'
+// }
 
-export const CSS_THEMES = {
-    light: {
-        base: '--cui-color-light-base',
-        muted: '--cui-color-light-muted',
-        active: '--cui-color-light-active'
-    },
-    dark: {
-        base: '--cui-color-dark-base',
-        muted: '--cui-color-dark-muted',
-        active: '--cui-color-dark-active'
-    },
-    accent: {
-        base: '--cui-color-primary',
-        muted: '--cui-color-primary-muted',
-        active: '--cui-color-primary-active'
-    },
-    secondary: {
-        base: '--cui-color-secondary',
-        muted: '--cui-color-secondary-muted',
-        active: '--cui-color-secondary-active'
-    },
-    success: {
-        base: '--cui-color-success',
-        muted: '--cui-color-success-muted',
-        active: '--cui-color-success-active'
-    },
-    warning: {
-        base: '--cui-color-warning',
-        muted: '--cui-color-warning-muted',
-        active: '--cui-color-warning-active'
-    },
-    error: {
-        base: '--cui-color-error',
-        muted: '--cui-color-error-muted',
-        active: '--cui-color-error-active'
-    }
-}
+// export const CSS_THEMES = {
+//     light: {
+//         base: '--cui-color-light-base',
+//         muted: '--cui-color-light-muted',
+//         active: '--cui-color-light-active'
+//     },
+//     dark: {
+//         base: '--cui-color-dark-base',
+//         muted: '--cui-color-dark-muted',
+//         active: '--cui-color-dark-active'
+//     },
+//     accent: {
+//         base: '--cui-color-primary',
+//         muted: '--cui-color-primary-muted',
+//         active: '--cui-color-primary-active'
+//     },
+//     secondary: {
+//         base: '--cui-color-secondary',
+//         muted: '--cui-color-secondary-muted',
+//         active: '--cui-color-secondary-active'
+//     },
+//     success: {
+//         base: '--cui-color-success',
+//         muted: '--cui-color-success-muted',
+//         active: '--cui-color-success-active'
+//     },
+//     warning: {
+//         base: '--cui-color-warning',
+//         muted: '--cui-color-warning-muted',
+//         active: '--cui-color-warning-active'
+//     },
+//     error: {
+//         base: '--cui-color-error',
+//         muted: '--cui-color-error-muted',
+//         active: '--cui-color-error-active'
+//     }
+// }
 
 export const SCOPE_SELECTOR = ":scope ";
 
@@ -193,3 +194,5 @@ export const SCREEN_SIZE_SMALL = 640;
 export const SCREEN_SIZE_MEDIUM = 960;
 export const SCREEN_SIZE_LARGE = 1200;
 export const SCREEN_SIZE_XLARGE = 1600;
+
+export const MEASUREMENT: ICuiMeasure[] = []

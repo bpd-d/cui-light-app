@@ -1,14 +1,14 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 export interface CuiCircleProgressChnaged {
     timestamp: number;
     progress: number;
 }
-export declare class CuiCircleArgs implements ICuiParsable {
+export declare class CuiCircleArgs extends CuiAutoParseArgs {
     progress: number;
     constructor();
-    parse(val: any): void;
 }
 export declare class CuiCircleComponent implements ICuiComponent {
     attribute: string;
@@ -16,12 +16,12 @@ export declare class CuiCircleComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiCircleHandler extends CuiHandler<CuiCircleArgs> {
+export declare class CuiCircleHandler extends CuiHandlerBase<CuiCircleArgs> {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     onSetProgress(val: any): void;
     private updateStyle;
     private readStyle;

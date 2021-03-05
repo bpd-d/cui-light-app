@@ -1,11 +1,12 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { GlobalClickEvent } from "src/core/models/events";
 export interface CuiDialogEvent {
     timestamp: number;
 }
-export declare class CuiDialogArgs implements ICuiParsable, CuiInteractableArgs {
-    #private;
+export declare class CuiDialogArgs extends CuiAutoParseArgs implements CuiInteractableArgs {
     escClose: boolean;
     outClose: boolean;
     timeout: number;
@@ -13,7 +14,6 @@ export declare class CuiDialogArgs implements ICuiParsable, CuiInteractableArgs 
     closeAct: string;
     keyClose: string;
     constructor(prefix: string, defTimeout?: number);
-    parse(args: any): void;
 }
 export declare class CuiDialogComponent implements ICuiComponent {
     #private;
@@ -33,5 +33,5 @@ export declare class CuiDialogHandler extends CuiInteractableHandler<CuiDialogAr
     onAfterClose(): void;
     onBeforeClose(): boolean;
     private isAnyActive;
-    onWindowClick(ev: MouseEvent): void;
+    onWindowClick(ev: GlobalClickEvent): void;
 }

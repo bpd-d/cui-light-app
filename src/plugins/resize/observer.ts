@@ -1,8 +1,8 @@
 import { CuiWindowSize } from "../../core/utils/types";
 import { calcWindowSize } from "../../core/utils/functions";
-import { ICuiEventBus } from "../../core/models/interfaces";
+import { ICuiEventBus } from "../../core/bus/interfaces";
 import { EVENTS } from "../../core/utils/statics";
-import { EventBase } from "src/core/models/events";
+import { CuiResizeData } from "src/core/models/events";
 
 export interface ICuiResizable {
     resize(data: CuiResizeData): Promise<boolean>;
@@ -15,12 +15,7 @@ export interface ICuiResizableObserver {
     disconnect(): void;
 }
 
-export interface CuiResizeData extends EventBase {
-    current: CuiWindowSize;
-    previous: CuiWindowSize;
-    width: number;
-    height: number;
-}
+
 
 export class CuiResizeObserver implements ICuiResizableObserver {
 

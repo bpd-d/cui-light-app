@@ -20,38 +20,24 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _defTimeout, _prefix, _eventId;
-import { CuiHandler } from "../../core/handlers/base";
-import { getStringOrDefault, getIntOrDefault, is, isString, isStringTrue, are, getFirstMatching } from "../../core/utils/functions";
+var _prefix, _eventId;
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { is, are, getFirstMatching } from "../../core/utils/functions";
 import { CuiActionsListFactory } from "../../core/utils/actions";
 import { CUID_ATTRIBUTE, EVENTS } from "../../core/utils/statics";
-export class CuiOpenArgs {
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export class CuiOpenArgs extends CuiAutoParseArgs {
     constructor(timeout) {
-        _defTimeout.set(this, void 0);
-        __classPrivateFieldSet(this, _defTimeout, timeout !== null && timeout !== void 0 ? timeout : 300);
+        super({
+            main: "target"
+        });
         this.target = "";
         this.action = "";
-        this.timeout = 0;
+        this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
         this.prevent = false;
         this.state = "";
     }
-    parse(args) {
-        if (is(args) && isString(args)) {
-            this.target = args;
-            this.action = "";
-            this.timeout = __classPrivateFieldGet(this, _defTimeout);
-            this.prevent = false;
-            this.state = "";
-            return;
-        }
-        this.target = getStringOrDefault(args.target, "");
-        this.action = args.action;
-        this.timeout = getIntOrDefault(args.timeout, __classPrivateFieldGet(this, _defTimeout));
-        this.prevent = isStringTrue(args.prevent);
-        this.state = args.state;
-    }
 }
-_defTimeout = new WeakMap();
 export class CuiOpenComponent {
     constructor(prefix) {
         _prefix.set(this, void 0);
@@ -66,23 +52,31 @@ export class CuiOpenComponent {
     }
 }
 _prefix = new WeakMap();
-export class CuiOpenHandler extends CuiHandler {
+export class CuiOpenHandler extends CuiHandlerBase {
     constructor(element, utils, attribute, prefix) {
         super("CuiOpenHandler", element, attribute, new CuiOpenArgs(utils.setup.animationTime), utils);
         _eventId.set(this, void 0);
         __classPrivateFieldSet(this, _eventId, null);
         this.onClick = this.onClick.bind(this);
     }
-    onInit() {
-        this.element.addEventListener('click', this.onClick);
-        __classPrivateFieldSet(this, _eventId, this.onEvent(EVENTS.OPEN, this.onOpen.bind(this)));
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.element.addEventListener('click', this.onClick);
+            __classPrivateFieldSet(this, _eventId, this.onEvent(EVENTS.OPEN, this.onOpen.bind(this)));
+            return true;
+        });
     }
-    onUpdate() {
-        //
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return true;
+        });
     }
-    onDestroy() {
-        this.element.removeEventListener('click', this.onClick);
-        this.detachEvent(EVENTS.OPEN, __classPrivateFieldGet(this, _eventId));
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.element.removeEventListener('click', this.onClick);
+            this.detachEvent(EVENTS.OPEN, __classPrivateFieldGet(this, _eventId));
+            return true;
+        });
     }
     onClick(ev) {
         this.onOpen(ev);

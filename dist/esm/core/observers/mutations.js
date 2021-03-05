@@ -20,17 +20,16 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _observer, _options, _element, _components, _attributes, _utils, _queryString, _isObserving, _observer_1, _element_1, _disabled, _options_1;
+var _observer, _options, _element, _components, _utils, _queryString, _isObserving, _observer_1, _element_1, _disabled, _options_1;
 import { is, are, joinAttributesForQuery, parseAttribute } from "../utils/functions";
-import { createCuiElement, destroyCuiElement, getMatchingComponents, updateComponent } from "../utils/api";
 import { CuiDevtoolFactory } from "../development/factory";
+import { createCuiElement, destroyCuiElement, getMatchingComponents, updateComponent } from "../api/functions";
 export class CuiMutationObserver {
     constructor(element, utils) {
         _observer.set(this, void 0);
         _options.set(this, void 0);
         _element.set(this, void 0);
         _components.set(this, void 0);
-        _attributes.set(this, void 0);
         _utils.set(this, void 0);
         _queryString.set(this, void 0);
         __classPrivateFieldSet(this, _observer, undefined);
@@ -39,7 +38,6 @@ export class CuiMutationObserver {
         __classPrivateFieldSet(this, _element, element);
         this._log = CuiDevtoolFactory.get('CuiMutationObserver');
         __classPrivateFieldSet(this, _components, []);
-        __classPrivateFieldSet(this, _attributes, []);
         __classPrivateFieldSet(this, _utils, utils);
         __classPrivateFieldSet(this, _queryString, "");
     }
@@ -58,7 +56,6 @@ export class CuiMutationObserver {
             childList: true,
             attributeFilter: attributes
         });
-        __classPrivateFieldSet(this, _attributes, attributes);
         __classPrivateFieldSet(this, _queryString, joinAttributesForQuery(attributes));
         return this;
     }
@@ -165,8 +162,7 @@ export class CuiMutationObserver {
     }
     handleAddedNode(node) {
         return __awaiter(this, void 0, void 0, function* () {
-            let matchingComponents = [];
-            matchingComponents = getMatchingComponents(node, __classPrivateFieldGet(this, _components));
+            let matchingComponents = getMatchingComponents(node, __classPrivateFieldGet(this, _components));
             return createCuiElement(node, matchingComponents, __classPrivateFieldGet(this, _utils));
         });
     }
@@ -196,7 +192,7 @@ export class CuiMutationObserver {
         });
     }
 }
-_observer = new WeakMap(), _options = new WeakMap(), _element = new WeakMap(), _components = new WeakMap(), _attributes = new WeakMap(), _utils = new WeakMap(), _queryString = new WeakMap();
+_observer = new WeakMap(), _options = new WeakMap(), _element = new WeakMap(), _components = new WeakMap(), _utils = new WeakMap(), _queryString = new WeakMap();
 export class CuiComponentMutationHandler {
     constructor(target) {
         _isObserving.set(this, void 0);

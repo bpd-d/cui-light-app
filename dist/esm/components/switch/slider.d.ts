@@ -2,8 +2,8 @@ import { ICuiComponent, ICuiComponentHandler, ICuiParsable, ICuiSwitchable } fro
 import { CuiUtils } from "../../core/models/utils";
 import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
 import { ICuiMoveData } from "../../core/listeners/move";
-export declare class CuiSliderArgs implements ICuiParsable {
-    #private;
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export declare class CuiSliderArgs extends CuiAutoParseArgs implements ICuiParsable {
     targets: string;
     timeout: number;
     links: string;
@@ -12,7 +12,6 @@ export declare class CuiSliderArgs implements ICuiParsable {
     animation: string;
     loop: boolean;
     constructor(prefix: string, timeout?: number);
-    parse(args: any): void;
 }
 export declare class CuiSliderComponent implements ICuiComponent {
     attribute: string;

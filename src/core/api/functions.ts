@@ -1,8 +1,8 @@
 import { RegisterElementError } from "../models/errors";
 import { ICuiComponent, CuiHTMLElement } from "../models/interfaces";
 import { CuiUtils } from "../models/utils";
-import { generateCUID, are, enumerateObject, parseAttribute } from "./functions";
-import { CUID_ATTRIBUTE } from "./statics";
+import { generateCUID, are, enumerateObject, parseAttribute } from "../utils/functions";
+import { CUID_ATTRIBUTE } from "../utils/statics";
 
 export function getMatchingComponents(node: any, components: ICuiComponent[]): ICuiComponent[] {
     return components.filter(component => {
@@ -53,15 +53,18 @@ export function addCuiArgument<T extends object>(element: HTMLElement, cuiArg: s
 
 }
 
-
 export async function createComponent(node: CuiHTMLElement, component: ICuiComponent, utils: CuiUtils, args?: any): Promise<boolean> {
     if (!node.$handlers) {
         node.$handlers = {};
     }
+    // If handler already exists - ignore
+    if (node.$handlers[component.attribute]) {
+        return false;
+    }
     try {
         let handler = component.get(node, utils);
         node.$handlers[component.attribute] = handler;
-        node.$handlers[component.attribute].handle(args);
+        await node.$handlers[component.attribute].handle(args);
     } catch (e) {
         throw new RegisterElementError(`An error occured during [${component.attribute}] initialization: ${e.message}`);
     }
@@ -78,7 +81,8 @@ export async function updateComponent(node: CuiHTMLElement, component: string, a
         return false;
     }
     try {
-        handler.refresh(args);
+        if (handler.refresh)
+            await handler.refresh(args);
     } catch (e) {
         throw new RegisterElementError(`An error occured during [${component}] update: ${e.message}`);
     }
@@ -95,7 +99,7 @@ async function destroyComponent(node: CuiHTMLElement, component: string): Promis
         return false;
     }
     try {
-        handler.destroy();
+        await handler.destroy();
     } catch (e) {
         throw new RegisterElementError(`An error occured during [${component}] destroy: ${e.message}`);
     }

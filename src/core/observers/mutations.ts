@@ -1,9 +1,9 @@
 import { ICuiComponent, ICuiPluginManager, CuiHTMLElement } from "../models/interfaces";
-import { is, are, joinAttributesForQuery, parseAttribute } from "../utils/functions";
+import { is, are, joinAttributesForQuery, parseAttribute, measure } from "../utils/functions";
 import { CuiUtils } from "../models/utils";
-import { createCuiElement, destroyCuiElement, getMatchingComponents, updateComponent } from "../utils/api";
 import { ICuiDevelopmentTool } from "../development/interfaces";
 import { CuiDevtoolFactory } from "../development/factory";
+import { createCuiElement, destroyCuiElement, getMatchingComponents, updateComponent } from "../api/functions";
 
 export interface ICuiMutionObserver {
     // setOptions(options: MutationObserverInit): ICuiMutionObserver;
@@ -30,7 +30,6 @@ export class CuiMutationObserver implements ICuiMutionObserver {
     #element: HTMLElement;
     plugins: ICuiPluginManager | undefined;
     #components: ICuiComponent[];
-    #attributes: string[];
     #utils: CuiUtils;
     #queryString: string;
     constructor(element: HTMLElement, utils: CuiUtils) {
@@ -40,7 +39,6 @@ export class CuiMutationObserver implements ICuiMutionObserver {
         this.#element = element
         this._log = CuiDevtoolFactory.get('CuiMutationObserver')
         this.#components = [];
-        this.#attributes = [];
         this.#utils = utils;
         this.#queryString = "";
 
@@ -63,7 +61,6 @@ export class CuiMutationObserver implements ICuiMutionObserver {
             childList: true,
             attributeFilter: attributes
         }
-        this.#attributes = attributes;
         this.#queryString = joinAttributesForQuery(attributes);
         return this;
     }
@@ -174,8 +171,7 @@ export class CuiMutationObserver implements ICuiMutionObserver {
     }
 
     private async handleAddedNode(node: any): Promise<boolean> {
-        let matchingComponents: ICuiComponent[] = [];
-        matchingComponents = getMatchingComponents(node, this.#components)
+        let matchingComponents = getMatchingComponents(node, this.#components)
         return createCuiElement(node, matchingComponents, this.#utils);
     }
 

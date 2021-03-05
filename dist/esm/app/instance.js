@@ -20,17 +20,17 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _log, _mutationObserver, _utils, _plugins, _components, _rootElement, _mutatedAttributes;
+var _log, _mutationObserver, _utils, _plugins, _components, _rootElement, _mutatedAttributes, _api;
 import { is, joinAttributesForQuery, are } from "../core/utils/functions";
 import { STATICS, EVENTS, CSS_VARIABLES } from "../core/utils/statics";
 import { CuiMutationObserver } from "../core/observers/mutations";
 import { CuiUtils } from "../core/models/utils";
 import { CuiInstanceInitError } from "../core/models/errors";
 import { ElementManager } from "./managers/element";
-import { CollectionManager } from "./managers/collection";
 import { CuiPluginManager } from "./managers/plugins";
-import { addCuiArgument, createCuiElement, getMatchingComponents } from "../core/utils/api";
 import { CuiDevtoolFactory } from "../core/development/factory";
+import { CuiApiHandler } from "../core/api/handler";
+import { getMatchingComponents, createCuiElement, addCuiArgument } from "../core/api/functions";
 export class CuiInstance {
     constructor(setup, plugins, components) {
         _log.set(this, void 0);
@@ -40,6 +40,7 @@ export class CuiInstance {
         _components.set(this, void 0);
         _rootElement.set(this, void 0);
         _mutatedAttributes.set(this, void 0);
+        _api.set(this, void 0);
         STATICS.prefix = setup.prefix;
         STATICS.logLevel = setup.logLevel;
         if (setup.development)
@@ -51,6 +52,7 @@ export class CuiInstance {
         __classPrivateFieldSet(this, _rootElement, setup.root);
         __classPrivateFieldSet(this, _mutationObserver, undefined);
         __classPrivateFieldSet(this, _mutatedAttributes, []);
+        __classPrivateFieldSet(this, _api, new CuiApiHandler(__classPrivateFieldGet(this, _components), __classPrivateFieldGet(this, _utils)));
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -110,18 +112,6 @@ export class CuiInstance {
         const newElement = new ElementManager(elements, __classPrivateFieldGet(this, _utils));
         return newElement;
     }
-    collection(selector) {
-        const elements = this.all(selector);
-        if (!is(elements)) {
-            return undefined;
-        }
-        // @ts-ignore already checked
-        let manager = new CollectionManager(elements, __classPrivateFieldGet(this, _utils).interactions);
-        return manager;
-    }
-    select(selector) {
-        return document.querySelector(selector);
-    }
     all(selector) {
         const nodes = document.querySelectorAll(selector);
         if (!is(nodes)) {
@@ -130,7 +120,7 @@ export class CuiInstance {
         return [...nodes];
     }
     getUtils() {
-        return __classPrivateFieldGet(this, _utils);
+        return __classPrivateFieldGet(this, _utils); //;
     }
     on(event, callback, element) {
         if (!are(event, callback)) {
@@ -173,6 +163,9 @@ export class CuiInstance {
     getPlugin(name) {
         return __classPrivateFieldGet(this, _plugins).get(name);
     }
+    api() {
+        return __classPrivateFieldGet(this, _api);
+    }
     /**
      * Creates cUI element outside of cUI root scope
      * @param element
@@ -195,4 +188,4 @@ export class CuiInstance {
         });
     }
 }
-_log = new WeakMap(), _mutationObserver = new WeakMap(), _utils = new WeakMap(), _plugins = new WeakMap(), _components = new WeakMap(), _rootElement = new WeakMap(), _mutatedAttributes = new WeakMap();
+_log = new WeakMap(), _mutationObserver = new WeakMap(), _utils = new WeakMap(), _plugins = new WeakMap(), _components = new WeakMap(), _rootElement = new WeakMap(), _mutatedAttributes = new WeakMap(), _api = new WeakMap();

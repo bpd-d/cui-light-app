@@ -20,47 +20,39 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _defOpenAct, _prefix, _prefix_1, _bodyClass, _attribute, _triggerHoverListener, _hoverListener, _trigger, _windowClickEventId, _openEventId, _closeEventId, _positionCalculator, _posClass, _autoTask, _actions;
-import { CuiHandler } from "../../core/handlers/base";
-import { is, replacePrefix, isStringTrue, getStringOrDefault, getIntOrDefault } from "../../core/utils/functions";
-import { EVENTS, SCOPE_SELECTOR } from "../../core/utils/statics";
+var _prefix, _prefix_1, _bodyClass, _attribute, _triggerHoverListener, _hoverListener, _trigger, _windowClickEventId, _openEventId, _closeEventId, _positionCalculator, _posClass, _autoTask, _actions;
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { is, joinWithScopeSelector, replacePrefix } from "../../core/utils/functions";
+import { EVENTS } from "../../core/utils/statics";
 import { AriaAttributes } from "../../core/utils/aria";
 import { CuiHoverListener } from "../../core/listeners/hover";
 import { CuiBasePositionCalculator } from "../../core/position/calculator";
 import { CuiTaskRunner } from "../../core/utils/task";
 import { CuiActionsListFactory } from "../../core/utils/actions";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const bodyClass = '{prefix}-drop-open';
 const DROP_POSITION = "{prefix}-drop-position-";
 const DROP_TRIGGER = "{prefix}-drop-trigger";
 const DROP_DEFAULT_TRIGGER = "> a, button";
 const DROP_DEFAULT_ANIMATION_CLS = '{prefix}-drop-animation-in';
-export class CuiDropArgs {
+export class CuiDropArgs extends CuiAutoParseArgs {
     constructor(prefix) {
-        _defOpenAct.set(this, void 0);
-        __classPrivateFieldSet(this, _defOpenAct, replacePrefix(DROP_DEFAULT_ANIMATION_CLS, prefix));
+        super({
+            props: {
+                'trigger': { corrector: joinWithScopeSelector }
+            }
+        });
         this.mode = "click";
-        this.trigger = DROP_DEFAULT_TRIGGER;
+        this.trigger = joinWithScopeSelector(DROP_DEFAULT_TRIGGER);
         this.autoClose = false;
         this.outClose = false;
         this.prevent = false;
         this.pos = "";
-        this.action = __classPrivateFieldGet(this, _defOpenAct);
+        this.action = replacePrefix(DROP_DEFAULT_ANIMATION_CLS, prefix);
         this.timeout = 3000;
         this.margin = 8;
     }
-    parse(args) {
-        this.mode = getStringOrDefault(args.mode, 'click').toLowerCase();
-        this.trigger = SCOPE_SELECTOR + getStringOrDefault(args.trigger, DROP_DEFAULT_TRIGGER);
-        this.prevent = isStringTrue(args.prevent);
-        this.autoClose = isStringTrue(args.autoClose);
-        this.outClose = args.outClose ? isStringTrue(args.outClose) : true;
-        this.pos = getStringOrDefault(args.pos, "");
-        this.action = getStringOrDefault(args.action, __classPrivateFieldGet(this, _defOpenAct));
-        this.timeout = getIntOrDefault(args.timeout, 3000);
-        this.margin = getIntOrDefault(args.margin, 8);
-    }
 }
-_defOpenAct = new WeakMap();
 export class CuiDropComponenet {
     constructor(prefix) {
         _prefix.set(this, void 0);
@@ -75,7 +67,7 @@ export class CuiDropComponenet {
     }
 }
 _prefix = new WeakMap();
-export class CuiDropHandler extends CuiHandler {
+export class CuiDropHandler extends CuiHandlerBase {
     constructor(element, utils, attribute, prefix) {
         super("CuidropHandler", element, attribute, new CuiDropArgs(prefix), utils);
         _prefix_1.set(this, void 0);
@@ -112,40 +104,48 @@ export class CuiDropHandler extends CuiHandler {
             this.logWarning("Window click plugin is not available: outClose will not work");
         }
     }
-    onInit() {
-        __classPrivateFieldSet(this, _trigger, this.acquireTrigger());
-        __classPrivateFieldSet(this, _triggerHoverListener, new CuiHoverListener(__classPrivateFieldGet(this, _trigger)));
-        this.setTriggerEvent();
-        __classPrivateFieldSet(this, _openEventId, this.onEvent(EVENTS.OPEN, this.open.bind(this)));
-        __classPrivateFieldSet(this, _closeEventId, this.onEvent(EVENTS.CLOSE, this.close.bind(this)));
-        __classPrivateFieldGet(this, _positionCalculator).setStatic(this.args.pos);
-        __classPrivateFieldGet(this, _positionCalculator).setMargin(this.args.margin);
-        __classPrivateFieldSet(this, _autoTask, new CuiTaskRunner(this.args.timeout, false, this.close.bind(this)));
-        __classPrivateFieldSet(this, _actions, CuiActionsListFactory.get(this.args.action));
-        this.mutate(() => {
-            AriaAttributes.setAria(this.element, 'aria-dropdown', "");
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldSet(this, _trigger, this.acquireTrigger());
+            __classPrivateFieldSet(this, _triggerHoverListener, new CuiHoverListener(__classPrivateFieldGet(this, _trigger)));
+            this.setTriggerEvent();
+            __classPrivateFieldSet(this, _openEventId, this.onEvent(EVENTS.OPEN, this.open.bind(this)));
+            __classPrivateFieldSet(this, _closeEventId, this.onEvent(EVENTS.CLOSE, this.close.bind(this)));
+            __classPrivateFieldGet(this, _positionCalculator).setStatic(this.args.pos);
+            __classPrivateFieldGet(this, _positionCalculator).setMargin(this.args.margin);
+            __classPrivateFieldSet(this, _autoTask, new CuiTaskRunner(this.args.timeout, false, this.close.bind(this)));
+            __classPrivateFieldSet(this, _actions, CuiActionsListFactory.get(this.args.action));
+            this.mutate(() => {
+                AriaAttributes.setAria(this.element, 'aria-dropdown', "");
+            });
+            return true;
         });
-        this._log.debug("Initialized", "handle");
     }
-    onUpdate() {
-        if (__classPrivateFieldGet(this, _triggerHoverListener) && __classPrivateFieldGet(this, _triggerHoverListener).isAttached()) {
-            __classPrivateFieldGet(this, _triggerHoverListener).detach();
-        }
-        else if (this.prevArgs && this.prevArgs.mode === 'click') {
-            //@ts-ignore 
-            __classPrivateFieldGet(this, _trigger).removeEventListener('click', this.onTriggerClick);
-        }
-        __classPrivateFieldSet(this, _trigger, this.acquireTrigger());
-        __classPrivateFieldSet(this, _triggerHoverListener, new CuiHoverListener(__classPrivateFieldGet(this, _trigger)));
-        this.setTriggerEvent();
-        __classPrivateFieldGet(this, _positionCalculator).setStatic(this.args.pos);
-        __classPrivateFieldGet(this, _positionCalculator).setMargin(this.args.margin);
-        __classPrivateFieldSet(this, _actions, CuiActionsListFactory.get(this.args.action));
-        __classPrivateFieldGet(this, _autoTask).setTimeout(this.args.timeout);
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (__classPrivateFieldGet(this, _triggerHoverListener) && __classPrivateFieldGet(this, _triggerHoverListener).isAttached()) {
+                __classPrivateFieldGet(this, _triggerHoverListener).detach();
+            }
+            else if (this.prevArgs && this.prevArgs.mode === 'click') {
+                //@ts-ignore 
+                __classPrivateFieldGet(this, _trigger).removeEventListener('click', this.onTriggerClick);
+            }
+            __classPrivateFieldSet(this, _trigger, this.acquireTrigger());
+            __classPrivateFieldSet(this, _triggerHoverListener, new CuiHoverListener(__classPrivateFieldGet(this, _trigger)));
+            this.setTriggerEvent();
+            __classPrivateFieldGet(this, _positionCalculator).setStatic(this.args.pos);
+            __classPrivateFieldGet(this, _positionCalculator).setMargin(this.args.margin);
+            __classPrivateFieldSet(this, _actions, CuiActionsListFactory.get(this.args.action));
+            __classPrivateFieldGet(this, _autoTask).setTimeout(this.args.timeout);
+            return true;
+        });
     }
-    onDestroy() {
-        this.detachEvent(EVENTS.OPEN, __classPrivateFieldGet(this, _openEventId));
-        this.detachEvent(EVENTS.CLOSE, __classPrivateFieldGet(this, _closeEventId));
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.detachEvent(EVENTS.OPEN, __classPrivateFieldGet(this, _openEventId));
+            this.detachEvent(EVENTS.CLOSE, __classPrivateFieldGet(this, _closeEventId));
+            return true;
+        });
     }
     /**
     * Api Method open
@@ -229,7 +229,7 @@ export class CuiDropHandler extends CuiHandler {
      * @param ev
      */
     onWindowClick(ev) {
-        if (!this.element.contains(ev.target)) {
+        if (!this.element.contains(ev.ev.target)) {
             this.close();
         }
     }

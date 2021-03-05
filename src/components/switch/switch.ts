@@ -3,14 +3,15 @@ import { CuiUtils } from "../../core/models/utils";
 import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
 import { ICuiTask, CuiTaskRunner } from "../../core/utils/task";
 import { ICuiComponentAction, CuiActionsListFactory } from "../../core/utils/actions";
-import { is, getStringOrDefault, replacePrefix, getIntOrDefault, isStringTrue, calculateNextIndex, getChildrenHeight, isInRange } from "../../core/utils/functions";
-import { SCOPE_SELECTOR, EVENTS } from "../../core/utils/statics";
+import { is, replacePrefix, calculateNextIndex, getChildrenHeight, isInRange, joinWithScopeSelector } from "../../core/utils/functions";
+import { EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 const SWITCH_DEFAULT_ACTION_IN = ".{prefix}-switch-animation-default-in";
 const SWITCH_DEFAULT_ACTION_OUT = ".{prefix}-switch-animation-default-out";
 const SWITCH_DEFAULT_TARGETS = " > *";
 
-export class CuiSwitchArgs implements ICuiParsable {
+export class CuiSwitchArgs extends CuiAutoParseArgs implements ICuiParsable {
     targets: string;
     in: string;
     out: string;
@@ -21,35 +22,23 @@ export class CuiSwitchArgs implements ICuiParsable {
     height: 'auto' | string;
     loop: boolean;
 
-    #prefix: string;
-    #defTimeout: number;
     constructor(prefix: string, timeout?: number) {
-        this.#prefix = prefix;
-        this.#defTimeout = timeout ?? 300;
+        super({
+            props: {
+                "targets": { corrector: joinWithScopeSelector }
+            }
+        });
 
-        this.targets = "";
-        this.in = "";
-        this.out = "";
-        this.timeout = this.#defTimeout;
+        this.targets = joinWithScopeSelector(SWITCH_DEFAULT_TARGETS);
+        this.in = replacePrefix(SWITCH_DEFAULT_ACTION_IN, prefix);
+        this.out = replacePrefix(SWITCH_DEFAULT_ACTION_OUT, prefix);
+        this.timeout = timeout ?? 300;
         this.links = "";
         this.switch = "";
         this.autoTimeout = -1;
-        this.height = "";
+        this.height = "auto";
         this.loop = false;
     }
-
-    parse(args: any): void {
-        this.targets = is(args.targets) ? SCOPE_SELECTOR + args.targets : SCOPE_SELECTOR + SWITCH_DEFAULT_TARGETS
-        this.in = getStringOrDefault(args.in, replacePrefix(SWITCH_DEFAULT_ACTION_IN, this.#prefix));
-        this.out = getStringOrDefault(args.out, replacePrefix(SWITCH_DEFAULT_ACTION_OUT, this.#prefix));
-        this.timeout = getIntOrDefault(args.timeout, this.#defTimeout);
-        this.links = getStringOrDefault(args.links, "");
-        this.switch = getStringOrDefault(args.switch, "");
-        this.autoTimeout = getIntOrDefault(args.autoTimeout, -1);
-        this.height = getStringOrDefault(args.height, 'auto');
-        this.loop = isStringTrue(args.loop);
-    }
-
 }
 
 export class CuiSwitchComponent implements ICuiComponent {

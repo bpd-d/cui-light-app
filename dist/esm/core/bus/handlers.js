@@ -20,109 +20,71 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _log, _executor, _executor_1;
+var _executor, _executor_1;
 import { CuiDevtoolFactory } from "../development/factory";
+import { CuiQueue } from "../queue/queue";
 import { is } from "../utils/functions";
-class EmitHandlerBase {
-    constructor() {
-        this.queue = [];
-        this.isBusy = false;
-    }
-    idMatches(emitId, handleId) {
-        return !is(emitId) || (is(emitId) && emitId == handleId);
-    }
-}
-export class SimpleEventEmitHandler extends EmitHandlerBase {
-    constructor(executor) {
-        super();
-        _log.set(this, void 0);
-        _executor.set(this, void 0);
-        __classPrivateFieldSet(this, _executor, executor);
-        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get("SimpleEventEmitHandler"));
+export class EmitHandler {
+    constructor(name, adapter) {
+        this.log = CuiDevtoolFactory.get(name);
+        this.queue = new CuiQueue(adapter);
+        this.queue.onError((e) => {
+            this.log.error(e, "Flush");
+        });
     }
     handle(events, cuid, args) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!is(events)) {
-                __classPrivateFieldGet(this, _log).warning("No events provided");
+                this.log.warning("No events provided");
                 return false;
             }
-            this.queue.push({
+            this.queue.add({
                 events: events,
                 cuid: cuid,
                 args: args
             });
-            if (!this.isBusy) {
-                if (!this.isBusy) {
-                    this.isBusy = true;
-                    if (this.queue.length > 0) {
-                        yield this.perform();
-                    }
-                    this.isBusy = false;
-                }
-            }
             return true;
         });
     }
-    perform() {
+}
+export class SimpleEventEmitHandlerAdapter {
+    constructor(executor) {
+        _executor.set(this, void 0);
+        this.type = 'single';
+        __classPrivateFieldSet(this, _executor, executor);
+    }
+    onFlush(items) {
         return __awaiter(this, void 0, void 0, function* () {
-            let task = this.queue.shift();
-            if (!task) {
-                return;
-            }
-            for (let id in task.events) {
-                let event = task.events[id];
-                try {
-                    if (this.idMatches(task.cuid, event.$cuid))
+            for (const task of items) {
+                for (let id in task.events) {
+                    let event = task.events[id];
+                    if (idMatches(task.cuid, event.$cuid))
                         yield __classPrivateFieldGet(this, _executor).execute(event.callback, task.args);
                 }
-                catch (e) {
-                    __classPrivateFieldGet(this, _log).error(e);
-                }
-            }
-        });
-    }
-}
-_log = new WeakMap(), _executor = new WeakMap();
-export class TaskedEventEmitHandler extends EmitHandlerBase {
-    constructor(executor) {
-        super();
-        _executor_1.set(this, void 0);
-        __classPrivateFieldSet(this, _executor_1, executor);
-    }
-    handle(events, cuid, args) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!is(events)) {
-                return false;
-            }
-            this.queue.push({
-                events: events,
-                cuid: cuid,
-                args: args
-            });
-            if (!this.isBusy) {
-                this.isBusy = true;
-                yield this.perform();
-                if (this.queue.length > 0) {
-                    yield this.perform();
-                }
-                this.isBusy = false;
             }
             return true;
         });
     }
-    perform() {
+}
+_executor = new WeakMap();
+export class TaskedEventEmitHandlerAdapter {
+    constructor(executor) {
+        _executor_1.set(this, void 0);
+        this.type = 'single';
+        __classPrivateFieldSet(this, _executor_1, executor);
+    }
+    onFlush(items) {
         return __awaiter(this, void 0, void 0, function* () {
-            let task = this.queue.shift();
-            let promises = [];
-            if (!task) {
-                return Promise.all(promises);
+            for (const task of items) {
+                let promises = [];
+                for (let id in task.events) {
+                    let event = task.events[id];
+                    if (idMatches(task.cuid, event.$cuid))
+                        promises.push(__classPrivateFieldGet(this, _executor_1).execute(event.callback, task.args));
+                }
+                yield Promise.all(promises);
             }
-            for (let id in task.events) {
-                let event = task.events[id];
-                if (this.idMatches(task.cuid, event.$cuid))
-                    promises.push(__classPrivateFieldGet(this, _executor_1).execute(event.callback, task.args));
-            }
-            return Promise.all(promises);
+            return true;
         });
     }
 }
@@ -131,9 +93,12 @@ export class CuiEventEmitHandlerFactory {
     static get(name, executor) {
         switch (name) {
             case "tasked":
-                return new TaskedEventEmitHandler(executor);
+                return new EmitHandler("TaskedEventEmitHandler", new TaskedEventEmitHandlerAdapter(executor));
             default:
-                return new SimpleEventEmitHandler(executor);
+                return new EmitHandler("SimpleEventEmitHandler", new SimpleEventEmitHandlerAdapter(executor));
         }
     }
+}
+function idMatches(emitId, handleId) {
+    return !is(emitId) || (is(emitId) && emitId == handleId);
 }

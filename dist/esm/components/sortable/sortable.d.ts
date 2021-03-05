@@ -1,13 +1,13 @@
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-export declare class CuiSortableArgs implements ICuiParsable {
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export declare class CuiSortableArgs extends CuiAutoParseArgs implements ICuiParsable {
     target: string;
     trigger: string;
     timeout: number;
     threshold: number;
     constructor();
-    parse(val: any): void;
 }
 export declare class CuiSortableComponent implements ICuiComponent {
     #private;
@@ -16,12 +16,12 @@ export declare class CuiSortableComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, sutils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiSortableHandler extends CuiHandler<CuiSortableArgs> {
+export declare class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
     #private;
     constructor(element: HTMLElement, attribute: string, utils: CuiUtils, prefix: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     /**
      * queries targets and triggers from the element
      * If exception - lists are cleared

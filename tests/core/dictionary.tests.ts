@@ -121,7 +121,7 @@ describe("Tests checking CuiDictionary", function () {
         } catch (e) {
             failed = true;
         }
-        expect(failed).toEqual(false, "Shall not fail");
+        expect(failed).toEqual(true, "Shall not fail");
         expect(dict.keys().length).toEqual(2, "Dictionary shall not be updated");
         expect(dict.values().length).toEqual(2, "Dictionary shall not be updated");
     })

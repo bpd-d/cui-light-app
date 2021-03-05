@@ -1,8 +1,4 @@
-import { ICuiEventBus } from "../../core/models/interfaces";
-export interface KeyDownEvent {
-    timestamp: number;
-    event: KeyboardEvent;
-}
+import { ICuiEventBus } from "src/core/bus/interfaces";
 export interface ICuiKeysObserver {
     connect(): void;
     disconnect(): void;

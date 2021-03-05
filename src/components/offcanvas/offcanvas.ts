@@ -3,8 +3,10 @@ import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers
 import { AriaAttributes } from "../../core/utils/aria";
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { is, isStringTrue, getStringOrDefault, getIntOrDefault, replacePrefix, getName } from "../../core/utils/functions";
+import { replacePrefix, getName } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { GlobalClickEvent } from "src/core/models/events";
 
 const OFFCANVAS_RIGHT_ANIM_DEFAULT_IN = ".{prefix}-offcanvas-default-right-in";
 const OFFCANVAS_RIGHT_ANIM_DEFAULT_OUT = ".{prefix}-offcanvas-default-right-out";
@@ -14,7 +16,7 @@ const OFFCANVAS_LEFT_ANIM_DEFAULT_OUT = ".{prefix}-offcanvas-default-left-out";
 const OFFCANVAS_BODY = "{prefix}-off-canvas-open";
 const OFFCANVAS_CONTAINER_CLS = '.{prefix}-off-canvas-container';
 
-export class CuiOffCanvasArgs implements ICuiParsable, CuiInteractableArgs {
+export class CuiOffCanvasArgs extends CuiAutoParseArgs implements ICuiParsable, CuiInteractableArgs {
     escClose: boolean;
     outClose: boolean;
     openAct: string;
@@ -24,30 +26,17 @@ export class CuiOffCanvasArgs implements ICuiParsable, CuiInteractableArgs {
     timeout: number;
 
     #prefix: string;
-    #defTimeout: number;
     constructor(prefix: string, timeout?: number) {
-        this.#defTimeout = timeout ?? 300;
+        super();
         this.#prefix = prefix;
+
         this.escClose = false;
         this.position = 'right';
         this.openAct = this.getDefaultOpenClass();
         this.closeAct = this.getDefaultCloseClass();
-        this.timeout = this.#defTimeout;
+        this.timeout = timeout ?? 300;
         this.outClose = false;
         this.keyClose = "";
-    }
-
-
-    parse(args: any) {
-        if (is(args)) {
-            this.escClose = isStringTrue(args.escClose);
-            this.outClose = isStringTrue(args.outClose);
-            this.position = getStringOrDefault(args.position, 'right');
-            this.openAct = getStringOrDefault(args.openAct, this.getDefaultOpenClass())
-            this.closeAct = getStringOrDefault(args.closeAct, this.getDefaultCloseClass());
-            this.timeout = getIntOrDefault(args.timeout, this.#defTimeout);
-            this.keyClose = args.keyClose;
-        }
     }
 
     getDefaultOpenClass(): string {
@@ -135,9 +124,9 @@ export class CuiOffCanvasHandler extends CuiInteractableHandler<CuiOffCanvasArgs
         return true;
     }
 
-    onWindowClick(ev: MouseEvent) {
+    onWindowClick(ev: GlobalClickEvent) {
         const container = this.element.querySelector(replacePrefix(OFFCANVAS_CONTAINER_CLS, this.#prefix));
-        if (container && !container.contains((ev.target as Node))) {
+        if (container && !container.contains((ev.ev.target as Node))) {
             this.close();
         }
     }

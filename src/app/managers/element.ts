@@ -3,7 +3,7 @@ import { CuiCachable, CuiElement } from "../../core/models/interfaces";
 import { CLASSES } from "../../core/utils/statics";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiActionsHelper } from "../../core/helpers/helpers";
-import { CuiClassAction } from "../../core/utils/actions";
+import { CuiActionsFatory, CuiClassAction } from "../../core/utils/actions";
 import { ICuiDevelopmentTool } from "../../core/development/interfaces";
 import { CuiDevtoolFactory } from "../../core/development/factory";
 
@@ -214,48 +214,42 @@ export class ElementManager implements CuiCachable {
         return true;
     }
 
-    async animate(className: string, timeout?: number): Promise<boolean> {
-        if (!is(className)) {
-            return false;
-        }
-        const delay = timeout ?? this.#utils.setup.animationTime;
-        return this.call((element) => {
-            this.change(() => {
-                element.classList.add(className);
-                element.classList.add(CLASSES.animProgress);
-                setTimeout(() => {
-                    this.change(() => {
-                        element.classList.remove(className);
-                        element.classList.remove(CLASSES.animProgress);
-                    })
-                }, delay)
-            })
-        });
-    }
-
-    async open(openClass: string, animationClass: string, timeout?: number): Promise<boolean> {
-        if (!are(openClass, animationClass)) {
+    async setAction(actionStr: string, animationClass: string, timeout?: number): Promise<boolean> {
+        if (!is(actionStr)) {
             return false
         }
-        const delay = timeout ?? this.#utils.setup.animationTime;
-        const action = new CuiClassAction(animationClass);
-        return this.call((element) => {
-            this.#actionsHelper.performAction(element, action, delay ?? 0).then(() => {
-                element.classList.add(openClass);
-            })
-        });
+        let act = CuiActionsFatory.get(actionStr);
+        return this.animate(animationClass, timeout, (element: Element) => {
+            act.add(element);
+        })
     }
 
-    async close(closeClass: string, animationClass: string, timeout?: number): Promise<boolean> {
-        if (!are(closeClass, animationClass)) {
+    async removeAction(actionStr: string, animationClass: string, timeout?: number): Promise<boolean> {
+        if (!is(actionStr)) {
             return false
         }
-        const delay = timeout ?? this.#utils.setup.animationTime;
+        let act = CuiActionsFatory.get(actionStr);
+        return this.animate(animationClass, timeout, (element: Element) => {
+            act.remove(element);
+        })
+    }
+    /**
+     * Perform animation on the element
+     * @param animationClass 
+     * @param timeout 
+     * @param callback 
+     */
+    async animate(animationClass: string, timeout?: number, callback?: (element: Element) => void) {
+        if (!is(animationClass)) {
+            return false
+        }
+        const delay = timeout ?? this.#utils.setup.animationTime ?? 0;
         const action = new CuiClassAction(animationClass);
         return this.call((element) => {
-            this.#actionsHelper.performAction(element, action, delay ?? 0).then(() => {
-                element.classList.remove(closeClass);
-            })
+            return this.#actionsHelper.performAction(element, action, delay, () => {
+                if (callback)
+                    callback(element);
+            });
         });
     }
 

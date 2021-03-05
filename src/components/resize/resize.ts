@@ -1,15 +1,17 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { EVENTS } from "../../core/utils/statics";
-import { calcWindowSize, getIntOrDefault, getStringOrDefault, is } from "../../core/utils/functions";
+import { calcWindowSize, is } from "../../core/utils/functions";
 import { CuiIntersectionObserver } from "../../core/observers/intersection";
 import { CuiWindowSize } from "../../core/utils/types";
 import { CuiActionsFatory, ICuiComponentAction } from "../../core/utils/actions";
-import { CuiResizeData } from "src/plugins/resize/observer";
+import { CuiResizeData } from "../../core/models/events";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 type CuiResizeComponentMode = "smart" | "simple";
-export class CuiResizeArgs implements ICuiParsable {
+
+export class CuiResizeArgs extends CuiAutoParseArgs {
     mode: CuiResizeComponentMode;
     default: string;
     small?: string;
@@ -18,20 +20,11 @@ export class CuiResizeArgs implements ICuiParsable {
     xlarge?: string;
     delay: number;
     constructor() {
+        super();
         this.mode = "simple";
         this.default = "";
-        this.small = this.medium = this.large = this.xlarge = undefined;
+        this.small = this.medium = this.large = this.xlarge = '';
         this.delay = 0;
-    }
-
-    parse(args: any) {
-        this.default = getStringOrDefault(args.default, "");
-        this.small = args.small ?? args.s;
-        this.medium = args.medium ?? args.m;
-        this.large = args.large ?? args.l;
-        this.xlarge = args.xlarge ?? args.xl;
-        this.mode = args.mode === 'smart' ? "smart" : "simple";
-        this.delay = getIntOrDefault(args.delay, 0);
     }
 }
 
@@ -53,7 +46,7 @@ export class CuiResizeComponent implements ICuiComponent {
     }
 }
 
-export class CuiResizeHandler extends CuiHandler<CuiResizeArgs> {
+export class CuiResizeHandler extends CuiHandlerBase<CuiResizeArgs> {
     #eventId: string | null;
     #intersectionObserver: CuiIntersectionObserver;
     #currentSize: CuiWindowSize;
@@ -75,7 +68,7 @@ export class CuiResizeHandler extends CuiHandler<CuiResizeArgs> {
         this.#currentAction = undefined;
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         this.#eventId = this.utils.bus.on(EVENTS.RESIZE, this.resize.bind(this));
         this.#intersectionObserver.connect();
         this.#intersectionObserver.observe(this.element);
@@ -83,20 +76,21 @@ export class CuiResizeHandler extends CuiHandler<CuiResizeArgs> {
         this.#isIntersecting = this.isInViewport(this.element);
         this.setNewValue();
         this.updateElement();
+        return true;
     }
-
-    onUpdate(): void {
+    async onRefresh(): Promise<boolean> {
         this.setNewValue();
         this.updateElement();
+        return true;
     }
-
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         if (this.#eventId !== null) {
             this.utils.bus.detach(EVENTS.RESIZE, this.#eventId);
             this.#eventId = null
         }
         this.#intersectionObserver.unobserve(this.element);
         this.#intersectionObserver.disconnect();
+        return true;
     }
 
     private resize(data: CuiResizeData) {

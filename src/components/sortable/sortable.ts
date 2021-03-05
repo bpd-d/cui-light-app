@@ -1,5 +1,5 @@
 import { ElementBuilder } from "../../core/builders/element";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiSimpleDragOverDetector } from "../../core/handlers/drag/detectors";
 import { CuiDragHandler } from "../../core/handlers/drag/drag";
 import { ICuiElementDetector } from "../../core/handlers/drag/interfaces";
@@ -8,32 +8,33 @@ import { AnimationProperty } from "../../core/animation/interfaces";
 import { ICuiMoveData } from "../../core/listeners/move";
 import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { getIntOrDefault, replacePrefix, is, are } from "../../core/utils/functions";
+import { replacePrefix, is, are, joinWithScopeSelector } from "../../core/utils/functions";
 import { SCOPE_SELECTOR, EVENTS, CLASSES } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 const SORTABLE_IS_MOVING = "{prefix}-moving";
 const DEFAULT_SELECTOR = " > *";
 const SORTABLE_PREVIEW_CLS = "{prefix}-sortable-preview";
 
-export class CuiSortableArgs implements ICuiParsable {
+export class CuiSortableArgs extends CuiAutoParseArgs implements ICuiParsable {
     target: string;
     trigger: string;
     timeout: number;
     threshold: number;
+
     constructor() {
-        this.target = SCOPE_SELECTOR + DEFAULT_SELECTOR;;
-        this.trigger = SCOPE_SELECTOR + DEFAULT_SELECTOR;
+        super({
+            props: {
+                "target": { corrector: joinWithScopeSelector },
+                "trigger": { corrector: joinWithScopeSelector }
+            }
+        });
+
+        this.target = joinWithScopeSelector(DEFAULT_SELECTOR);
+        this.trigger = joinWithScopeSelector(DEFAULT_SELECTOR);
         this.timeout = 150;
         this.threshold = 5;
     }
-    parse(val: any): void {
-        this.target = val.target ? SCOPE_SELECTOR + " " + val.target : SCOPE_SELECTOR + DEFAULT_SELECTOR;
-        this.trigger = val.trigger ? SCOPE_SELECTOR + " " + val.trigger : SCOPE_SELECTOR + DEFAULT_SELECTOR;
-        this.timeout = getIntOrDefault(val.timeout, 150);
-        this.threshold = getIntOrDefault(val.threshold, 5);
-    }
-
-
 }
 
 export class CuiSortableComponent implements ICuiComponent {
@@ -51,7 +52,7 @@ export class CuiSortableComponent implements ICuiComponent {
     }
 }
 
-export class CuiSortableHandler extends CuiHandler<CuiSortableArgs> {
+export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
     #dragHandler: CuiDragHandler;
     #triggers: Element[];
     #targets: Element[];
@@ -95,22 +96,23 @@ export class CuiSortableHandler extends CuiHandler<CuiSortableArgs> {
         })
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         this.#dragHandler.attach();
         this.getTargetsAndTrggers();
         this.#detector.setThreshold(this.args.threshold)
+        return true;
     }
-
-    onUpdate(): void {
+    async onRefresh(): Promise<boolean> {
         if (this.prevArgs && (this.args.target !== this.prevArgs.target ||
             this.args.trigger !== this.prevArgs.trigger)) {
             this.getTargetsAndTrggers();
         }
         this.#dragHandler.setLongPressTimeout(this.args.timeout);
+        return true;
     }
-
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.#dragHandler.detach();
+        return true;
     }
 
     /**

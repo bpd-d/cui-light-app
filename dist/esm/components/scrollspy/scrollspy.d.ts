@@ -1,14 +1,7 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
-export interface CuiScrollspyScrollEvent {
-    top: number;
-    left: number;
-    scrolling: boolean;
-    initial: boolean;
-    source: string;
-    timestamp: number;
-}
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 export interface CuiScrollspyTargetChangeEvent {
     intersecting: HTMLElement[];
     timestamp: number;
@@ -21,7 +14,7 @@ export interface CuiScrollSpyAttribute {
     ratio: number;
     threshold: number;
 }
-export declare class CuiScrollSpyArgs {
+export declare class CuiScrollSpyArgs extends CuiAutoParseArgs {
     selector: string;
     action: string;
     link: string;
@@ -31,7 +24,6 @@ export declare class CuiScrollSpyArgs {
     mode: "single" | "multi";
     threshold: number;
     constructor();
-    parse(args: any): void;
 }
 export declare class CuiScrollspyComponent implements ICuiComponent {
     attribute: string;
@@ -39,13 +31,13 @@ export declare class CuiScrollspyComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiScrollspyHandler extends CuiHandler<CuiScrollSpyArgs> {
+export declare class CuiScrollspyHandler extends CuiHandlerBase<CuiScrollSpyArgs> {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     private onIntersection;
-    private parseAttribute;
-    private updateAttributes;
+    private init;
+    private update;
 }

@@ -1,127 +1,94 @@
 import { CuiDevtoolFactory } from "../development/factory";
 import { ICuiDevelopmentTool } from "../development/interfaces";
-import { CuiEventReceiver } from "../models/interfaces";
+import { CuiQueueAdapterType, ICuiQueue, ICuiQueueAdapter } from "../queue/interfaces";
+import { CuiQueue } from "../queue/queue";
 import { is } from "../utils/functions";
-import { ICuiCallbackExecutor, ICuiEventEmitHandler } from "./interfaces";
+import { ICuiCallbackExecutor, ICuiEventEmitHandler, CuiEventReceiver } from "./interfaces";
 
-interface EmitHandlerData {
+export interface EmitHandlerData {
     events: CuiEventReceiver;
     cuid: string | null;
-    args: any[];
+    args?: any;
 }
 
-class EmitHandlerBase {
-    isBusy: boolean;
-    queue: EmitHandlerData[];
-    constructor() {
-        this.queue = [];
-        this.isBusy = false;
-    }
-    idMatches(emitId: string | null | undefined, handleId: string | null | undefined) {
-        return !is(emitId) || (is(emitId) && emitId == handleId);
-    }
-}
-
-export class SimpleEventEmitHandler extends EmitHandlerBase implements ICuiEventEmitHandler {
-    #log: ICuiDevelopmentTool;
-    #executor: ICuiCallbackExecutor;
-    constructor(executor: ICuiCallbackExecutor) {
-        super();
-        this.#executor = executor;
-        this.#log = CuiDevtoolFactory.get("SimpleEventEmitHandler");
+export class EmitHandler implements ICuiEventEmitHandler {
+    queue: ICuiQueue<EmitHandlerData>;
+    log: ICuiDevelopmentTool;
+    constructor(name: string, adapter: ICuiQueueAdapter<EmitHandlerData>) {
+        this.log = CuiDevtoolFactory.get(name);
+        this.queue = new CuiQueue<EmitHandlerData>(adapter);
+        this.queue.onError((e: unknown) => {
+            this.log.error(e as any, "Flush");
+        })
     }
 
-    async handle(events: CuiEventReceiver, cuid: string, args: any[]): Promise<boolean> {
+    async handle(events: CuiEventReceiver, cuid: string, args?: any): Promise<boolean> {
         if (!is(events)) {
-            this.#log.warning("No events provided")
+            this.log.warning("No events provided")
             return false;
         }
-        this.queue.push({
+        this.queue.add({
             events: events,
             cuid: cuid,
             args: args
         })
-        if (!this.isBusy) {
-            if (!this.isBusy) {
-                this.isBusy = true;
-                if (this.queue.length > 0) {
-                    await this.perform();
-                }
-                this.isBusy = false;
-            }
-        }
         return true;
     }
+}
 
-    private async perform() {
-        let task = this.queue.shift();
-        if (!task) {
-            return;
-        }
-        for (let id in task.events) {
-            let event = task.events[id]
-            try {
-                if (this.idMatches(task.cuid, event.$cuid))
+export class SimpleEventEmitHandlerAdapter implements ICuiQueueAdapter<EmitHandlerData> {
+    type?: CuiQueueAdapterType;
+    #executor: ICuiCallbackExecutor;
+    constructor(executor: ICuiCallbackExecutor) {
+        this.type = 'single';
+        this.#executor = executor;
+    }
+
+    async onFlush(items: EmitHandlerData[]): Promise<boolean> {
+        for (const task of items) {
+            for (let id in task.events) {
+                let event = task.events[id]
+                if (idMatches(task.cuid, event.$cuid))
                     await this.#executor.execute(event.callback, task.args)
             }
-            catch (e) {
-                this.#log.error(e)
-            }
-        }
-    }
-}
-
-export class TaskedEventEmitHandler extends EmitHandlerBase implements ICuiEventEmitHandler {
-    #executor: ICuiCallbackExecutor;
-    constructor(executor: ICuiCallbackExecutor) {
-        super();
-        this.#executor = executor;
-    }
-
-    async handle(events: CuiEventReceiver, cuid: string | null, args: any[]): Promise<boolean> {
-        if (!is(events)) {
-            return false;
-        }
-        this.queue.push({
-            events: events,
-            cuid: cuid,
-            args: args
-        })
-        if (!this.isBusy) {
-            this.isBusy = true;
-            await this.perform();
-            if (this.queue.length > 0) {
-                await this.perform();
-            }
-
-            this.isBusy = false;
         }
         return true;
     }
-
-    private async perform(): Promise<boolean[]> {
-        let task = this.queue.shift();
-        let promises: Promise<boolean>[] = []
-        if (!task) {
-            return Promise.all(promises);
-        }
-        for (let id in task.events) {
-            let event = task.events[id]
-            if (this.idMatches(task.cuid, event.$cuid))
-                promises.push(this.#executor.execute(event.callback, task.args))
-        }
-        return Promise.all(promises)
-    }
 }
 
+export class TaskedEventEmitHandlerAdapter implements ICuiQueueAdapter<EmitHandlerData> {
+    type?: CuiQueueAdapterType;
+    #executor: ICuiCallbackExecutor;
+    constructor(executor: ICuiCallbackExecutor) {
+        this.type = 'single';
+        this.#executor = executor;
+    }
+
+    async onFlush(items: EmitHandlerData[]): Promise<boolean> {
+        for (const task of items) {
+            let promises: Promise<boolean>[] = []
+            for (let id in task.events) {
+                let event = task.events[id]
+                if (idMatches(task.cuid, event.$cuid))
+                    promises.push(this.#executor.execute(event.callback, task.args))
+            }
+            await Promise.all(promises);
+        }
+        return true;
+    }
+}
 
 export class CuiEventEmitHandlerFactory {
     static get(name: string, executor: ICuiCallbackExecutor): ICuiEventEmitHandler {
         switch (name) {
             case "tasked":
-                return new TaskedEventEmitHandler(executor);
+                return new EmitHandler("TaskedEventEmitHandler", new TaskedEventEmitHandlerAdapter(executor));
             default:
-                return new SimpleEventEmitHandler(executor);
+                return new EmitHandler("SimpleEventEmitHandler", new SimpleEventEmitHandlerAdapter(executor));
         }
     }
+}
+
+function idMatches(emitId: string | null | undefined, handleId: string | null | undefined) {
+    return !is(emitId) || (is(emitId) && emitId == handleId);
 }

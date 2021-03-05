@@ -360,7 +360,7 @@ describe("Tests checking class [managers -> elements]", function () {
         let conAnim: boolean = false;
         let conAnim2: boolean = false;
         // First call method
-        perform = await element.open('cui-open', 'test', 300);
+        perform = await element.setAction('cui-open', 'test', 300);
         await sleep(100);
         // Check whether element has an anim class and doesn't have open yet
         contains = node.classList.contains('cui-open')
@@ -380,7 +380,7 @@ describe("Tests checking class [managers -> elements]", function () {
         let perform: boolean = false
         let contains: boolean = false;
         let contains2: boolean = false;
-        perform = await element.open('cui-open', '', 300);
+        perform = await element.removeAction('cui-open', '', 300);
         await sleep(100);
         contains = node.classList.contains('cui-open')
         await sleep(400);
@@ -398,7 +398,7 @@ describe("Tests checking class [managers -> elements]", function () {
         let conAnim2: boolean = false;
         // Add class to node - will be removed by method close
         node.classList.add('cui-close')
-        perform = await element.close('cui-close', 'test', 300);
+        perform = await element.removeAction('cui-close', 'test', 300);
         await sleep(100);
         // Check whether contains close and anim classes
         contains = node.classList.contains('cui-close')
@@ -419,7 +419,7 @@ describe("Tests checking class [managers -> elements]", function () {
         let contains: boolean = false;
         let contains2: boolean = false;
         node.classList.add('cui-close')
-        perform = await element.close('cui-close', '', 300);
+        perform = await element.removeAction('cui-close', '', 300);
         await sleep(100);
         contains = node.classList.contains('cui-close')
         await sleep(400);

@@ -1,6 +1,7 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 /**
  * Intersection
  * Toggles action in/out when target is intersecting with the screen
@@ -10,13 +11,12 @@ import { CuiHandler } from "../../core/handlers/base";
  * offset - 0...1 - tells how much target must intersecting with the screen
  * action - action to trigger
  */
-export declare class CuiIntersectionAttributes {
+export declare class CuiIntersectionAttributes extends CuiAutoParseArgs {
     target: string;
     action: string;
     offset: number;
     isRoot: boolean;
     constructor();
-    parse(args: any): void;
 }
 export declare class CuiIntersectionComponent implements ICuiComponent {
     attribute: string;
@@ -24,12 +24,12 @@ export declare class CuiIntersectionComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiIntersectionHandler extends CuiHandler<CuiIntersectionAttributes> {
+export declare class CuiIntersectionHandler extends CuiHandlerBase<CuiIntersectionAttributes> {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     parseArguments(): void;
     onIntersection(entries: IntersectionObserverEntry[], observer: IntersectionObserver): void;
     emitIntersection(entry: IntersectionObserverEntry): void;

@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -13,28 +22,28 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _prefix, _dragHandler, _triggers, _targets, _currentTarget, _currentIdx, _preview, _movingCls, _detector, _currentBefore, _animation, _previewCls;
 import { ElementBuilder } from "../../core/builders/element";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiSimpleDragOverDetector } from "../../core/handlers/drag/detectors";
 import { CuiDragHandler } from "../../core/handlers/drag/drag";
 import { CuiSwipeAnimationEngine } from "../../core/animation/engine";
-import { getIntOrDefault, replacePrefix, is, are } from "../../core/utils/functions";
-import { SCOPE_SELECTOR, EVENTS, CLASSES } from "../../core/utils/statics";
+import { replacePrefix, is, are, joinWithScopeSelector } from "../../core/utils/functions";
+import { EVENTS, CLASSES } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const SORTABLE_IS_MOVING = "{prefix}-moving";
 const DEFAULT_SELECTOR = " > *";
 const SORTABLE_PREVIEW_CLS = "{prefix}-sortable-preview";
-export class CuiSortableArgs {
+export class CuiSortableArgs extends CuiAutoParseArgs {
     constructor() {
-        this.target = SCOPE_SELECTOR + DEFAULT_SELECTOR;
-        ;
-        this.trigger = SCOPE_SELECTOR + DEFAULT_SELECTOR;
+        super({
+            props: {
+                "target": { corrector: joinWithScopeSelector },
+                "trigger": { corrector: joinWithScopeSelector }
+            }
+        });
+        this.target = joinWithScopeSelector(DEFAULT_SELECTOR);
+        this.trigger = joinWithScopeSelector(DEFAULT_SELECTOR);
         this.timeout = 150;
         this.threshold = 5;
-    }
-    parse(val) {
-        this.target = val.target ? SCOPE_SELECTOR + " " + val.target : SCOPE_SELECTOR + DEFAULT_SELECTOR;
-        this.trigger = val.trigger ? SCOPE_SELECTOR + " " + val.trigger : SCOPE_SELECTOR + DEFAULT_SELECTOR;
-        this.timeout = getIntOrDefault(val.timeout, 150);
-        this.threshold = getIntOrDefault(val.threshold, 5);
     }
 }
 export class CuiSortableComponent {
@@ -51,7 +60,7 @@ export class CuiSortableComponent {
     }
 }
 _prefix = new WeakMap();
-export class CuiSortableHandler extends CuiHandler {
+export class CuiSortableHandler extends CuiHandlerBase {
     constructor(element, attribute, utils, prefix) {
         super("CuiSortableHandler", element, attribute, new CuiSortableArgs(), utils);
         _dragHandler.set(this, void 0);
@@ -91,20 +100,29 @@ export class CuiSortableHandler extends CuiHandler {
             });
         });
     }
-    onInit() {
-        __classPrivateFieldGet(this, _dragHandler).attach();
-        this.getTargetsAndTrggers();
-        __classPrivateFieldGet(this, _detector).setThreshold(this.args.threshold);
-    }
-    onUpdate() {
-        if (this.prevArgs && (this.args.target !== this.prevArgs.target ||
-            this.args.trigger !== this.prevArgs.trigger)) {
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldGet(this, _dragHandler).attach();
             this.getTargetsAndTrggers();
-        }
-        __classPrivateFieldGet(this, _dragHandler).setLongPressTimeout(this.args.timeout);
+            __classPrivateFieldGet(this, _detector).setThreshold(this.args.threshold);
+            return true;
+        });
     }
-    onDestroy() {
-        __classPrivateFieldGet(this, _dragHandler).detach();
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.prevArgs && (this.args.target !== this.prevArgs.target ||
+                this.args.trigger !== this.prevArgs.trigger)) {
+                this.getTargetsAndTrggers();
+            }
+            __classPrivateFieldGet(this, _dragHandler).setLongPressTimeout(this.args.timeout);
+            return true;
+        });
+    }
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldGet(this, _dragHandler).detach();
+            return true;
+        });
     }
     /**
      * queries targets and triggers from the element

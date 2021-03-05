@@ -23,7 +23,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _events, _log, _eventHandler, _name, _events_1, _log_1, _buses, _last, _isOn, _statistics;
 import { is, are, generateRandomString, enumerateObject } from "../utils/functions";
 import { ArgumentError } from "../models/errors";
-import { CuiEventEmitHandlerFactory, TaskedEventEmitHandler } from "./handlers";
+import { CuiEventEmitHandlerFactory } from "./handlers";
 import { CuiCallbackExecutor } from "./executors";
 import { CuiDevtoolFactory } from "../development/factory";
 export class CuiEventBus {
@@ -98,7 +98,7 @@ export class CuiEventBus {
     * @param {string} cuid - id of component which emits the event
     * @param {any[]} args  - event arguments
     */
-    emit(event, cuid, ...args) {
+    emit(event, cuid, args) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!is(event)) {
                 throw new ArgumentError("Event name is incorrect");
@@ -221,12 +221,12 @@ export class CuiEventExtBus {
     * @param {string} cuid - id of component which emits the event
     * @param {any[]} args  - event arguments
     */
-    emit(event, cuid, ...args) {
+    emit(event, cuid, args) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!is(event)) {
                 throw new ArgumentError("Event name is incorrect");
             }
-            return this.get(event).emit(event, cuid, ...args);
+            return this.get(event).emit(event, cuid, args);
         });
     }
     /**
@@ -289,7 +289,7 @@ _events_1 = new WeakMap(), _log_1 = new WeakMap(), _buses = new WeakMap(), _last
 export class CuiEventBusFactory {
     static get(setup) {
         //@ts-ignore - setup is underfined check is perfromed
-        return is(setup) ? new CuiEventExtBus(setup) : new CuiEventBus(new TaskedEventEmitHandler(new CuiCallbackExecutor));
+        return is(setup) ? new CuiEventExtBus(setup) : new CuiEventBus(CuiEventEmitHandlerFactory.get('tasked', new CuiCallbackExecutor()));
     }
 }
 export class CuiBusExtStatisticsHandler {

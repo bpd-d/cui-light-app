@@ -1,4 +1,4 @@
-import { ICuiEventBus } from "../../core/models/interfaces";
+import { ICuiEventBus } from "src/core/bus/interfaces";
 export declare class CuiMoveObserver {
     #private;
     constructor(bus: ICuiEventBus, gestures: boolean);

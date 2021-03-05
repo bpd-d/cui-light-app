@@ -1,8 +1,9 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { replacePrefix, isStringTrue, getStringOrDefault, getIntOrDefault } from "../../core/utils/functions";
+import { replacePrefix } from "../../core/utils/functions";
 import { AriaAttributes } from "../../core/utils/aria";
 import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 const COVER_OPEN_ANIMATION_CLASS = '.{prefix}-dialog-default-in';
 const COVER_CLOSE_ANIMATION_CLASS = '.{prefix}-dialog-default-out';
@@ -12,36 +13,22 @@ export interface CuiDialogEvent {
     timestamp: number;
 }
 
-export class CuiCoverArgs implements ICuiParsable, CuiInteractableArgs {
+export class CuiCoverArgs extends CuiAutoParseArgs implements CuiInteractableArgs {
     escClose: boolean;
     timeout: number;
     openAct: string;
     closeAct: string;
     keyClose: string;
 
-    #defTimeout: number;
-    #prefix: string;
     constructor(prefix: string, defTimeout?: number) {
-        this.#defTimeout = defTimeout ?? 300;
-        this.#prefix = prefix;
-
+        super();
         this.escClose = false;
-        this.timeout = this.#defTimeout;
-        this.openAct = "";
-        this.closeAct = "";
+        this.timeout = defTimeout ?? 300;
+        this.openAct = replacePrefix(COVER_OPEN_ANIMATION_CLASS, prefix);
+        this.closeAct = replacePrefix(COVER_CLOSE_ANIMATION_CLASS, prefix);
         this.keyClose = "";
-
-
     }
 
-
-    parse(args: any) {
-        this.escClose = isStringTrue(args.escClose);
-        this.keyClose = args.keyClose;
-        this.timeout = getIntOrDefault(args.timeout, this.#defTimeout);
-        this.openAct = getStringOrDefault(args.openAct, replacePrefix(COVER_OPEN_ANIMATION_CLASS, this.#prefix))
-        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(COVER_CLOSE_ANIMATION_CLASS, this.#prefix))
-    }
 }
 
 export class CuiCoverComponent implements ICuiComponent {

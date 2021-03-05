@@ -1,8 +1,9 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiSwitchable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
-import { getIntOrDefault, is, isStringTrue, replacePrefix, getStringOrDefault } from "../../core/utils/functions";
+import { getIntOrDefault, is, isStringTrue, replacePrefix, getStringOrDefault, joinWithScopeSelector } from "../../core/utils/functions";
 import { EVENTS, SCOPE_SELECTOR } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 
 /**
@@ -25,41 +26,26 @@ interface CuiAccordionTarget {
 const ACCORDION_TITLE_CLS = '> * > .{prefix}-accordion-title';
 const ACCORDION_ITEMS_CLS = '> *';
 
-export class CuiAccordionArgs {
+
+export class CuiAccordionArgs extends CuiAutoParseArgs {
     single: boolean;
     selector: string;
     items: string;
     timeout: number;
     animation: boolean;
 
-    #defTitleSelector: string;
-    #defItemsSelector: string;
-    #defTimeout: number;
-    constructor(prefix: string, timeout: number | undefined) {
-        this.#defTitleSelector = replacePrefix(ACCORDION_TITLE_CLS, prefix);
-        this.#defItemsSelector = replacePrefix(ACCORDION_ITEMS_CLS, prefix);
+    constructor(prefix: string, timeout?: number) {
+        super({
+            props: {
+                "selector": { corrector: joinWithScopeSelector },
+                "items": { corrector: joinWithScopeSelector },
+            }
+        });
         this.animation = false;
-        this.#defTimeout = timeout ?? 300;
         this.single = false;
-        this.selector = SCOPE_SELECTOR + this.#defTitleSelector;
-        this.items = SCOPE_SELECTOR + this.#defItemsSelector;
-        this.timeout = this.#defTimeout;
-    }
-
-    parse(args: any) {
-        if (is(args)) {
-            this.single = isStringTrue(args.single);
-            this.selector = SCOPE_SELECTOR + getStringOrDefault(args.selector, this.#defTitleSelector);
-            this.items = SCOPE_SELECTOR + getStringOrDefault(args.content, this.#defItemsSelector);
-            this.timeout = getIntOrDefault(args.timeout, this.#defTimeout);
-            this.animation = isStringTrue(args.animation);
-            return;
-        }
-
-    }
-
-    isValid(): boolean {
-        return true;
+        this.selector = joinWithScopeSelector(replacePrefix(ACCORDION_TITLE_CLS, prefix));
+        this.items = joinWithScopeSelector(replacePrefix(ACCORDION_ITEMS_CLS, prefix));
+        this.timeout = timeout ?? 300;
     }
 }
 
@@ -93,14 +79,11 @@ export class CuiAccordionHandler extends CuiMutableHandler<CuiAccordionArgs> imp
     }
 
     onInit(): void {
-        if (this.args.isValid()) {
-            try {
-                this.initTargets();
-                this.#switchEventId = this.onEvent(EVENTS.SWITCH, this.onSwitch.bind(this))
-            } catch (e) {
-                this._log.exception(e, 'handle')
-            }
-            this._log.debug("Initialized", "handle")
+        try {
+            this.initTargets();
+            this.#switchEventId = this.onEvent(EVENTS.SWITCH, this.onSwitch.bind(this))
+        } catch (e) {
+            this._log.exception(e, 'handle')
         }
     }
 
@@ -136,11 +119,12 @@ export class CuiAccordionHandler extends CuiMutableHandler<CuiAccordionArgs> imp
         if (this.helper.hasClass(this.activeClassName, current)) {
             this.helper.removeClassesAs(current, this.activeClassName)
         } else {
-            if (this.args.single) {
-                this.closeAllExcept(index)
-            }
-            this.helper.setClassesAs(current, this.activeClassName)
-
+            this.mutate(() => {
+                if (this.args.single) {
+                    this.closeAllExcept(index)
+                }
+                this.helper.setClass(this.activeClassName, current)
+            })
         }
         this.emitEvent(EVENTS.SWITCHED, {
             index: index,
@@ -169,12 +153,10 @@ export class CuiAccordionHandler extends CuiMutableHandler<CuiAccordionArgs> imp
     }
 
     closeAllExcept(current: number) {
-        this.mutate(() => {
-            this.#items.forEach((item: Element, index: number) => {
-                if (current !== index && this.helper.hasClass(this.activeClassName, item)) {
-                    item.classList.remove(this.activeClassName)
-                }
-            })
+        this.#items.forEach((item: Element, index: number) => {
+            if (current !== index && this.helper.hasClass(this.activeClassName, item)) {
+                item.classList.remove(this.activeClassName)
+            }
         })
     }
 

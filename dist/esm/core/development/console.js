@@ -57,6 +57,10 @@ export class CuiConsoleDevelopementTool {
         if (__classPrivateFieldGet(this, _level) === 'debug')
             console.error(e.stack);
     }
+    setId(id) {
+        if (id)
+            __classPrivateFieldSet(this, _cuid, id);
+    }
     prepString(message, level, functionName) {
         return `[${new Date().toLocaleString()}][${level}][${__classPrivateFieldGet(this, _name)}][${functionName !== null && functionName !== void 0 ? functionName : '-'}][${__classPrivateFieldGet(this, _cuid)}][${message}]`;
     }

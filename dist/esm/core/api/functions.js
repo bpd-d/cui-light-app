@@ -8,8 +8,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { RegisterElementError } from "../models/errors";
-import { generateCUID, are, enumerateObject, parseAttribute } from "./functions";
-import { CUID_ATTRIBUTE } from "./statics";
+import { generateCUID, are, enumerateObject, parseAttribute } from "../utils/functions";
+import { CUID_ATTRIBUTE } from "../utils/statics";
 export function getMatchingComponents(node, components) {
     return components.filter(component => {
         return node.hasAttribute && node.hasAttribute(component.attribute);
@@ -62,10 +62,14 @@ export function createComponent(node, component, utils, args) {
         if (!node.$handlers) {
             node.$handlers = {};
         }
+        // If handler already exists - ignore
+        if (node.$handlers[component.attribute]) {
+            return false;
+        }
         try {
             let handler = component.get(node, utils);
             node.$handlers[component.attribute] = handler;
-            node.$handlers[component.attribute].handle(args);
+            yield node.$handlers[component.attribute].handle(args);
         }
         catch (e) {
             throw new RegisterElementError(`An error occured during [${component.attribute}] initialization: ${e.message}`);
@@ -83,7 +87,8 @@ export function updateComponent(node, component, args) {
             return false;
         }
         try {
-            handler.refresh(args);
+            if (handler.refresh)
+                yield handler.refresh(args);
         }
         catch (e) {
             throw new RegisterElementError(`An error occured during [${component}] update: ${e.message}`);
@@ -101,7 +106,7 @@ function destroyComponent(node, component) {
             return false;
         }
         try {
-            handler.destroy();
+            yield handler.destroy();
         }
         catch (e) {
             throw new RegisterElementError(`An error occured during [${component}] destroy: ${e.message}`);

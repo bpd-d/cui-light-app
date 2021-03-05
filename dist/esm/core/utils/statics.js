@@ -1,3 +1,4 @@
+//import { CuiColorPair } from "../models/colors";
 import { counter } from "./functions";
 export const CUID_ATTRIBUTE = "cuid";
 export const CLASSES = {
@@ -15,56 +16,56 @@ export const ICONS = {
     special_fail: "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"special-fail\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\"><path class=\"circle\" d=\"M 50,7.000001 A 43,43 0 0 1 92.999999,50 43,43 0 0 1 50,92.999999 43,43 0 0 1 7.0000011,50 43,43 0 0 1 50,7.000001 Z\"></path><path class=\"arm_1\" d=\"M 28.536809,28.536809 71.342023,71.342023\"></path><path class=\"arm_2\" d=\"M 71.342023,28.536809 28.536809,71.342023\"></path></svg>",
     special_success: "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"special-success\" viewBox=\"0 0 100 100\" width=\"100\" height=\"100\"><path class=\"circle\" d=\"M 50,7 A 43,43 0 0 1 93,50 43,43 0 0 1 50,93 43,43 0 0 1 7,50 43,43 0 0 1 50,7 Z\"></path><path class=\"arm\" d=\"M 22.988405,48.234784 36.946233,72.410453 75.516456,33.84023\"></path></svg>",
 };
-export const COLORS = ['red', 'green', 'blue', 'alpha'];
-export const CSS_APP_BACKGROUND_COLORS = {
-    light: '--cui-color-light-app-background',
-    dark: '--cui-color-dark-app-background'
-};
-export const CSS_COMPONENT_BACKGROUND_COLORS = {
-    light: '--cui-color-light-background',
-    dark: '--cui-color-dark-background '
-};
-export const CSS_COMPONENT_BORDER_COLORS = {
-    light: '--cui-color-light-border',
-    dark: '--cui-color-dark-border'
-};
-export const CSS_THEMES = {
-    light: {
-        base: '--cui-color-light-base',
-        muted: '--cui-color-light-muted',
-        active: '--cui-color-light-active'
-    },
-    dark: {
-        base: '--cui-color-dark-base',
-        muted: '--cui-color-dark-muted',
-        active: '--cui-color-dark-active'
-    },
-    accent: {
-        base: '--cui-color-primary',
-        muted: '--cui-color-primary-muted',
-        active: '--cui-color-primary-active'
-    },
-    secondary: {
-        base: '--cui-color-secondary',
-        muted: '--cui-color-secondary-muted',
-        active: '--cui-color-secondary-active'
-    },
-    success: {
-        base: '--cui-color-success',
-        muted: '--cui-color-success-muted',
-        active: '--cui-color-success-active'
-    },
-    warning: {
-        base: '--cui-color-warning',
-        muted: '--cui-color-warning-muted',
-        active: '--cui-color-warning-active'
-    },
-    error: {
-        base: '--cui-color-error',
-        muted: '--cui-color-error-muted',
-        active: '--cui-color-error-active'
-    }
-};
+// export const COLORS = ['red', 'green', 'blue', 'alpha']
+// export const CSS_APP_BACKGROUND_COLORS: CuiColorPair = {
+//     light: '--cui-color-light-app-background',
+//     dark: '--cui-color-dark-app-background'
+// }
+// export const CSS_COMPONENT_BACKGROUND_COLORS: CuiColorPair = {
+//     light: '--cui-color-light-background',
+//     dark: '--cui-color-dark-background '
+// }
+// export const CSS_COMPONENT_BORDER_COLORS: CuiColorPair = {
+//     light: '--cui-color-light-border',
+//     dark: '--cui-color-dark-border'
+// }
+// export const CSS_THEMES = {
+//     light: {
+//         base: '--cui-color-light-base',
+//         muted: '--cui-color-light-muted',
+//         active: '--cui-color-light-active'
+//     },
+//     dark: {
+//         base: '--cui-color-dark-base',
+//         muted: '--cui-color-dark-muted',
+//         active: '--cui-color-dark-active'
+//     },
+//     accent: {
+//         base: '--cui-color-primary',
+//         muted: '--cui-color-primary-muted',
+//         active: '--cui-color-primary-active'
+//     },
+//     secondary: {
+//         base: '--cui-color-secondary',
+//         muted: '--cui-color-secondary-muted',
+//         active: '--cui-color-secondary-active'
+//     },
+//     success: {
+//         base: '--cui-color-success',
+//         muted: '--cui-color-success-muted',
+//         active: '--cui-color-success-active'
+//     },
+//     warning: {
+//         base: '--cui-color-warning',
+//         muted: '--cui-color-warning-muted',
+//         active: '--cui-color-warning-active'
+//     },
+//     error: {
+//         base: '--cui-color-error',
+//         muted: '--cui-color-error-muted',
+//         active: '--cui-color-error-active'
+//     }
+// }
 export const SCOPE_SELECTOR = ":scope ";
 export const CSS_VARIABLES = {
     fontSize: "--{prefix}-font-size",
@@ -174,3 +175,4 @@ export const SCREEN_SIZE_SMALL = 640;
 export const SCREEN_SIZE_MEDIUM = 960;
 export const SCREEN_SIZE_LARGE = 1200;
 export const SCREEN_SIZE_XLARGE = 1600;
+export const MEASUREMENT = [];

@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -12,11 +21,12 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     return privateMap.get(receiver);
 };
 var _observer, _targets, _actions;
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiIntersectionObserver } from "../../core/observers/intersection";
 import { CuiActionsListFactory } from "../../core/utils/actions";
-import { is, getRangeValueOrDefault, getStringOrDefault, isStringTrue } from "../../core/utils/functions";
-import { EVENTS, SCOPE_SELECTOR } from "../../core/utils/statics";
+import { is, getRangeValueOrDefault, joinWithScopeSelector } from "../../core/utils/functions";
+import { EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const DEFAULT_SELCTOR = "> *";
 /**
  * Intersection
@@ -27,18 +37,18 @@ const DEFAULT_SELCTOR = "> *";
  * offset - 0...1 - tells how much target must intersecting with the screen
  * action - action to trigger
  */
-export class CuiIntersectionAttributes {
+export class CuiIntersectionAttributes extends CuiAutoParseArgs {
     constructor() {
-        this.target = "div";
+        super({
+            props: {
+                offset: { corrector: (value) => { return getRangeValueOrDefault(value, 0, 1, 0); } },
+                target: { corrector: joinWithScopeSelector }
+            }
+        });
+        this.target = joinWithScopeSelector(DEFAULT_SELCTOR);
         this.action = "";
         this.offset = 0;
         this.isRoot = false;
-    }
-    parse(args) {
-        this.target = is(args.target) ? SCOPE_SELECTOR + args.target : SCOPE_SELECTOR + DEFAULT_SELCTOR;
-        this.action = getStringOrDefault(args.action, "");
-        this.offset = getRangeValueOrDefault(parseFloat(args.offset), 0, 1, 0);
-        this.isRoot = isStringTrue(args.isRoot);
     }
 }
 export class CuiIntersectionComponent {
@@ -52,7 +62,7 @@ export class CuiIntersectionComponent {
         return new CuiIntersectionHandler(element, utils, this.attribute);
     }
 }
-export class CuiIntersectionHandler extends CuiHandler {
+export class CuiIntersectionHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiIntersectionHandler", element, attribute, new CuiIntersectionAttributes(), utils);
         _observer.set(this, void 0);
@@ -62,19 +72,28 @@ export class CuiIntersectionHandler extends CuiHandler {
         __classPrivateFieldSet(this, _targets, []);
         __classPrivateFieldSet(this, _actions, []);
     }
-    onInit() {
-        this.parseArguments();
-        __classPrivateFieldGet(this, _observer).setCallback(this.onIntersection.bind(this));
-        __classPrivateFieldGet(this, _observer).connect();
-        __classPrivateFieldGet(this, _targets).forEach(target => {
-            __classPrivateFieldGet(this, _observer).observe(target);
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.parseArguments();
+            __classPrivateFieldGet(this, _observer).setCallback(this.onIntersection.bind(this));
+            __classPrivateFieldGet(this, _observer).connect();
+            __classPrivateFieldGet(this, _targets).forEach(target => {
+                __classPrivateFieldGet(this, _observer).observe(target);
+            });
+            return true;
         });
     }
-    onUpdate() {
-        this.parseArguments();
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.parseArguments();
+            return true;
+        });
     }
-    onDestroy() {
-        __classPrivateFieldGet(this, _observer).disconnect();
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            __classPrivateFieldGet(this, _observer).disconnect();
+            return true;
+        });
     }
     parseArguments() {
         // @ts-ignore prevArgs is correct

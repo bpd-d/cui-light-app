@@ -1,9 +1,9 @@
-import { ICuiEventBus, ICuiCallbackExecutor, ICuiEventEmitHandler, CuiEventReceiver, CuiElement } from "../../src/core/models/interfaces"
+import { CuiElement } from "../../src/core/models/interfaces"
 import { CuiEventBus, CuiEventExtBus } from "../../src/core/bus/bus";
 import { CuiCallbackExecutor } from "../../src/core/bus/executors";
-import { TaskedEventEmitHandler } from "../../src/core/bus/handlers";
 import { ExecutorTestItem, ExecutorTestItemExt } from "../helpers/models";
-import { ICuiEventBusQueueSetup } from "../../src/core/bus/interfaces";
+import { ICuiEventBusQueueSetup, ICuiCallbackExecutor, ICuiEventEmitHandler, ICuiEventBus, CuiEventReceiver } from "../../src/core/bus/interfaces";
+import { CuiEventEmitHandlerFactory } from "../../src/core/bus/handlers";
 
 describe("Tests for class [CuiCallbackExecutor]", function () {
 
@@ -24,20 +24,20 @@ describe("Tests for class [CuiCallbackExecutor]", function () {
 
     it("Case for method [execute] - with context", async function () {
         let item: ExecutorTestItem = new ExecutorTestItem();
-        await executor.execute(item.setValue.bind(item), [true]);
+        await executor.execute(item.setValue.bind(item), true);
 
         expect(item.value).toBeTrue();
     })
 })
 
-describe("Tests for class [TaskedEventEmitHandler]", function () {
+describe("Tests for class [TaskedEventEmitHandlerAdapter]", function () {
 
     let executor: ICuiCallbackExecutor;
     let handler: ICuiEventEmitHandler;
 
     beforeEach(() => {
         executor = new CuiCallbackExecutor();
-        handler = new TaskedEventEmitHandler(executor);
+        handler = CuiEventEmitHandlerFactory.get('tasked', executor);
     })
 
     it("Case for method [handle] - no context", async function () {
@@ -45,7 +45,7 @@ describe("Tests for class [TaskedEventEmitHandler]", function () {
         let tasks: CuiEventReceiver = {
             "task": { callback: item.setValue.bind(item), $cuid: "000" }
         }
-        await handler.handle(tasks, null, [true])
+        await handler.handle(tasks, null, true)
 
         expect(item.value).toBeTrue();
     })
@@ -67,7 +67,7 @@ describe("Tests for class [TaskedEventEmitHandler]", function () {
             "task": { callback: item.setValue.bind(item), $cuid: null },
             "task2": { callback: item2.setValue.bind(item2), $cuid: "000" }
         }
-        await handler.handle(tasks, null, [true])
+        await handler.handle(tasks, null, true)
 
         expect(item.value).toBeTrue();
         expect(item2.value).toBeTrue();
@@ -81,7 +81,7 @@ describe("Tests for class [SimpleEventEmitHandler]", function () {
 
     beforeEach(() => {
         executor = new CuiCallbackExecutor();
-        handler = new TaskedEventEmitHandler(executor);
+        handler = CuiEventEmitHandlerFactory.get('simple', executor);
     })
 
     it("Case for method [handle] - no context", async function () {
@@ -89,7 +89,7 @@ describe("Tests for class [SimpleEventEmitHandler]", function () {
         let tasks: CuiEventReceiver = {
             "task": { callback: item.setValue.bind(item), $cuid: null }
         }
-        await handler.handle(tasks, null, [true])
+        await handler.handle(tasks, null, true)
 
         expect(item.value).toBeTrue();
     })
@@ -111,7 +111,7 @@ describe("Tests for class [SimpleEventEmitHandler]", function () {
             "task": { callback: item.setValue.bind(item), $cuid: null },
             "task2": { callback: item2.setValue.bind(item2), $cuid: null }
         }
-        await handler.handle(tasks, null, [true])
+        await handler.handle(tasks, null, true)
 
         expect(item.value).toBeTrue();
         expect(item2.value).toBeTrue();
@@ -125,7 +125,7 @@ describe("Tests for class [CuiEventBus]", function () {
 
     beforeEach(() => {
         executor = new CuiCallbackExecutor();
-        handler = new TaskedEventEmitHandler(executor);
+        handler = CuiEventEmitHandlerFactory.get('tasked', executor);
         bus = new CuiEventBus(handler);
     })
 

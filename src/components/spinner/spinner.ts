@@ -1,27 +1,21 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { EVENTS, ICONS } from "../../core/utils/statics";
-import { is, isString, getStringOrDefault, getIntOrDefault, replacePrefix } from "../../core/utils/functions";
+import { is, replacePrefix } from "../../core/utils/functions";
 import { IconBuilder } from "../../core/builders/icon";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
-export class CuiSpinnerArgs implements ICuiParsable {
+export class CuiSpinnerArgs extends CuiAutoParseArgs implements ICuiParsable {
     spinner: string;
     scale: number;
     constructor() {
+        super({
+            main: "spinner"
+        });
         this.spinner = "circle";
         this.scale = 1;
     }
-
-    parse(args: any) {
-        if (isString(args)) {
-            this.spinner = getStringOrDefault(args, "circle");
-        } else {
-            this.spinner = getStringOrDefault(args.spinner, "circle");
-            this.scale = getIntOrDefault(args.scale, 1);
-        }
-    }
-
 }
 
 export class CuiSpinnerComponent implements ICuiComponent {
@@ -43,7 +37,7 @@ export class CuiSpinnerComponent implements ICuiComponent {
     }
 }
 
-export class CuiSpinnerHandler extends CuiHandler<CuiSpinnerArgs> {
+export class CuiSpinnerHandler extends CuiHandlerBase<CuiSpinnerArgs> {
     #pauseEventId: string | null;
     #animationPauseClass: string;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string) {
@@ -52,20 +46,21 @@ export class CuiSpinnerHandler extends CuiHandler<CuiSpinnerArgs> {
         this.#animationPauseClass = replacePrefix("{prefix}-animation-pause", prefix);
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         this.#pauseEventId = this.onEvent(EVENTS.PAUSE, this.onPause.bind(this));
         this.add()
+        return true;
     }
-
-    onUpdate(): void {
+    async onRefresh(): Promise<boolean> {
         if (this.prevArgs && this.args.spinner !== this.prevArgs.spinner) {
             this.add();
         }
+        return true;
     }
-
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.removeIfAnyExisists();
         this.detachEvent(EVENTS.PAUSE, this.#pauseEventId);
+        return true;
     }
 
     private addSpinner(iconElement: Element, name: string) {

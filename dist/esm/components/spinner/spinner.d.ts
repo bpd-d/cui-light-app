@@ -1,11 +1,11 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
-export declare class CuiSpinnerArgs implements ICuiParsable {
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export declare class CuiSpinnerArgs extends CuiAutoParseArgs implements ICuiParsable {
     spinner: string;
     scale: number;
     constructor();
-    parse(args: any): void;
 }
 export declare class CuiSpinnerComponent implements ICuiComponent {
     #private;
@@ -14,12 +14,12 @@ export declare class CuiSpinnerComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiSpinnerHandler extends CuiHandler<CuiSpinnerArgs> {
+export declare class CuiSpinnerHandler extends CuiHandlerBase<CuiSpinnerArgs> {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     private addSpinner;
     private add;
     private removeIfAnyExisists;

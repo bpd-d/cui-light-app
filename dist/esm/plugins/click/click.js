@@ -31,7 +31,12 @@ export class CuiWindowClickPlugin {
     }
     onWindowClick(ev) {
         if (__classPrivateFieldGet(this, _bus))
-            __classPrivateFieldGet(this, _bus).emit(EVENTS.WINDOW_CLICK, null, ev);
+            __classPrivateFieldGet(this, _bus).emit(EVENTS.WINDOW_CLICK, null, {
+                ev: ev,
+                source: "CuiWindowClickPlugin",
+                timestamp: Date.now(),
+                name: EVENTS.WINDOW_CLICK
+            });
     }
 }
 _bus = new WeakMap(), _boundClick = new WeakMap();

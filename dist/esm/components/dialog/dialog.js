@@ -11,61 +11,50 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _defTimeout, _prefix, _prefix_1, _prefix_2, _bodyClass, _scrollY, _windowClickEventId;
-import { replacePrefix, isStringTrue, getStringOrDefault, getIntOrDefault } from "../../core/utils/functions";
+var _prefix, _prefix_1, _bodyClass, _scrollY, _windowClickEventId;
+import { replacePrefix } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
 import { AriaAttributes } from "../../core/utils/aria";
 import { CuiInteractableHandler } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const DIALOG_OPEN_ANIMATION_CLASS = '.{prefix}-dialog-default-in';
 const DIALOG_CLOSE_ANIMATION_CLASS = '.{prefix}-dialog-default-out';
 const bodyClass = '{prefix}-dialog-open';
 const CONTAINER = '.{prefix}-dialog-container';
-export class CuiDialogArgs {
+export class CuiDialogArgs extends CuiAutoParseArgs {
     constructor(prefix, defTimeout) {
-        _defTimeout.set(this, void 0);
-        _prefix.set(this, void 0);
-        __classPrivateFieldSet(this, _defTimeout, defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300);
-        __classPrivateFieldSet(this, _prefix, prefix);
+        super();
         this.escClose = false;
         this.outClose = false;
-        this.timeout = __classPrivateFieldGet(this, _defTimeout);
-        this.openAct = "";
-        this.closeAct = "";
+        this.timeout = defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300;
+        this.openAct = replacePrefix(DIALOG_OPEN_ANIMATION_CLASS, prefix);
+        this.closeAct = replacePrefix(DIALOG_CLOSE_ANIMATION_CLASS, prefix);
         this.keyClose = "";
     }
-    parse(args) {
-        this.escClose = isStringTrue(args.escClose);
-        this.outClose = isStringTrue(args.outClose);
-        this.keyClose = args.keyClose;
-        this.timeout = getIntOrDefault(args.timeout, __classPrivateFieldGet(this, _defTimeout));
-        this.openAct = getStringOrDefault(args.openAct, replacePrefix(DIALOG_OPEN_ANIMATION_CLASS, __classPrivateFieldGet(this, _prefix)));
-        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(DIALOG_CLOSE_ANIMATION_CLASS, __classPrivateFieldGet(this, _prefix)));
-    }
 }
-_defTimeout = new WeakMap(), _prefix = new WeakMap();
 export class CuiDialogComponent {
     constructor(prefix) {
-        _prefix_1.set(this, void 0);
-        __classPrivateFieldSet(this, _prefix_1, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${__classPrivateFieldGet(this, _prefix_1)}-dialog`;
+        _prefix.set(this, void 0);
+        __classPrivateFieldSet(this, _prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
+        this.attribute = `${__classPrivateFieldGet(this, _prefix)}-dialog`;
     }
     getStyle() {
         return null;
     }
     get(element, utils) {
-        return new CuiDialogHandler(element, utils, this.attribute, __classPrivateFieldGet(this, _prefix_1));
+        return new CuiDialogHandler(element, utils, this.attribute, __classPrivateFieldGet(this, _prefix));
     }
 }
-_prefix_1 = new WeakMap();
+_prefix = new WeakMap();
 export class CuiDialogHandler extends CuiInteractableHandler {
     constructor(element, utils, attribute, prefix) {
         super("CuiDialogHandler", element, attribute, new CuiDialogArgs(prefix, utils.setup.animationTimeLong), utils);
-        _prefix_2.set(this, void 0);
+        _prefix_1.set(this, void 0);
         _bodyClass.set(this, void 0);
         _scrollY.set(this, void 0);
         _windowClickEventId.set(this, void 0);
         __classPrivateFieldSet(this, _bodyClass, replacePrefix(bodyClass, prefix));
-        __classPrivateFieldSet(this, _prefix_2, prefix);
+        __classPrivateFieldSet(this, _prefix_1, prefix);
         __classPrivateFieldSet(this, _scrollY, 0);
         __classPrivateFieldSet(this, _windowClickEventId, null);
         if (!utils.isPlugin("click-plugin")) {
@@ -110,12 +99,12 @@ export class CuiDialogHandler extends CuiInteractableHandler {
         return this.helper.hasClass(__classPrivateFieldGet(this, _bodyClass), document.body);
     }
     onWindowClick(ev) {
-        let container = this.element.querySelector(replacePrefix(CONTAINER, __classPrivateFieldGet(this, _prefix_2)));
-        if (container && !container.contains(ev.target)) {
+        let container = this.element.querySelector(replacePrefix(CONTAINER, __classPrivateFieldGet(this, _prefix_1)));
+        if (container && !container.contains(ev.ev.target)) {
             this.close('out').then(() => {
                 this._log.debug("Closed by click outside");
             });
         }
     }
 }
-_prefix_2 = new WeakMap(), _bodyClass = new WeakMap(), _scrollY = new WeakMap(), _windowClickEventId = new WeakMap();
+_prefix_1 = new WeakMap(), _bodyClass = new WeakMap(), _scrollY = new WeakMap(), _windowClickEventId = new WeakMap();

@@ -1,11 +1,9 @@
-import { ICuiEventBus } from "../../core/models/interfaces";
+import { ICuiEventBus } from "src/core/bus/interfaces";
+import { KeyDownEvent } from "src/core/models/events";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiKeyPressListener } from "./listener";
 
-export interface KeyDownEvent {
-    timestamp: number;
-    event: KeyboardEvent;
-}
+
 export interface ICuiKeysObserver {
     connect(): void;
     disconnect(): void;
@@ -26,7 +24,7 @@ export class CuiKeysObserver {
     }
 
     onKeyDown(ev: KeyboardEvent) {
-        this.#bus.emit(EVENTS.KEYDOWN, null, {
+        this.#bus.emit<KeyDownEvent>(EVENTS.KEYDOWN, null, {
             timestamp: Date.now(),
             name: EVENTS.KEYDOWN,
             source: "CuiKeysObserver",

@@ -1,9 +1,11 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { replacePrefix, isStringTrue, getStringOrDefault, getIntOrDefault } from "../../core/utils/functions";
+import { replacePrefix } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
 import { AriaAttributes } from "../../core/utils/aria";
 import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { GlobalClickEvent } from "src/core/models/events";
 
 const DIALOG_OPEN_ANIMATION_CLASS = '.{prefix}-dialog-default-in';
 const DIALOG_CLOSE_ANIMATION_CLASS = '.{prefix}-dialog-default-out';
@@ -14,7 +16,7 @@ export interface CuiDialogEvent {
     timestamp: number;
 }
 
-export class CuiDialogArgs implements ICuiParsable, CuiInteractableArgs {
+export class CuiDialogArgs extends CuiAutoParseArgs implements CuiInteractableArgs {
     escClose: boolean;
     outClose: boolean;
     timeout: number;
@@ -22,28 +24,15 @@ export class CuiDialogArgs implements ICuiParsable, CuiInteractableArgs {
     closeAct: string;
     keyClose: string;
 
-    #defTimeout: number;
-    #prefix: string;
     constructor(prefix: string, defTimeout?: number) {
-        this.#defTimeout = defTimeout ?? 300;
-        this.#prefix = prefix;
+        super();
 
         this.escClose = false;
         this.outClose = false;
-        this.timeout = this.#defTimeout;
-        this.openAct = "";
-        this.closeAct = "";
+        this.timeout = defTimeout ?? 300;
+        this.openAct = replacePrefix(DIALOG_OPEN_ANIMATION_CLASS, prefix);
+        this.closeAct = replacePrefix(DIALOG_CLOSE_ANIMATION_CLASS, prefix);
         this.keyClose = "";
-    }
-
-
-    parse(args: any) {
-        this.escClose = isStringTrue(args.escClose);
-        this.outClose = isStringTrue(args.outClose);
-        this.keyClose = args.keyClose;
-        this.timeout = getIntOrDefault(args.timeout, this.#defTimeout);
-        this.openAct = getStringOrDefault(args.openAct, replacePrefix(DIALOG_OPEN_ANIMATION_CLASS, this.#prefix))
-        this.closeAct = getStringOrDefault(args.closeAct, replacePrefix(DIALOG_CLOSE_ANIMATION_CLASS, this.#prefix))
     }
 }
 
@@ -88,6 +77,7 @@ export class CuiDialogHandler extends CuiInteractableHandler<CuiDialogArgs> {
     onInit(): void {
         AriaAttributes.setAria(this.element, 'aria-modal', "");
     }
+
     onUpdate(): void {
 
     }
@@ -128,9 +118,9 @@ export class CuiDialogHandler extends CuiInteractableHandler<CuiDialogArgs> {
         return this.helper.hasClass(this.#bodyClass, document.body);
     }
 
-    onWindowClick(ev: MouseEvent) {
+    onWindowClick(ev: GlobalClickEvent) {
         let container = this.element.querySelector(replacePrefix(CONTAINER, this.#prefix));
-        if (container && !container.contains((ev.target as Node))) {
+        if (container && !container.contains((ev.ev.target as Node))) {
             this.close('out').then(() => {
                 this._log.debug("Closed by click outside")
             });

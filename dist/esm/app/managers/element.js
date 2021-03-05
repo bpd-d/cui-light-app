@@ -22,9 +22,8 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _elements, _isLocked, _logger, _cDt, _utils, _actionsHelper;
 import { is, are } from "../../core/utils/functions";
-import { CLASSES } from "../../core/utils/statics";
 import { CuiActionsHelper } from "../../core/helpers/helpers";
-import { CuiClassAction } from "../../core/utils/actions";
+import { CuiActionsFatory, CuiClassAction } from "../../core/utils/actions";
 import { CuiDevtoolFactory } from "../../core/development/factory";
 export class ElementManager {
     constructor(elements, utils) {
@@ -246,50 +245,46 @@ export class ElementManager {
             return true;
         });
     }
-    animate(className, timeout) {
+    setAction(actionStr, animationClass, timeout) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!is(className)) {
+            if (!is(actionStr)) {
                 return false;
             }
-            const delay = timeout !== null && timeout !== void 0 ? timeout : __classPrivateFieldGet(this, _utils).setup.animationTime;
-            return this.call((element) => {
-                this.change(() => {
-                    element.classList.add(className);
-                    element.classList.add(CLASSES.animProgress);
-                    setTimeout(() => {
-                        this.change(() => {
-                            element.classList.remove(className);
-                            element.classList.remove(CLASSES.animProgress);
-                        });
-                    }, delay);
-                });
+            let act = CuiActionsFatory.get(actionStr);
+            return this.animate(animationClass, timeout, (element) => {
+                act.add(element);
             });
         });
     }
-    open(openClass, animationClass, timeout) {
+    removeAction(actionStr, animationClass, timeout) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!are(openClass, animationClass)) {
+            if (!is(actionStr)) {
                 return false;
             }
-            const delay = timeout !== null && timeout !== void 0 ? timeout : __classPrivateFieldGet(this, _utils).setup.animationTime;
-            const action = new CuiClassAction(animationClass);
-            return this.call((element) => {
-                __classPrivateFieldGet(this, _actionsHelper).performAction(element, action, delay !== null && delay !== void 0 ? delay : 0).then(() => {
-                    element.classList.add(openClass);
-                });
+            let act = CuiActionsFatory.get(actionStr);
+            return this.animate(animationClass, timeout, (element) => {
+                act.remove(element);
             });
         });
     }
-    close(closeClass, animationClass, timeout) {
+    /**
+     * Perform animation on the element
+     * @param animationClass
+     * @param timeout
+     * @param callback
+     */
+    animate(animationClass, timeout, callback) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            if (!are(closeClass, animationClass)) {
+            if (!is(animationClass)) {
                 return false;
             }
-            const delay = timeout !== null && timeout !== void 0 ? timeout : __classPrivateFieldGet(this, _utils).setup.animationTime;
+            const delay = (_a = timeout !== null && timeout !== void 0 ? timeout : __classPrivateFieldGet(this, _utils).setup.animationTime) !== null && _a !== void 0 ? _a : 0;
             const action = new CuiClassAction(animationClass);
             return this.call((element) => {
-                __classPrivateFieldGet(this, _actionsHelper).performAction(element, action, delay !== null && delay !== void 0 ? delay : 0).then(() => {
-                    element.classList.remove(closeClass);
+                return __classPrivateFieldGet(this, _actionsHelper).performAction(element, action, delay, () => {
+                    if (callback)
+                        callback(element);
                 });
             });
         });

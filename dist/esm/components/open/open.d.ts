@@ -1,15 +1,14 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
-export declare class CuiOpenArgs {
-    #private;
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export declare class CuiOpenArgs extends CuiAutoParseArgs {
     target: string;
     action: string;
     timeout: number;
     prevent: boolean;
     state: string;
     constructor(timeout?: number);
-    parse(args: any): void;
 }
 export declare class CuiOpenComponent implements ICuiComponent {
     #private;
@@ -18,14 +17,14 @@ export declare class CuiOpenComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiOpenHandler extends CuiHandler<CuiOpenArgs> {
+export declare class CuiOpenHandler extends CuiHandlerBase<CuiOpenArgs> {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
-    onClick(ev: MouseEvent): void;
-    onOpen(ev: MouseEvent): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
+    private onClick;
+    private onOpen;
     /**
      * Emits open event or performs an opening action
      * @param target target element

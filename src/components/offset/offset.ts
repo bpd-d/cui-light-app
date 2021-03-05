@@ -1,11 +1,12 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiScrollListener, CuiScrollEvent } from "../../core/listeners/scroll";
 import { ICuiComponentAction, CuiActionsListFactory } from "../../core/utils/actions";
-import { are, getIntOrDefault, getRangeValue, getStringOrDefault, is, isStringTrue } from "../../core/utils/functions";
+import { are, getRangeValue, is } from "../../core/utils/functions";
 import { CuiOffsetModeFactory, ICuiOffsetMode } from "./modes";
 import { EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
 /**
  * Toggles an action after specified offset is reached in relation to the element or document
@@ -37,7 +38,7 @@ export interface CuiOffsetAttribute {
     root?: boolean;
 }
 
-export class CuiOffsetArgs {
+export class CuiOffsetArgs extends CuiAutoParseArgs {
     target: string;
     action: string;
     offsetY: number;
@@ -45,21 +46,13 @@ export class CuiOffsetArgs {
     root: boolean;
     mode: "static" | "dynamic";
     constructor() {
-        this.offsetX = 0;
-        this.offsetY = 0;
+        super();
+        this.offsetX = -1;
+        this.offsetY = -1;
         this.target = "";
         this.root = false;
         this.action = "";
         this.mode = 'static';
-    }
-
-    parse(args: any) {
-        this.target = args.target;
-        this.action = args.action;
-        this.offsetX = getIntOrDefault(args.offsetX, -1);
-        this.offsetY = getIntOrDefault(args.offsetY, -1);
-        this.root = isStringTrue(args.root);
-        this.mode = getStringOrDefault(args.mode, 'static');
     }
 }
 export class CuiOffsetComponent implements ICuiComponent {
@@ -77,7 +70,7 @@ export class CuiOffsetComponent implements ICuiComponent {
     }
 }
 
-export class CuiOffsetHandler extends CuiHandler<CuiOffsetArgs> {
+export class CuiOffsetHandler extends CuiHandlerBase<CuiOffsetArgs> {
     #listener: CuiScrollListener | undefined;
     #target: Element;
     #utils: CuiUtils;
@@ -105,18 +98,21 @@ export class CuiOffsetHandler extends CuiHandler<CuiOffsetArgs> {
 
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         this.parseAttribute();
         this.#listener = new CuiScrollListener(this.args.root ? (window as any) : this.element, this.utils.setup.scrollThreshold);
         this.#listener.setCallback(this.onScroll.bind(this));
         this.#listener.attach();
+        return true;
     }
-    onUpdate(): void {
+    async onRefresh(): Promise<boolean> {
         this.parseAttribute();
+        return true;
     }
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         if (this.#listener)
             this.#listener.detach();
+        return true;
     }
 
     private onScroll(ev: CuiScrollEvent): void {

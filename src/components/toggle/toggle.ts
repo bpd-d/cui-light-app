@@ -1,27 +1,22 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { ICuiComponentAction, CuiActionsListFactory } from "../../core/utils/actions";
-import { is, isString, getStringOrDefault } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
 
-export class CuiToggleArgs {
+export class CuiToggleArgs extends CuiAutoParseArgs {
     target: string;
     action: string;
     constructor() {
+        super({
+            main: "action"
+        });
         this.action = "";
         this.target = "";
     }
-
-    parse(args: any) {
-        if (is(args) && isString(args)) {
-            this.action = args;
-        } else {
-            this.target = getStringOrDefault(args.target, "");
-            this.action = args.action;
-        }
-    }
 }
+
 export class CuiToggleComponent implements ICuiComponent {
     attribute: string;
     constructor(prefix?: string) {
@@ -37,7 +32,8 @@ export class CuiToggleComponent implements ICuiComponent {
     }
 }
 
-export class CuiToggleHandler extends CuiHandler<CuiToggleArgs> {
+export class CuiToggleHandler extends CuiHandlerBase<CuiToggleArgs> {
+
     #target: Element;
     #utils: CuiUtils;
     #toggleEventId: string | null;
@@ -51,21 +47,22 @@ export class CuiToggleHandler extends CuiHandler<CuiToggleArgs> {
         this.onClick = this.onClick.bind(this);
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         this.#target = this.getTarget();
         this.#actions = CuiActionsListFactory.get(this.args.action);
         this.element.addEventListener('click', this.onClick);
         this.#toggleEventId = this.onEvent(EVENTS.TOGGLE, this.toggle.bind(this));
-
+        return true;
     }
-    onUpdate(): void {
+    async onRefresh(): Promise<boolean> {
         this.#target = this.getTarget();
         this.#actions = CuiActionsListFactory.get(this.args.action);
+        return true;
     }
-
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.element.removeEventListener('click', this.onClick);
         this.detachEvent(EVENTS.TOGGLE, this.#toggleEventId);
+        return true;
     }
 
     toggle() {

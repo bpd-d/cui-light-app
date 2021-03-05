@@ -1,8 +1,27 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { EVENTS } from "../../core/utils/statics";
-import { is, getOffsetTop, getStringOrDefault, are } from "../../core/utils/functions";
+import { is, getOffsetTop, are, getEnumOrDefault } from "../../core/utils/functions";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+
+export class CuiScrollArgs extends CuiAutoParseArgs implements ICuiParsable {
+    target: string;
+    parent: string;
+    behavior: 'auto' | 'smooth';
+
+    constructor() {
+        super({
+            props: {
+                "behavior": { corrector: (value: string) => getEnumOrDefault(value, 'auto', 'smooth') }
+            }
+        });
+        this.target = "";
+        this.parent = "";
+        this.behavior = 'auto';
+    }
+}
+
 
 /**
  * Component scrolls to specified target in the document
@@ -34,27 +53,9 @@ export interface CuiScrollAttribute {
     behavior?: 'auto' | 'smooth';
 }
 
-export class CuiScrollArgs implements ICuiParsable {
-    target: string;
-    parent: string;
-    behavior: 'auto' | 'smooth';
-
-    constructor() {
-        this.target = "";
-        this.parent = "";
-        this.behavior = 'auto';
-    }
-
-    parse(val: any): void {
-        this.target = getStringOrDefault(val.target, "");
-        this.parent = getStringOrDefault(val.parent, "");
-        this.behavior = is(val.behavior) && val.behavior.toLowerCase() === 'smooth' ? 'smooth' : 'auto';
-    }
 
 
-}
-
-export class CuiScrollHandler extends CuiHandler<CuiScrollArgs> {
+export class CuiScrollHandler extends CuiHandlerBase<CuiScrollArgs> {
     #parent: HTMLElement | null;
     #target: HTMLElement | null;
 
@@ -68,15 +69,18 @@ export class CuiScrollHandler extends CuiHandler<CuiScrollArgs> {
         this.#onClickBound = this.onClick.bind(this);
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
         this.element.addEventListener('click', this.#onClickBound);
         this.setTargets();
+        return true;
     }
-    onUpdate(): void {
+    async onRefresh(): Promise<boolean> {
         this.setTargets();
+        return true;
     }
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.element.removeEventListener('click', this.#onClickBound);
+        return true;
     }
 
     onClick(ev: MouseEvent) {

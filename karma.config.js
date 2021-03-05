@@ -7,7 +7,6 @@ module.exports = function (config) {
         exclude: [],
         //files/patterns to load in the browser
         files: [
-            // { pattern: 'tests/*.tests.ts', watched: true, served: true, included: true },
             { pattern: 'tests/app/*.tests.ts', watched: true, served: true, included: true },
             { pattern: 'tests/core/*.tests.ts', watched: true, served: true, included: true },
 

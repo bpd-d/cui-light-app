@@ -1,7 +1,7 @@
 import { CuiLightMode, CuiWindowSize } from "./types";
 import { ArgumentError } from "../models/errors";
 import { CuiElement } from "../models/interfaces";
-import { COMPONENTS_COUNTER, SCREEN_SIZE_LARGE, SCREEN_SIZE_MEDIUM, SCREEN_SIZE_SMALL, SCREEN_SIZE_XLARGE } from "./statics";
+import { COMPONENTS_COUNTER, MEASUREMENT, SCOPE_SELECTOR, SCREEN_SIZE_LARGE, SCREEN_SIZE_MEDIUM, SCREEN_SIZE_SMALL, SCREEN_SIZE_XLARGE } from "./statics";
 
 /**
  * Checks if value is defined an is not null
@@ -384,7 +384,7 @@ export function getRandomInt(min: number, max: number): number {
 
 
 
-export function* counter() {
+export function* counter(): Generator<number, number, number> {
     let idx = 0;
     while (true) {
         let reset = yield idx++;
@@ -551,3 +551,35 @@ export function splitColon(text: string): string[] {
     // @ts-ignore tag is always defined
     return [tag, split.join(":")];
 }
+
+export function getEnumOrDefault<T>(value: T, defVal: T, ...values: T[]): T {
+    if (values.includes(value)) {
+        return value;
+    }
+    return defVal;
+}
+
+export function joinWithScopeSelector(value: string) {
+    return SCOPE_SELECTOR + value;
+}
+
+export function measure(name?: string) {
+    const optName = name ?? "";
+    return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
+        const originalMethod = descriptor.value;
+        descriptor.value = function (...args: any[]) {
+            const start = performance.now();
+            const result = originalMethod.apply(this, args);
+            const finish = performance.now();
+            MEASUREMENT.push({
+                target: optName,
+                method: propertyKey,
+                time: finish - start
+            })
+            return result;
+        };
+
+        return descriptor;
+    }
+
+};

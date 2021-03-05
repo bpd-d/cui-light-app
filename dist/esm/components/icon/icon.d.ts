@@ -1,11 +1,11 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandler } from "../../core/handlers/base";
-export declare class CuiIconArgs implements ICuiParsable {
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiAutoParseArgs } from "../../core/utils/arguments";
+export declare class CuiIconArgs extends CuiAutoParseArgs {
     icon: string;
     scale: number;
     constructor();
-    parse(val: any): void;
 }
 export declare class CuiIconComponent implements ICuiComponent {
     attribute: string;
@@ -13,12 +13,12 @@ export declare class CuiIconComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiIconHandler extends CuiHandler<CuiIconArgs> {
+export declare class CuiIconHandler extends CuiHandlerBase<CuiIconArgs> {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     private addIcon;
     private insertBefore;
     private appendChild;
