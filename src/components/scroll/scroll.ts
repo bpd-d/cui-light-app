@@ -4,11 +4,16 @@ import { CuiHandlerBase } from "../../core/handlers/base";
 import { EVENTS } from "../../core/utils/statics";
 import { is, getOffsetTop, are, getEnumOrDefault } from "../../core/utils/functions";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiClickModule } from "../modules/click/click";
+import { CuiClickableArgs } from "src/core/models/arguments";
+import { CuiScrollByEvent } from "src/core/models/events";
 
-export class CuiScrollArgs extends CuiAutoParseArgs implements ICuiParsable {
+export class CuiScrollArgs extends CuiAutoParseArgs implements CuiClickableArgs {
     target: string;
     parent: string;
     behavior: 'auto' | 'smooth';
+    prevent: boolean;
+    stopPropagation: boolean;
 
     constructor() {
         super({
@@ -19,7 +24,10 @@ export class CuiScrollArgs extends CuiAutoParseArgs implements ICuiParsable {
         this.target = "";
         this.parent = "";
         this.behavior = 'auto';
+        this.stopPropagation = false;
+        this.prevent = false;
     }
+
 }
 
 
@@ -56,65 +64,54 @@ export interface CuiScrollAttribute {
 
 
 export class CuiScrollHandler extends CuiHandlerBase<CuiScrollArgs> {
-    #parent: HTMLElement | null;
-    #target: HTMLElement | null;
 
-    #onClickBound: (ev: MouseEvent) => void;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
         super("CuiScrollHandler", element, attribute, new CuiScrollArgs(), utils);
-        this.element = element;
-        this.#parent = null;
-        this.#target = null;
 
-        this.#onClickBound = this.onClick.bind(this);
+        this.addModule(new CuiClickModule(this.element, this.args, this.onClick.bind(this)));
     }
 
     async onHandle(): Promise<boolean> {
-        this.element.addEventListener('click', this.#onClickBound);
-        this.setTargets();
         return true;
     }
     async onRefresh(): Promise<boolean> {
-        this.setTargets();
         return true;
     }
     async onRemove(): Promise<boolean> {
-        this.element.removeEventListener('click', this.#onClickBound);
         return true;
     }
 
     onClick(ev: MouseEvent) {
-        if (!are(this.#target, this.#parent)) {
+        const target = this.getTarget();
+        const parent = this.getTargetsParent(target);
+
+        if (!target || !parent) {
             return;
         }
-        //@ts-ignore
-        let to = getOffsetTop(this.#target) - this.#parent.offsetTop;
-        //@ts-ignore
-        let from = this.#parent.scrollTop;
+
+        let to = getOffsetTop(target) - parent.offsetTop;
+        let from = parent.scrollTop;
         let by = to - from;
-        //@ts-ignore
-        this.#parent.scrollBy({
+
+        parent.scrollBy({
             top: by,
             behavior: this.args.behavior
         });
-        this.emitEvent(EVENTS.ON_SCROLL, {
+
+        this.emitEvent<CuiScrollByEvent>(EVENTS.ON_SCROLL, {
             to: to,
             by: by,
-            //@ts-ignore
-            target: this.#target,
-            //@ts-ignore
-            parent: this.#parent,
-            timestamp: Date.now(),
+            target: target,
+            parent: parent
         })
-        ev.preventDefault();
     }
 
-    private setTargets(): void {
-        this.#target = is(this.args.target) ? document.querySelector(this.args.target) as HTMLElement : null;
-        if (is(this.#target)) {
-            // @ts-ignore target is set
-            this.#parent = is(this.args.parent) ? document.querySelector(this.args.parent) : this.#target.parentElement;
-        }
+    private getTarget(): HTMLElement | null {
+        return is(this.args.target) ? document.querySelector<HTMLElement>(this.args.target) : null;
+    }
+
+    private getTargetsParent(target: HTMLElement | null): HTMLElement | null {
+        return is(this.args.parent) ? document.querySelector(this.args.parent) : target ? target.parentElement : null;
     }
 }
 

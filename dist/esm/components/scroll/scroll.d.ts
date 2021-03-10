@@ -1,11 +1,14 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-export declare class CuiScrollArgs extends CuiAutoParseArgs implements ICuiParsable {
+import { CuiClickableArgs } from "src/core/models/arguments";
+export declare class CuiScrollArgs extends CuiAutoParseArgs implements CuiClickableArgs {
     target: string;
     parent: string;
     behavior: 'auto' | 'smooth';
+    prevent: boolean;
+    stopPropagation: boolean;
     constructor();
 }
 /**
@@ -28,11 +31,11 @@ export interface CuiScrollAttribute {
     behavior?: 'auto' | 'smooth';
 }
 export declare class CuiScrollHandler extends CuiHandlerBase<CuiScrollArgs> {
-    #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
     onClick(ev: MouseEvent): void;
-    private setTargets;
+    private getTarget;
+    private getTargetsParent;
 }

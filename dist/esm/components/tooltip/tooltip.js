@@ -20,15 +20,15 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _prefix, _hoverListener, _tooltip, _margin, _positionCalculator, _tooltipDataCls, _actions, _task;
+var _prefix, _tooltip, _margin, _positionCalculator, _tooltipDataCls, _actions, _task;
 import { ElementBuilder } from "../../core/builders/element";
 import { CuiHandlerBase } from "../../core/handlers/base";
-import { CuiHoverListener } from "../../core/listeners/hover";
 import { CuiBasePositionCalculator } from "../../core/position/calculator";
 import { CuiTaskRunner } from "../../core/utils/task";
 import { CuiActionsListFactory } from "../../core/utils/actions";
 import { replacePrefix, is } from "../../core/utils/functions";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiHoverModule } from "../modules/hover/hover";
 const TOOLTIP_ACTION = ".{prefix}-animation-tooltip-in";
 const TOOLTIP_DATA = "{prefix}-tooltip-data";
 export class CuiTooltipArgs extends CuiAutoParseArgs {
@@ -61,7 +61,6 @@ _prefix = new WeakMap();
 export class CuiTooltipHandler extends CuiHandlerBase {
     constructor(element, attribute, utils, prefix) {
         super("CuiTooltipHandler", element, attribute, new CuiTooltipArgs(prefix), utils);
-        _hoverListener.set(this, void 0);
         _tooltip.set(this, void 0);
         _margin.set(this, void 0);
         _positionCalculator.set(this, void 0);
@@ -70,34 +69,30 @@ export class CuiTooltipHandler extends CuiHandlerBase {
         _task.set(this, void 0);
         __classPrivateFieldSet(this, _tooltip, undefined);
         __classPrivateFieldSet(this, _actions, []);
-        __classPrivateFieldSet(this, _task, undefined);
         __classPrivateFieldSet(this, _tooltipDataCls, replacePrefix(TOOLTIP_DATA, prefix));
-        __classPrivateFieldSet(this, _hoverListener, new CuiHoverListener(element));
-        __classPrivateFieldGet(this, _hoverListener).setCallback(this.onHover.bind(this));
         __classPrivateFieldSet(this, _margin, 8);
         __classPrivateFieldSet(this, _positionCalculator, new CuiBasePositionCalculator());
         __classPrivateFieldGet(this, _positionCalculator).setPreferred("top-center");
+        __classPrivateFieldSet(this, _task, new CuiTaskRunner(this.args.timeout, false, this.removeTooltip.bind(this)));
+        this.addModule(new CuiHoverModule(this.element, this.onHover.bind(this)));
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
-            __classPrivateFieldGet(this, _hoverListener).attach();
             this.getDataFromArgs();
-            __classPrivateFieldSet(this, _task, new CuiTaskRunner(this.args.timeout, false, this.removeTooltip.bind(this)));
+            __classPrivateFieldGet(this, _task).setTimeout(this.args.timeout);
             return true;
         });
     }
     onRefresh() {
         return __awaiter(this, void 0, void 0, function* () {
             this.getDataFromArgs();
-            if (__classPrivateFieldGet(this, _task))
-                __classPrivateFieldGet(this, _task).setTimeout(this.args.timeout);
+            __classPrivateFieldGet(this, _task).setTimeout(this.args.timeout);
             return true;
         });
     }
     onRemove() {
         return __awaiter(this, void 0, void 0, function* () {
             this.removeTooltip();
-            __classPrivateFieldGet(this, _hoverListener).detach();
             return true;
         });
     }
@@ -129,8 +124,7 @@ export class CuiTooltipHandler extends CuiHandlerBase {
                 __classPrivateFieldGet(this, _tooltip).style.top = `${y}px`;
                 __classPrivateFieldGet(this, _tooltip).style.left = `${x}px`;
                 this.toggleActions();
-                if (__classPrivateFieldGet(this, _task))
-                    __classPrivateFieldGet(this, _task).start();
+                __classPrivateFieldGet(this, _task).start();
             }
             catch (e) {
                 this.logError(e.message, "createTooltip", e);
@@ -138,14 +132,14 @@ export class CuiTooltipHandler extends CuiHandlerBase {
         });
     }
     removeTooltip() {
-        if (__classPrivateFieldGet(this, _task))
-            __classPrivateFieldGet(this, _task).stop();
+        __classPrivateFieldGet(this, _task).stop();
+        if (!is(__classPrivateFieldGet(this, _tooltip))) {
+            return;
+        }
         this.mutate(() => {
-            if (is(__classPrivateFieldGet(this, _tooltip))) {
-                //@ts-ignore already checked
-                __classPrivateFieldGet(this, _tooltip).remove();
-                __classPrivateFieldSet(this, _tooltip, undefined);
-            }
+            //@ts-ignore already checked
+            __classPrivateFieldGet(this, _tooltip).remove();
+            __classPrivateFieldSet(this, _tooltip, undefined);
         });
     }
     getDataFromArgs() {
@@ -163,4 +157,4 @@ export class CuiTooltipHandler extends CuiHandlerBase {
         });
     }
 }
-_hoverListener = new WeakMap(), _tooltip = new WeakMap(), _margin = new WeakMap(), _positionCalculator = new WeakMap(), _tooltipDataCls = new WeakMap(), _actions = new WeakMap(), _task = new WeakMap();
+_tooltip = new WeakMap(), _margin = new WeakMap(), _positionCalculator = new WeakMap(), _tooltipDataCls = new WeakMap(), _actions = new WeakMap(), _task = new WeakMap();

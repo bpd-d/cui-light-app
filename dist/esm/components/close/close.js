@@ -26,6 +26,7 @@ import { is, getParentCuiElement, are } from "../../core/utils/functions";
 import { CuiActionsListFactory } from "../../core/utils/actions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiClickModule } from "../modules/click/click";
 export class CuiCloseArgs extends CuiAutoParseArgs {
     constructor(timeout) {
         super({
@@ -34,6 +35,7 @@ export class CuiCloseArgs extends CuiAutoParseArgs {
         this.target = "";
         this.action = "";
         this.prevent = false;
+        this.stopPropagation = false;
         this.state = "";
         this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
     }
@@ -57,11 +59,10 @@ export class CuiCloseHandler extends CuiHandlerBase {
         super("CuiCloseHandler", element, attribute, new CuiCloseArgs(utils.setup.animationTime), utils);
         _eventId.set(this, void 0);
         __classPrivateFieldSet(this, _eventId, null);
-        this.onClick = this.onClick.bind(this);
+        this.addModule(new CuiClickModule(this.element, this.args, this.onClose.bind(this)));
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.element.addEventListener('click', this.onClick);
             __classPrivateFieldSet(this, _eventId, this.onEvent(EVENTS.CLOSE, this.onClose.bind(this)));
             return true;
         });
@@ -73,15 +74,9 @@ export class CuiCloseHandler extends CuiHandlerBase {
     }
     onRemove() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.element.removeEventListener('click', this.onClick);
             this.detachEvent(EVENTS.CLOSE, __classPrivateFieldGet(this, _eventId));
             return true;
         });
-    }
-    onClick(ev) {
-        this.onClose(ev);
-        if (this.args.prevent)
-            ev.preventDefault();
     }
     onClose(ev) {
         if (this.isLocked) {
@@ -95,7 +90,8 @@ export class CuiCloseHandler extends CuiHandlerBase {
         this.isLocked = true;
         //@ts-ignore target is checked
         this.run(target).then((result) => {
-            this.onActionFinish(ev, result);
+            if (result)
+                this.emitClose(ev);
         }).catch((e) => {
             this._log.exception(e);
         }).finally(() => {
@@ -112,31 +108,31 @@ export class CuiCloseHandler extends CuiHandlerBase {
             else if (are(this.args.action, this.args.timeout)) {
                 let actions = CuiActionsListFactory.get(this.args.action);
                 return this.actionsHelper.performActions(target, actions, this.args.timeout, () => {
-                    this.removeActiveClass(target);
+                    this.helper.removeClass(this.activeClassName, target);
                 });
             }
             else {
-                this.removeActiveClassAsync(target);
+                this.helper.removeClassesAs(target, this.activeClassName);
                 return true;
             }
         });
     }
-    removeActiveClass(target) {
-        if (is(target) && this.helper.hasClass(this.activeClassName, target)) {
-            this.helper.removeClass(this.activeClassName, target);
-        }
-    }
-    removeActiveClassAsync(target) {
-        this.fetch(() => {
-            if (is(target) && this.helper.hasClass(this.activeClassName, target)) {
-                this.helper.removeClassesAs(target, this.activeClassName);
-            }
-        });
-    }
-    onActionFinish(ev, shouldEmit) {
-        if (shouldEmit)
-            this.emitClose(ev);
-    }
+    // private removeActiveClass(target: Element) {
+    //     if (is(target) && this.helper.hasClass(this.activeClassName, target)) {
+    //         this.helper.removeClass(this.activeClassName, target);
+    //     }
+    // }
+    // private removeActiveClassAsync(target: Element) {
+    //     this.fetch(() => {
+    //         if (is(target) && this.helper.hasClass(this.activeClassName, target)) {
+    //             this.helper.removeClassesAs(target, this.activeClassName);
+    //         }
+    //     })
+    // }
+    // private onActionFinish(ev: MouseEvent, shouldEmit: boolean) {
+    //     if (shouldEmit)
+    //         this.emitClose(ev);
+    // }
     getTarget() {
         var _a;
         if (!is(this.args.target)) {
@@ -146,7 +142,6 @@ export class CuiCloseHandler extends CuiHandlerBase {
     }
     emitClose(ev) {
         this.emitEvent(EVENTS.CLOSED, {
-            timestamp: Date.now(),
             state: this.args.state,
             event: ev
         });

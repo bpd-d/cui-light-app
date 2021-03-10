@@ -11,6 +11,7 @@ import { CuiTaskRunner, ICuiTask } from "../../core/utils/task";
 import { ICuiComponentAction, CuiActionsListFactory } from "../../core/utils/actions";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 import { GlobalClickEvent } from "src/core/models/events";
+import { CuiHoverModule } from "../modules/hover/hover";
 
 const bodyClass = '{prefix}-drop-open';
 const DROP_POSITION = "{prefix}-drop-position-";
@@ -43,7 +44,7 @@ export class CuiDropArgs extends CuiAutoParseArgs {
         this.mode = "click";
         this.trigger = joinWithScopeSelector(DROP_DEFAULT_TRIGGER);
         this.autoClose = false;
-        this.outClose = false;
+        this.outClose = true;
         this.prevent = false;
         this.pos = "";
         this.action = replacePrefix(DROP_DEFAULT_ANIMATION_CLS, prefix);
@@ -74,7 +75,7 @@ export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiO
     #bodyClass: string;
     #attribute: string;
     #triggerHoverListener: CuiHoverListener | undefined;
-    #hoverListener: CuiHoverListener;
+
     #trigger: Element;
     #windowClickEventId: string | null;
     #openEventId: string | null;
@@ -88,8 +89,6 @@ export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiO
         this.#attribute = attribute;
         this.#prefix = prefix;
         this.#bodyClass = replacePrefix(bodyClass, prefix);
-        this.#hoverListener = new CuiHoverListener(this.element);
-        this.#hoverListener.setCallback(this.onElementHover.bind(this))
         this.#windowClickEventId = null;
         this.#openEventId = null;
         this.#closeEventId = null;
@@ -106,18 +105,23 @@ export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiO
         if (!utils.isPlugin("click-plugin")) {
             this.logWarning("Window click plugin is not available: outClose will not work")
         }
+
+        this.addModule(new CuiHoverModule(this.element, this.onElementHover.bind(this)));
     }
 
     async onHandle(): Promise<boolean> {
         this.#trigger = this.acquireTrigger();
         this.#triggerHoverListener = new CuiHoverListener(this.#trigger);
-        this.setTriggerEvent();
+        this.#triggerHoverListener.setCallback(this.onHoverEvent.bind(this));
+        this.#triggerHoverListener.attach();
+        //@ts-ignore
+        this.#trigger.addEventListener('click', this.onTriggerClick)
+        // this.setTriggerEvent();
         this.#openEventId = this.onEvent(EVENTS.OPEN, this.open.bind(this));
         this.#closeEventId = this.onEvent(EVENTS.CLOSE, this.close.bind(this));
-        this.#positionCalculator.setStatic(this.args.pos);
-        this.#positionCalculator.setMargin(this.args.margin);
-        this.#autoTask = new CuiTaskRunner(this.args.timeout, false, this.close.bind(this));
-        this.#actions = CuiActionsListFactory.get(this.args.action);
+
+        this.setDataFromArgs();
+
         this.mutate(() => {
             AriaAttributes.setAria(this.element, 'aria-dropdown', "");
         })
@@ -125,28 +129,38 @@ export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiO
         return true;
     }
     async onRefresh(): Promise<boolean> {
-        if (this.#triggerHoverListener && this.#triggerHoverListener.isAttached()) {
-            this.#triggerHoverListener.detach();
-        } else if (this.prevArgs && this.prevArgs.mode === 'click') {
-            //@ts-ignore 
-            this.#trigger.removeEventListener('click', this.onTriggerClick)
+        if (this.prevArgs && this.args.trigger !== this.prevArgs.trigger) {
+            if (this.#triggerHoverListener && this.#triggerHoverListener.isAttached()) {
+                this.#triggerHoverListener.detach();
+            } else if (this.prevArgs && this.prevArgs.mode === 'click') {
+                //@ts-ignore 
+                this.#trigger.removeEventListener('click', this.onTriggerClick)
+            }
+            this.#trigger = this.acquireTrigger();
+            this.#triggerHoverListener = new CuiHoverListener(this.#trigger);
+            this.#triggerHoverListener.setCallback(this.onHoverEvent.bind(this));
+            this.#triggerHoverListener.attach();
+            //@ts-ignore
+            this.#trigger.addEventListener('click', this.onTriggerClick)
         }
 
-        this.#trigger = this.acquireTrigger();
-        this.#triggerHoverListener = new CuiHoverListener(this.#trigger);
-        this.setTriggerEvent();
-        this.#positionCalculator.setStatic(this.args.pos);
-        this.#positionCalculator.setMargin(this.args.margin);
-        this.#actions = CuiActionsListFactory.get(this.args.action);
-        this.#autoTask.setTimeout(this.args.timeout);
+
+        this.setDataFromArgs();
         return true;
     }
     async onRemove(): Promise<boolean> {
+
         this.detachEvent(EVENTS.OPEN, this.#openEventId);
         this.detachEvent(EVENTS.CLOSE, this.#closeEventId);
         return true;
     }
 
+    private setDataFromArgs() {
+        this.#positionCalculator.setStatic(this.args.pos);
+        this.#positionCalculator.setMargin(this.args.margin);
+        this.#autoTask.setTimeout(this.args.timeout);
+        this.#actions = CuiActionsListFactory.get(this.args.action);
+    }
     /**
     * Api Method open
     */
@@ -160,10 +174,10 @@ export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiO
         if (this.isAnyActive()) {
             await this.findAndCloseOpenedDrop();
         }
-        this.isLocked = true;
+
         this._log.debug(`Drop ${this.cuid}`, 'open');
         this.onOpen();
-        this.isLocked = false;
+
         return true
     }
 
@@ -174,30 +188,19 @@ export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiO
         if (this.checkLockAndWarn("close") || !this.isActive()) {
             return false;
         }
-        this.isLocked = true;
         this.logInfo(`Drop ${this.cuid}`, 'close');
         this.onClose();
-        this.detachEvent(EVENTS.WINDOW_CLICK, this.#windowClickEventId);
         this.emitEvent(EVENTS.CLOSED, {
             timestamp: Date.now()
         })
-        this.#hoverListener.detach();
-        this.isLocked = false;
         return true;
     }
 
-
-    onClose() {
-        this.mutate(() => {
-            this.helper.removeClass(this.activeClassName, this.element)
-            this.helper.removeClass(this.#bodyClass, document.body)
-            this.toggleActions();
-            this.helper.removeClass(this.#posClass, this.element);
-            AriaAttributes.setAria(this.element, 'aria-expanded', 'false')
-        })
-    }
-
+    /**
+     * Set of actions performed during drop open
+     */
     onOpen() {
+        this.isLocked = true;
         this.helper.setClass(this.activeClassName, this.element);
         this.mutate(() => {
             const box = this.#trigger.getBoundingClientRect();
@@ -213,19 +216,32 @@ export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiO
                 this.emitEvent(EVENTS.OPENED, {
                     timestamp: Date.now()
                 })
-                this.#hoverListener.attach();
+
                 this.runAutoCloseTask();
 
-                if (this.args.outClose) {
-                    this.#windowClickEventId = this.onEvent(EVENTS.WINDOW_CLICK, this.onWindowClick.bind(this));
-                }
-
                 AriaAttributes.setAria(this.element, 'aria-expanded', 'true')
+                this.#windowClickEventId = this.onEvent(EVENTS.WINDOW_CLICK, this.onWindowClick.bind(this));
             } catch (e) {
                 this._log.exception(e)
+            } finally {
+                this.isLocked = false;
             }
+        })
+    }
 
-
+    /**
+        * Set of actions performed during drop close
+        */
+    onClose() {
+        this.isLocked = true;
+        this.mutate(() => {
+            this.helper.removeClass(this.activeClassName, this.element)
+            this.helper.removeClass(this.#bodyClass, document.body)
+            this.toggleActions();
+            this.helper.removeClass(this.#posClass, this.element);
+            AriaAttributes.setAria(this.element, 'aria-expanded', 'false')
+            this.detachEvent(EVENTS.WINDOW_CLICK, this.#windowClickEventId);
+            this.isLocked = false;
         })
     }
 
@@ -234,6 +250,9 @@ export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiO
      * @param ev 
      */
     private onWindowClick(ev: GlobalClickEvent) {
+        if (!this.args.outClose) {
+            return;
+        }
         if (!this.element.contains((ev.ev.target as Node))) {
             this.close();
         }
@@ -266,13 +285,13 @@ export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiO
      * @param ev 
      */
     private onTriggerClick(ev: MouseEvent) {
+        if (this.args.mode !== 'click') {
+            return;
+        }
         if (this.isActive()) {
             this.close();
         } else {
             this.open();
-        }
-        if (this.args.prevent) {
-            ev.preventDefault();
         }
     }
 
@@ -281,11 +300,11 @@ export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiO
     * @param ev
     */
     private onHoverEvent(ev: CuiHoverEvent) {
+        if (this.args.mode !== 'hover') {
+            return;
+        }
         if (ev.isHovering && !this.isActive()) {
             this.open();
-        }
-        if (this.args.prevent) {
-            ev.event.preventDefault();
         }
     }
 
@@ -302,18 +321,18 @@ export class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiO
         }
     }
 
-    /**
-     * Sets event on trigger button
-     */
-    private setTriggerEvent() {
-        if (this.args.mode === 'hover' && this.#triggerHoverListener) {
-            this.#triggerHoverListener.setCallback(this.onHoverEvent.bind(this));
-            this.#triggerHoverListener.attach();
-        } else {
-            //@ts-ignore
-            this.#trigger.addEventListener('click', this.onTriggerClick)
-        }
-    }
+    // /**
+    //  * Sets event on trigger button
+    //  */
+    // private setTriggerEvent() {
+    //     if (this.args.mode === 'hover' && this.#triggerHoverListener) {
+    //         this.#triggerHoverListener.setCallback(this.onHoverEvent.bind(this));
+    //         this.#triggerHoverListener.attach();
+    //     } else {
+    //         //@ts-ignore
+    //         this.#trigger.addEventListener('click', this.onTriggerClick)
+    //     }
+    // }
 
     /**
      * Runs auto-close task on opened element

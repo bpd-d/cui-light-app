@@ -9,8 +9,9 @@ import { ICuiMoveData } from "../../core/listeners/move";
 import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { replacePrefix, is, are, joinWithScopeSelector } from "../../core/utils/functions";
-import { SCOPE_SELECTOR, EVENTS, CLASSES } from "../../core/utils/statics";
+import { EVENTS, CLASSES } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { SortEvent } from "src/core/models/events";
 
 const SORTABLE_IS_MOVING = "{prefix}-moving";
 const DEFAULT_SELECTOR = " > *";
@@ -82,18 +83,7 @@ export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
         this.#previewCls = replacePrefix(SORTABLE_PREVIEW_CLS, prefix);
         this.#detector = new CuiSimpleDragOverDetector();
         this.#animation = new CuiSwipeAnimationEngine();
-        this.#animation.setOnFinish(() => {
-            let item = this.#currentTarget;
-            let idx = this.#currentIdx;
-            this.stopMovementPrep();
-
-            this.utils.bus.emit(EVENTS.MOVE_LOCK, null, false);
-            this.emitEvent(EVENTS.SORTED, {
-                item: item,
-                index: idx,
-                timestamp: new Date()
-            })
-        })
+        this.#animation.setOnFinish(this.onSortAnimationFinish.bind(this));
     }
 
     async onHandle(): Promise<boolean> {
@@ -143,10 +133,9 @@ export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
         }
         this.utils.bus.emit(EVENTS.MOVE_LOCK, null, true);
         this.startMovementPrep(data);
-        this.emitEvent(EVENTS.SORT_START, {
-            item: this.#currentTarget,
+        this.emitEvent<SortEvent>(EVENTS.SORT_START, {
+            target: this.#currentTarget,
             index: this.#currentIdx,
-            timestamp: new Date()
         })
         return true;
     }
@@ -291,5 +280,15 @@ export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
                 unit: "px"
             }
         }
+    }
+
+    private onSortAnimationFinish() {
+        this.stopMovementPrep();
+
+        this.utils.bus.emit(EVENTS.MOVE_LOCK, null, false);
+        this.emitEvent<SortEvent>(EVENTS.SORTED, {
+            target: this.#currentTarget,
+            index: this.#currentIdx,
+        })
     }
 }

@@ -522,3 +522,15 @@ export function measure(name) {
     };
 }
 ;
+export function getChildSelectorFromScoped(scopedSelector) {
+    const split = scopedSelector.split(">");
+    return split[split.length - 1].trim();
+}
+export function applyMixins(derivedCtor, constructors) {
+    constructors.forEach((baseCtor) => {
+        Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
+            Object.defineProperty(derivedCtor.prototype, name, Object.getOwnPropertyDescriptor(baseCtor.prototype, name) ||
+                Object.create(null));
+        });
+    });
+}

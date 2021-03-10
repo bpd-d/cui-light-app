@@ -40,4 +40,5 @@ export declare class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> 
     private setCurrentPosition;
     private insertElement;
     private getFinishAnimation;
+    private onSortAnimationFinish;
 }

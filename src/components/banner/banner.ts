@@ -73,9 +73,6 @@ export class CuiBannerHandler extends CuiInteractableHandler<CuiBannerArgs> {
     }
 
     onInit(): void {
-        if (!this.isActive()) {
-            this.helper.setClass(this.activeClassName, this.element);
-        }
     }
 
     onUpdate(): void {

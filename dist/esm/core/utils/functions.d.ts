@@ -159,3 +159,5 @@ export declare function splitColon(text: string): string[];
 export declare function getEnumOrDefault<T>(value: T, defVal: T, ...values: T[]): T;
 export declare function joinWithScopeSelector(value: string): string;
 export declare function measure(name?: string): (target: Object, propertyKey: string, descriptor: PropertyDescriptor) => PropertyDescriptor;
+export declare function getChildSelectorFromScoped(scopedSelector: string): string;
+export declare function applyMixins(derivedCtor: any, constructors: any[]): void;

@@ -4,7 +4,7 @@
 
 import { ICuiApiHandler } from "src/core/api/interfaces";
 
-export const CUI_LIGHT_VERSION = "0.4.1";
+export const CUI_LIGHT_VERSION = "0.4.2";
 global {
     interface Window {
         cuiInit: CuiInit;
@@ -382,6 +382,7 @@ export type CuiColorSetType = 'light' | 'dark' | 'accent' | 'secondary' | 'succe
 export type CuiClearCacheType = 'element' | "collection" | "all";
 export type CuiLightMode = 'light' | 'dark';
 export type CuiWindowSize = 'small' | 'medium' | 'large' | 'xlarge' | "none";
+export type Constructor<T = {}> = new (...args: any[]) => T;
 
 export interface ICuiDocumentStyleAppender {
     append(style: string): boolean;

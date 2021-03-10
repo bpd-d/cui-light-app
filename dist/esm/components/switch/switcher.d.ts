@@ -1,10 +1,15 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
+import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-export declare class CuiSwitcherArgs extends CuiAutoParseArgs implements ICuiParsable {
+import { CuiClickableArgs } from "src/core/models/arguments";
+export declare class CuiSwitcherArgs extends CuiAutoParseArgs implements CuiClickableArgs {
     target: string;
     index: string;
+    prevent: boolean;
+    stopPropagation: boolean;
+    targets: string;
+    isList: boolean;
     constructor();
 }
 export declare class CuiSwitcherComponent implements ICuiComponent {
@@ -14,15 +19,16 @@ export declare class CuiSwitcherComponent implements ICuiComponent {
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
 export declare class CuiSwitcherHandler extends CuiHandlerBase<CuiSwitcherArgs> {
-    #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
-    getTarget(): void;
-    setEvents(): void;
-    removeEvents(): void;
+    /**
+     * Sets current switcher target value
+     *
+     */
+    getTargetCuid(): string | null;
     onClickEvent(ev: MouseEvent): void;
-    onListItemClick(index: number, ev: MouseEvent): void;
-    onClick(index: any): void;
+    handleItemClick(ev: MouseEvent, targetCuid: string): void;
+    handleListClick(ev: MouseEvent, targetCuid: string): void;
 }

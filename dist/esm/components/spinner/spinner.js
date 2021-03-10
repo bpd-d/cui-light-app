@@ -110,7 +110,9 @@ export class CuiSpinnerHandler extends CuiHandlerBase {
                 this.helper.removeClassesAs(this.element, __classPrivateFieldGet(this, _animationPauseClass));
             }
         });
-        this.emitEvent(EVENTS.PAUSED, flag);
+        this.emitEvent(EVENTS.PAUSED, {
+            paused: flag
+        });
     }
 }
 _pauseEventId = new WeakMap(), _animationPauseClass = new WeakMap();

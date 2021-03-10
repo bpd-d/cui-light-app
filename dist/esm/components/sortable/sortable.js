@@ -88,17 +88,7 @@ export class CuiSortableHandler extends CuiHandlerBase {
         __classPrivateFieldSet(this, _previewCls, replacePrefix(SORTABLE_PREVIEW_CLS, prefix));
         __classPrivateFieldSet(this, _detector, new CuiSimpleDragOverDetector());
         __classPrivateFieldSet(this, _animation, new CuiSwipeAnimationEngine());
-        __classPrivateFieldGet(this, _animation).setOnFinish(() => {
-            let item = __classPrivateFieldGet(this, _currentTarget);
-            let idx = __classPrivateFieldGet(this, _currentIdx);
-            this.stopMovementPrep();
-            this.utils.bus.emit(EVENTS.MOVE_LOCK, null, false);
-            this.emitEvent(EVENTS.SORTED, {
-                item: item,
-                index: idx,
-                timestamp: new Date()
-            });
-        });
+        __classPrivateFieldGet(this, _animation).setOnFinish(this.onSortAnimationFinish.bind(this));
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -153,9 +143,8 @@ export class CuiSortableHandler extends CuiHandlerBase {
         this.utils.bus.emit(EVENTS.MOVE_LOCK, null, true);
         this.startMovementPrep(data);
         this.emitEvent(EVENTS.SORT_START, {
-            item: __classPrivateFieldGet(this, _currentTarget),
+            target: __classPrivateFieldGet(this, _currentTarget),
             index: __classPrivateFieldGet(this, _currentIdx),
-            timestamp: new Date()
         });
         return true;
     }
@@ -288,6 +277,14 @@ export class CuiSortableHandler extends CuiHandlerBase {
                 unit: "px"
             }
         };
+    }
+    onSortAnimationFinish() {
+        this.stopMovementPrep();
+        this.utils.bus.emit(EVENTS.MOVE_LOCK, null, false);
+        this.emitEvent(EVENTS.SORTED, {
+            target: __classPrivateFieldGet(this, _currentTarget),
+            index: __classPrivateFieldGet(this, _currentIdx),
+        });
     }
 }
 _dragHandler = new WeakMap(), _triggers = new WeakMap(), _targets = new WeakMap(), _currentTarget = new WeakMap(), _currentIdx = new WeakMap(), _preview = new WeakMap(), _movingCls = new WeakMap(), _detector = new WeakMap(), _currentBefore = new WeakMap(), _animation = new WeakMap(), _previewCls = new WeakMap();

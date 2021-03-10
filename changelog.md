@@ -1,5 +1,9 @@
 # bpd cUI Light changelog
 
+# [0.4.2] 2020-03-08
+* [Added] Modules to components - they will attach to handler lifecycle
+* [Added] Mixins implementation to improve package size
+* [Changed] Components to work with modules - small adjustments
 # [0.4.1] 2021-03-05
 * [Fixed] Small adjustments
 # [0.4.0] 2021-03-05

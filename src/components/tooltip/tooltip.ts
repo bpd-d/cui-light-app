@@ -9,6 +9,7 @@ import { CuiUtils } from "../../core/models/utils";
 import { ICuiComponentAction, CuiActionsListFactory } from "../../core/utils/actions";
 import { replacePrefix, is } from "../../core/utils/functions";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiHoverModule } from "../modules/hover/hover";
 
 const TOOLTIP_ACTION = ".{prefix}-animation-tooltip-in";
 const TOOLTIP_DATA = "{prefix}-tooltip-data";
@@ -54,43 +55,39 @@ export class CuiTooltipComponent implements ICuiComponent {
 
 export class CuiTooltipHandler extends CuiHandlerBase<CuiTooltipArgs> {
 
-    #hoverListener: CuiHoverListener;
     #tooltip: HTMLElement | undefined;
     #margin: number;
     #positionCalculator: ICuiPositionCalculator;
     #tooltipDataCls: string;
     #actions: ICuiComponentAction[];
-    #task: ICuiTask | undefined;
+    #task: ICuiTask;
     constructor(element: HTMLElement, attribute: string, utils: CuiUtils, prefix: string) {
         super("CuiTooltipHandler", element, attribute, new CuiTooltipArgs(prefix), utils);
         this.#tooltip = undefined;
         this.#actions = [];
-        this.#task = undefined;
+
         this.#tooltipDataCls = replacePrefix(TOOLTIP_DATA, prefix);
-        this.#hoverListener = new CuiHoverListener(element);
-        this.#hoverListener.setCallback(this.onHover.bind(this));
         this.#margin = 8;
         this.#positionCalculator = new CuiBasePositionCalculator();
         this.#positionCalculator.setPreferred("top-center");
+        this.#task = new CuiTaskRunner(this.args.timeout, false, this.removeTooltip.bind(this));
+        this.addModule(new CuiHoverModule(this.element, this.onHover.bind(this)));
     }
 
     async onHandle(): Promise<boolean> {
-        this.#hoverListener.attach();
         this.getDataFromArgs();
-        this.#task = new CuiTaskRunner(this.args.timeout, false, this.removeTooltip.bind(this));
+        this.#task.setTimeout(this.args.timeout);
         return true;
     }
 
     async onRefresh(): Promise<boolean> {
         this.getDataFromArgs();
-        if (this.#task)
-            this.#task.setTimeout(this.args.timeout);
+        this.#task.setTimeout(this.args.timeout);
         return true;
     }
 
     async onRemove(): Promise<boolean> {
         this.removeTooltip();
-        this.#hoverListener.detach();
         return true;
     }
 
@@ -122,8 +119,7 @@ export class CuiTooltipHandler extends CuiHandlerBase<CuiTooltipArgs> {
                 this.#tooltip.style.top = `${y}px`;
                 this.#tooltip.style.left = `${x}px`;
                 this.toggleActions();
-                if (this.#task)
-                    this.#task.start();
+                this.#task.start();
             } catch (e) {
                 this.logError(e.message, "createTooltip", e);
             }
@@ -132,14 +128,14 @@ export class CuiTooltipHandler extends CuiHandlerBase<CuiTooltipArgs> {
     }
 
     private removeTooltip() {
-        if (this.#task)
-            this.#task.stop();
+        this.#task.stop();
+        if (!is(this.#tooltip)) {
+            return
+        }
         this.mutate(() => {
-            if (is(this.#tooltip)) {
-                //@ts-ignore already checked
-                this.#tooltip.remove();
-                this.#tooltip = undefined;
-            }
+            //@ts-ignore already checked
+            this.#tooltip.remove();
+            this.#tooltip = undefined;
         })
     }
 

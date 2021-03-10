@@ -30,6 +30,7 @@ export declare class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implemen
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
+    private setDataFromArgs;
     /**
     * Api Method open
     */
@@ -38,8 +39,14 @@ export declare class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implemen
      * Api Method close
      */
     close(): Promise<boolean>;
-    onClose(): void;
+    /**
+     * Set of actions performed during drop open
+     */
     onOpen(): void;
+    /**
+        * Set of actions performed during drop close
+        */
+    onClose(): void;
     /**
      * Event invoked when window is clicked
      * @param ev
@@ -65,10 +72,6 @@ export declare class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implemen
      * @param ev
      */
     private onElementHover;
-    /**
-     * Sets event on trigger button
-     */
-    private setTriggerEvent;
     /**
      * Runs auto-close task on opened element
      */

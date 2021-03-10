@@ -1,8 +1,10 @@
-import { IUIInteractionProvider, CuiContext, ICuiComponentHandler, ICuiParsable, ICuiOpenable, ICuiClosable } from "../models/interfaces";
+import { IUIInteractionProvider, CuiContext, ICuiComponentHandler, ICuiParsable, ICuiOpenable, ICuiClosable, CuiHTMLElement } from "../models/interfaces";
 import { CuiUtils } from "../models/utils";
 import { CuiActionsHelper } from "../helpers/helpers";
 import { ICuiComponentAction } from "../utils/actions";
 import { ICuiDevelopmentTool } from "../development/interfaces";
+import { EventBase } from "../models/events";
+import { ICuiHandlerModule } from "./modules/interfaces";
 export interface CuiChildMutation {
     removed: Node[];
     added: Node[];
@@ -40,7 +42,7 @@ export declare class CuiComponentBase implements CuiContext {
      * @param event Event name
      * @param data Data to emit
      */
-    emitEvent<T>(event: string, data: T): void;
+    emitEvent<T extends EventBase>(event: string, data: T, source?: CuiHTMLElement): void;
     onEvent<T>(event: string, callback: (t: T) => void): string | null;
     detachEvent(event: string, id: string | null): void;
     getId(): string;
@@ -76,6 +78,7 @@ export declare abstract class CuiHandlerBase<T extends ICuiParsable> extends Cui
     * @param callback - optional - callback to be executed in mutation on action removal, e.g. additional DOM changes on element
     */
     performAction(actions: ICuiComponentAction[], timeout: number, onFinish: () => void, callback?: () => void): Promise<boolean>;
+    addModule(module: ICuiHandlerModule<T>): void;
     private checkLock;
     private performLifecycleOp;
     abstract onHandle(): Promise<boolean>;

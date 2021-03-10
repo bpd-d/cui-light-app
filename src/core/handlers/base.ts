@@ -1,4 +1,4 @@
-import { IUIInteractionProvider, CuiContext, ICuiComponentHandler, ICuiParsable, ICuiOpenable, ICuiClosable } from "../models/interfaces";
+import { IUIInteractionProvider, CuiContext, ICuiComponentHandler, ICuiParsable, ICuiOpenable, ICuiClosable, CuiHTMLElement } from "../models/interfaces";
 import { CuiUtils } from "../models/utils";
 import { ICuiComponentMutationObserver, CuiComponentMutationHandler } from "../observers/mutations";
 import { AriaAttributes } from "../utils/aria";
@@ -8,7 +8,9 @@ import { is, getActiveClass, clone } from "../utils/functions";
 import { EVENTS } from "../utils/statics";
 import { ICuiDevelopmentTool } from "../development/interfaces";
 import { CuiDevtoolFactory } from "../development/factory";
-import { KeyDownEvent } from "../models/events";
+import { EventBase, KeyDownEvent } from "../models/events";
+import { CuiModulesHandler } from "./modules/handler";
+import { ICuiHandlerModule } from "./modules/interfaces";
 
 export interface CuiChildMutation {
     removed: Node[];
@@ -109,10 +111,16 @@ export class CuiComponentBase implements CuiContext {
      * @param event Event name
      * @param data Data to emit
      */
-    emitEvent<T>(event: string, data: T) {
+    emitEvent<T extends EventBase>(event: string, data: T, source?: CuiHTMLElement) {
         if (!this.#emittedEvents.includes(event))
             this.#emittedEvents.push(event);
-        this.utils.bus.emit(event, this.cuid, data)
+
+        this.utils.bus.emit(event, this.cuid, {
+            ...data,
+            name: event,
+            timestamp: Date.now(),
+            source: source ?? this.element,
+        })
     }
 
     onEvent<T>(event: string, callback: (t: T) => void): string | null {
@@ -185,6 +193,7 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
     isInitialized: boolean;
     actionsHelper: CuiActionsHelper;
     #attribute: string;
+    #moduleHandler: CuiModulesHandler<T>;
     constructor(componentName: string, element: HTMLElement, attribute: string, args: T, utils: CuiUtils) {
         super(componentName, element, utils);
         this.args = args;
@@ -192,6 +201,7 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
         this.prevArgs = undefined;
         this.isInitialized = false;
         this.#attribute = attribute;
+        this.#moduleHandler = new CuiModulesHandler();
     }
 
     async handle(args: any): Promise<boolean> {
@@ -200,8 +210,7 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
             this.logWarning("Trying to initialize handler again", 'handle');
             return false;
         }
-        if (this.isLocked) {
-            this.logWarning("Handler is locked", 'handle');
+        if (!this.checkLock("handle")) {
             return false;
         }
         this.isLocked = true;
@@ -212,6 +221,7 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
         }
 
         this.logInfo("Init", 'handle');
+        await this.#moduleHandler.init(args);
         return this.performLifecycleOp("onHandle", this.onHandle(), () => {
             this.isLocked = false; this.isInitialized = true;
         });
@@ -223,7 +233,7 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
             this.logError("Cannot update not initialized component", 'refresh');
             return false;
         }
-        if (!this.checkLock()) {
+        if (!this.checkLock("refresh")) {
             return false;
         }
         this.isLocked = true;
@@ -231,6 +241,7 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
         this.prevArgs = clone(this.args);
         this.args.parse(args);
         this._log.debug("Component update", 'refresh');
+        await this.#moduleHandler.update(args);
         return this.performLifecycleOp("onRefresh", this.onRefresh(), () => {
             this.isLocked = false;
         });
@@ -242,10 +253,11 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
             this.logError("Cannot update not initialized component", 'destroy');
             return false;
         }
-        if (!this.checkLock()) {
+        if (!this.checkLock('destroy')) {
             return false;
         }
         this.isLocked = true;
+        await this.#moduleHandler.destroy();
         return this.performLifecycleOp("onRemove", this.onRemove(), () => {
             this.detachEmiitedEvents();
             this.removeFromDebug();
@@ -270,9 +282,13 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
         return false;
     }
 
-    private checkLock(): boolean {
+    addModule(module: ICuiHandlerModule<T>) {
+        this.#moduleHandler.add(module);
+    }
+
+    private checkLock(method?: string): boolean {
         if (this.isLocked) {
-            this.logWarning("Handler is locked", 'handle');
+            this.logWarning("Handler is locked", method);
             return false;
         }
         return true;
@@ -290,6 +306,8 @@ export abstract class CuiHandlerBase<T extends ICuiParsable> extends CuiComponen
         }
         return result
     }
+
+
     // Abstract
     abstract onHandle(): Promise<boolean>;
     abstract onRefresh(): Promise<boolean>;
@@ -367,7 +385,7 @@ export abstract class CuiInteractableHandler<T extends ICuiParsable & CuiInterac
         return this.performAction(this.#openAct, this.args.timeout, this.onActionFinish.bind(this, this.onAfterOpen.bind(this), EVENTS.OPENED, args), () => {
             this.helper.setClass(this.activeClassName, this.element)
             AriaAttributes.setAria(this.element, 'aria-expanded', 'true');
-        });;
+        });
     }
 
     async close(args?: any): Promise<boolean> {

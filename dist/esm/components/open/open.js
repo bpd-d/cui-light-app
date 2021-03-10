@@ -22,10 +22,11 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _prefix, _eventId;
 import { CuiHandlerBase } from "../../core/handlers/base";
-import { is, are, getFirstMatching } from "../../core/utils/functions";
+import { is, are, getParentCuiElement } from "../../core/utils/functions";
 import { CuiActionsListFactory } from "../../core/utils/actions";
-import { CUID_ATTRIBUTE, EVENTS } from "../../core/utils/statics";
+import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiClickModule } from "../modules/click/click";
 export class CuiOpenArgs extends CuiAutoParseArgs {
     constructor(timeout) {
         super({
@@ -35,6 +36,7 @@ export class CuiOpenArgs extends CuiAutoParseArgs {
         this.action = "";
         this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
         this.prevent = false;
+        this.stopPropagation = false;
         this.state = "";
     }
 }
@@ -57,11 +59,10 @@ export class CuiOpenHandler extends CuiHandlerBase {
         super("CuiOpenHandler", element, attribute, new CuiOpenArgs(utils.setup.animationTime), utils);
         _eventId.set(this, void 0);
         __classPrivateFieldSet(this, _eventId, null);
-        this.onClick = this.onClick.bind(this);
+        this.addModule(new CuiClickModule(this.element, this.args, this.onOpen.bind(this)));
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.element.addEventListener('click', this.onClick);
             __classPrivateFieldSet(this, _eventId, this.onEvent(EVENTS.OPEN, this.onOpen.bind(this)));
             return true;
         });
@@ -73,22 +74,15 @@ export class CuiOpenHandler extends CuiHandlerBase {
     }
     onRemove() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.element.removeEventListener('click', this.onClick);
             this.detachEvent(EVENTS.OPEN, __classPrivateFieldGet(this, _eventId));
             return true;
         });
-    }
-    onClick(ev) {
-        this.onOpen(ev);
-        if (this.args.prevent) {
-            ev.preventDefault();
-        }
     }
     onOpen(ev) {
         if (this.isLocked) {
             return;
         }
-        const target = this.getTarget(this.args.target);
+        const target = this.getTarget();
         if (!is(target)) {
             this._log.warning(`Target ${this.args.target} not found`, 'onClick');
             return;
@@ -97,7 +91,8 @@ export class CuiOpenHandler extends CuiHandlerBase {
         //@ts-ignore - target checked
         this.run(target).then((result) => {
             //@ts-ignore - target checked
-            this.activateTarget(ev, target, result);
+            if (result)
+                this.emitOpen(ev);
         }).catch((e) => {
             this._log.exception(e);
         }).finally(() => {
@@ -113,8 +108,7 @@ export class CuiOpenHandler extends CuiHandlerBase {
         return __awaiter(this, void 0, void 0, function* () {
             let cuiId = target.$cuid;
             if (is(cuiId)) {
-                this._log.debug("Open cUI component");
-                yield this.utils.bus.emit(EVENTS.OPEN, cuiId, this.args.state);
+                this.handleClickCui(cuiId);
                 return false;
             }
             else {
@@ -122,56 +116,47 @@ export class CuiOpenHandler extends CuiHandlerBase {
                 if (are(this.args.timeout, this.args.action)) {
                     this._log.debug("Perfrom an action");
                     let actions = CuiActionsListFactory.get(this.args.action);
-                    yield this.actionsHelper.performActions(target, actions, this.args.timeout, () => {
-                        this.setActiveClass(target);
+                    return this.actionsHelper.performActions(target, actions, this.args.timeout, () => {
+                        this.helper.setClass(this.activeClassName, target);
                     });
-                    return true;
                 }
-                this.setActiveClassAsync(target);
+                this.helper.setClassesAs(target, this.activeClassName);
                 return true;
             }
         });
     }
-    setActiveClass(target) {
-        if (is(target) && !this.helper.hasClass(this.activeClassName, target)) {
-            this.helper.setClass(this.activeClassName, target);
-        }
-    }
-    setActiveClassAsync(target) {
-        this.fetch(() => {
-            if (is(target) && !this.helper.hasClass(this.activeClassName, target)) {
-                this.helper.setClassesAs(target, this.activeClassName);
-            }
-        });
-    }
-    activateTarget(ev, target, shouldEmit) {
-        if (is(target) && !this.helper.hasClass(this.activeClassName, target)) {
-            this.helper.setClassesAs(target, this.activeClassName);
-        }
-        if (shouldEmit)
-            this.emitOpen(ev);
+    handleClickCui(cuid) {
+        this._log.debug("Open cUI component");
+        this.utils.bus.emit(EVENTS.OPEN, cuid, this.args.state);
+        return false;
     }
     emitOpen(ev) {
         this.emitEvent(EVENTS.OPENED, {
             event: ev,
-            state: this.args.state,
-            timestamp: Date.now()
+            state: this.args.state
         });
     }
-    getTarget(target) {
-        if (is(target)) {
-            //@ts-ignore - target checked
-            return document.querySelector(target);
+    // private getTarget(target: string) {
+    //     if (is(target)) {
+    //         //@ts-ignore - target checked
+    //         return document.querySelector(target);
+    //     }
+    //     let parent = this.element.parentElement;
+    //     //@ts-ignore - parent checked
+    //     let result = is(parent) ? parent.querySelectorAll(`[${CUID_ATTRIBUTE}]`) : undefined;
+    //     if (!result || result.length < 2) {
+    //         return undefined;
+    //     }
+    //     return getFirstMatching([...result], (el: Element) => {
+    //         return el !== this.element;
+    //     })
+    // }
+    getTarget() {
+        var _a;
+        if (!is(this.args.target)) {
+            return getParentCuiElement(this.element);
         }
-        let parent = this.element.parentElement;
-        //@ts-ignore - parent checked
-        let result = is(parent) ? parent.querySelectorAll(`[${CUID_ATTRIBUTE}]`) : undefined;
-        if (!result || result.length < 2) {
-            return undefined;
-        }
-        return getFirstMatching([...result], (el) => {
-            return el !== this.element;
-        });
+        return (_a = document.querySelector(this.args.target)) !== null && _a !== void 0 ? _a : getParentCuiElement(this.element);
     }
 }
 _eventId = new WeakMap();

@@ -5,6 +5,7 @@ import { EVENTS, ICONS } from "../../core/utils/statics";
 import { is, replacePrefix } from "../../core/utils/functions";
 import { IconBuilder } from "../../core/builders/icon";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiSpinnerEvent } from "../../core/models/events";
 
 export class CuiSpinnerArgs extends CuiAutoParseArgs implements ICuiParsable {
     spinner: string;
@@ -95,7 +96,9 @@ export class CuiSpinnerHandler extends CuiHandlerBase<CuiSpinnerArgs> {
                 this.helper.removeClassesAs(this.element, this.#animationPauseClass);
             }
         })
-        this.emitEvent(EVENTS.PAUSED, flag);
+        this.emitEvent<CuiSpinnerEvent>(EVENTS.PAUSED, {
+            paused: flag
+        });
     }
 
 

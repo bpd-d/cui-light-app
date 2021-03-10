@@ -4,17 +4,27 @@ import { CuiHandlerBase } from "../../core/handlers/base";
 import { ICuiComponentAction, CuiActionsListFactory } from "../../core/utils/actions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiClickModule } from "../modules/click/click";
+import { Mixin } from "../../core/utils/mixins";
+import { CuiClickableArgs } from "../../core/models/arguments";
 
-export class CuiToggleArgs extends CuiAutoParseArgs {
+export class CuiToggleArgs extends CuiAutoParseArgs implements CuiClickableArgs {
+
     target: string;
     action: string;
+    prevent: boolean;
+    stopPropagation: boolean;
+
     constructor() {
         super({
             main: "action"
         });
         this.action = "";
         this.target = "";
+        this.prevent = false;
+        this.stopPropagation = false;
     }
+
 }
 
 export class CuiToggleComponent implements ICuiComponent {
@@ -44,13 +54,12 @@ export class CuiToggleHandler extends CuiHandlerBase<CuiToggleArgs> {
         this.#utils = utils;
         this.#toggleEventId = null;
         this.#actions = [];
-        this.onClick = this.onClick.bind(this);
+        this.addModule(new CuiClickModule(element, this.args, this.onClick.bind(this)))
     }
 
     async onHandle(): Promise<boolean> {
         this.#target = this.getTarget();
         this.#actions = CuiActionsListFactory.get(this.args.action);
-        this.element.addEventListener('click', this.onClick);
         this.#toggleEventId = this.onEvent(EVENTS.TOGGLE, this.toggle.bind(this));
         return true;
     }
@@ -60,7 +69,6 @@ export class CuiToggleHandler extends CuiHandlerBase<CuiToggleArgs> {
         return true;
     }
     async onRemove(): Promise<boolean> {
-        this.element.removeEventListener('click', this.onClick);
         this.detachEvent(EVENTS.TOGGLE, this.#toggleEventId);
         return true;
     }
@@ -80,7 +88,6 @@ export class CuiToggleHandler extends CuiHandlerBase<CuiToggleArgs> {
 
     onClick(ev: MouseEvent) {
         this.toggle();
-        ev.preventDefault();
     }
 
     getTarget(): Element {

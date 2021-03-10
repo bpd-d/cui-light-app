@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
     if (!privateMap.has(receiver)) {
         throw new TypeError("attempted to set private field on non-instance");
@@ -20,11 +11,11 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _observer, _targets, _actions;
-import { CuiHandlerBase } from "../../core/handlers/base";
+var _observer, _targets, _actions, _childSelector;
+import { CuiMutableHandler } from "../../core/handlers/base";
 import { CuiIntersectionObserver } from "../../core/observers/intersection";
 import { CuiActionsListFactory } from "../../core/utils/actions";
-import { is, getRangeValueOrDefault, joinWithScopeSelector } from "../../core/utils/functions";
+import { is, getRangeValueOrDefault, joinWithScopeSelector, getChildSelectorFromScoped } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 const DEFAULT_SELCTOR = "> *";
@@ -62,46 +53,46 @@ export class CuiIntersectionComponent {
         return new CuiIntersectionHandler(element, utils, this.attribute);
     }
 }
-export class CuiIntersectionHandler extends CuiHandlerBase {
+export class CuiIntersectionHandler extends CuiMutableHandler {
     constructor(element, utils, attribute) {
         super("CuiIntersectionHandler", element, attribute, new CuiIntersectionAttributes(), utils);
         _observer.set(this, void 0);
         _targets.set(this, void 0);
         _actions.set(this, void 0);
+        _childSelector.set(this, void 0);
         __classPrivateFieldSet(this, _observer, new CuiIntersectionObserver(this.element));
         __classPrivateFieldSet(this, _targets, []);
         __classPrivateFieldSet(this, _actions, []);
+        __classPrivateFieldSet(this, _childSelector, '');
     }
-    onHandle() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.parseArguments();
-            __classPrivateFieldGet(this, _observer).setCallback(this.onIntersection.bind(this));
-            __classPrivateFieldGet(this, _observer).connect();
-            __classPrivateFieldGet(this, _targets).forEach(target => {
-                __classPrivateFieldGet(this, _observer).observe(target);
-            });
-            return true;
+    onMutation(record) {
+        if ((record.added.length > 0 && record.added.find(record => record.matches(__classPrivateFieldGet(this, _childSelector))))
+            || (record.added.length > 0 && record.removed.find(record => record.matches(__classPrivateFieldGet(this, _childSelector))))) {
+            this._log.debug("Reinitialize targets from mutation", "onMutation");
+            this.initializeTargets();
+        }
+    }
+    onInit() {
+        this.parseArguments();
+        __classPrivateFieldGet(this, _observer).setCallback(this.onIntersection.bind(this));
+        __classPrivateFieldGet(this, _observer).connect();
+        __classPrivateFieldGet(this, _targets).forEach(target => {
+            __classPrivateFieldGet(this, _observer).observe(target);
         });
     }
-    onRefresh() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.parseArguments();
-            return true;
-        });
+    onUpdate() {
+        this.parseArguments();
     }
-    onRemove() {
-        return __awaiter(this, void 0, void 0, function* () {
-            __classPrivateFieldGet(this, _observer).disconnect();
-            return true;
-        });
+    onDestroy() {
+        __classPrivateFieldGet(this, _observer).disconnect();
     }
     parseArguments() {
         // @ts-ignore prevArgs is correct
         if (!is(this.prevArgs) || (this.prevArgs.target !== this.args.target)) {
-            let el = this.args.isRoot ? document.body : this.element;
-            __classPrivateFieldSet(this, _targets, [...el.querySelectorAll(this.args.target)]);
+            this.initializeTargets();
         }
         __classPrivateFieldSet(this, _actions, CuiActionsListFactory.get(this.args.action));
+        __classPrivateFieldSet(this, _childSelector, getChildSelectorFromScoped(this.args.target));
     }
     onIntersection(entries, observer) {
         if (!is(__classPrivateFieldGet(this, _targets))) {
@@ -121,7 +112,25 @@ export class CuiIntersectionHandler extends CuiHandlerBase {
         this.emitEvent(EVENTS.INTERSECTION, {
             entry: entry,
             offset: this.args.offset,
-            timestamp: Date.now()
+        });
+    }
+    initializeTargets() {
+        let el = this.args.isRoot ? document.body : this.element;
+        this.removeObservables();
+        __classPrivateFieldSet(this, _targets, [...el.querySelectorAll(this.args.target)]);
+        this.setObservables();
+    }
+    setObservables() {
+        __classPrivateFieldGet(this, _targets).forEach(target => {
+            __classPrivateFieldGet(this, _observer).observe(target);
+        });
+    }
+    removeObservables() {
+        if (!is(__classPrivateFieldGet(this, _targets))) {
+            return;
+        }
+        __classPrivateFieldGet(this, _targets).forEach(target => {
+            __classPrivateFieldGet(this, _observer).observe(target);
         });
     }
     addActions(element) {
@@ -131,4 +140,4 @@ export class CuiIntersectionHandler extends CuiHandlerBase {
         __classPrivateFieldGet(this, _actions).forEach(action => action.remove(element));
     }
 }
-_observer = new WeakMap(), _targets = new WeakMap(), _actions = new WeakMap();
+_observer = new WeakMap(), _targets = new WeakMap(), _actions = new WeakMap(), _childSelector = new WeakMap();

@@ -1,27 +1,16 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiSwitchable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-/**
- *
- */
-export interface CuiAccordionEvent {
-    index: number;
-    previous: number;
-    currentTarget: Element;
-    previousTarget: Element;
-    timestamp: number;
-}
-interface CuiAccordionTarget {
-    element: Element;
-    listener?: any;
-}
-export declare class CuiAccordionArgs extends CuiAutoParseArgs {
+import { CuiClickableArgs } from "../../core/models/arguments";
+export declare class CuiAccordionArgs extends CuiAutoParseArgs implements CuiClickableArgs {
     single: boolean;
     selector: string;
     items: string;
     timeout: number;
     animation: boolean;
+    prevent: boolean;
+    stopPropagation: boolean;
     constructor(prefix: string, timeout?: number);
 }
 export declare class CuiAccordionComponent implements ICuiComponent {
@@ -31,19 +20,16 @@ export declare class CuiAccordionComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiAccordionHandler extends CuiMutableHandler<CuiAccordionArgs> implements ICuiSwitchable {
+export declare class CuiAccordionHandler extends CuiHandlerBase<CuiAccordionArgs> implements ICuiSwitchable {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
-    onMutation(mutations: CuiChildMutation): void;
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
     switch(index: number): Promise<boolean>;
-    onSwitch(index: any): void;
-    initTargets(): void;
-    closeAllExcept(current: number): void;
-    setListener(target: CuiAccordionTarget, index: number): void;
-    removeListener(target: CuiAccordionTarget): void;
-    queryItems(): Element[];
+    private openCloseTarget;
+    private onSwitch;
+    private closeAllExcept;
+    private onElementClick;
+    private queryItems;
 }
-export {};

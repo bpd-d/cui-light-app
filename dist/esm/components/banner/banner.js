@@ -65,9 +65,6 @@ export class CuiBannerHandler extends CuiInteractableHandler {
         __classPrivateFieldSet(this, _isTracking, false);
     }
     onInit() {
-        if (!this.isActive()) {
-            this.helper.setClass(this.activeClassName, this.element);
-        }
     }
     onUpdate() {
     }

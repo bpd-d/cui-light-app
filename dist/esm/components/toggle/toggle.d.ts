@@ -2,9 +2,12 @@ import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interface
 import { CuiUtils } from "../../core/models/utils";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-export declare class CuiToggleArgs extends CuiAutoParseArgs {
+import { CuiClickableArgs } from "../../core/models/arguments";
+export declare class CuiToggleArgs extends CuiAutoParseArgs implements CuiClickableArgs {
     target: string;
     action: string;
+    prevent: boolean;
+    stopPropagation: boolean;
     constructor();
 }
 export declare class CuiToggleComponent implements ICuiComponent {

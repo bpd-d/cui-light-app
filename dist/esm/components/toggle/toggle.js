@@ -25,6 +25,7 @@ import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiActionsListFactory } from "../../core/utils/actions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiClickModule } from "../modules/click/click";
 export class CuiToggleArgs extends CuiAutoParseArgs {
     constructor() {
         super({
@@ -32,6 +33,8 @@ export class CuiToggleArgs extends CuiAutoParseArgs {
         });
         this.action = "";
         this.target = "";
+        this.prevent = false;
+        this.stopPropagation = false;
     }
 }
 export class CuiToggleComponent {
@@ -56,13 +59,12 @@ export class CuiToggleHandler extends CuiHandlerBase {
         __classPrivateFieldSet(this, _utils, utils);
         __classPrivateFieldSet(this, _toggleEventId, null);
         __classPrivateFieldSet(this, _actions, []);
-        this.onClick = this.onClick.bind(this);
+        this.addModule(new CuiClickModule(element, this.args, this.onClick.bind(this)));
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
             __classPrivateFieldSet(this, _target, this.getTarget());
             __classPrivateFieldSet(this, _actions, CuiActionsListFactory.get(this.args.action));
-            this.element.addEventListener('click', this.onClick);
             __classPrivateFieldSet(this, _toggleEventId, this.onEvent(EVENTS.TOGGLE, this.toggle.bind(this)));
             return true;
         });
@@ -76,7 +78,6 @@ export class CuiToggleHandler extends CuiHandlerBase {
     }
     onRemove() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.element.removeEventListener('click', this.onClick);
             this.detachEvent(EVENTS.TOGGLE, __classPrivateFieldGet(this, _toggleEventId));
             return true;
         });
@@ -95,7 +96,6 @@ export class CuiToggleHandler extends CuiHandlerBase {
     }
     onClick(ev) {
         this.toggle();
-        ev.preventDefault();
     }
     getTarget() {
         var _a;

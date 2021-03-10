@@ -1,17 +1,21 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiOpenable } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiHandlerBase } from "../../core/handlers/base";
-import { is, are, getFirstMatching } from "../../core/utils/functions";
+import { is, are, getFirstMatching, getParentCuiElement } from "../../core/utils/functions";
 import { CuiActionsListFactory } from "../../core/utils/actions";
 import { CUID_ATTRIBUTE, EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiClickableArgs } from "src/core/models/arguments";
+import { CuiClickModule } from "../modules/click/click";
+import { InteractionEvent } from "src/core/models/events";
 
-export class CuiOpenArgs extends CuiAutoParseArgs {
+export class CuiOpenArgs extends CuiAutoParseArgs implements CuiClickableArgs {
     target: string;
     action: string;
     timeout: number;
     prevent: boolean;
     state: string;
+    stopPropagation: boolean;
 
     constructor(timeout?: number) {
         super({
@@ -21,9 +25,11 @@ export class CuiOpenArgs extends CuiAutoParseArgs {
         this.action = "";
         this.timeout = timeout ?? 300;
         this.prevent = false;
+        this.stopPropagation = false;
         this.state = "";
 
     }
+
 }
 
 export class CuiOpenComponent implements ICuiComponent {
@@ -48,11 +54,10 @@ export class CuiOpenHandler extends CuiHandlerBase<CuiOpenArgs> {
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string) {
         super("CuiOpenHandler", element, attribute, new CuiOpenArgs(utils.setup.animationTime), utils);
         this.#eventId = null;
-        this.onClick = this.onClick.bind(this);
+        this.addModule(new CuiClickModule(this.element, this.args, this.onOpen.bind(this)))
     }
 
     async onHandle(): Promise<boolean> {
-        this.element.addEventListener('click', this.onClick)
         this.#eventId = this.onEvent(EVENTS.OPEN, this.onOpen.bind(this));
         return true;
     }
@@ -60,23 +65,15 @@ export class CuiOpenHandler extends CuiHandlerBase<CuiOpenArgs> {
         return true;
     }
     async onRemove(): Promise<boolean> {
-        this.element.removeEventListener('click', this.onClick)
         this.detachEvent(EVENTS.OPEN, this.#eventId);
         return true;
-    }
-
-    private onClick(ev: MouseEvent) {
-        this.onOpen(ev);
-        if (this.args.prevent) {
-            ev.preventDefault();
-        }
     }
 
     private onOpen(ev: MouseEvent) {
         if (this.isLocked) {
             return;
         }
-        const target = this.getTarget(this.args.target);
+        const target = this.getTarget();
         if (!is(target)) {
             this._log.warning(`Target ${this.args.target} not found`, 'onClick')
             return;
@@ -85,13 +82,15 @@ export class CuiOpenHandler extends CuiHandlerBase<CuiOpenArgs> {
         //@ts-ignore - target checked
         this.run(target).then((result) => {
             //@ts-ignore - target checked
-            this.activateTarget(ev, target, result);
+            if (result)
+                this.emitOpen(ev);
         }).catch((e) => {
             this._log.exception(e);
         }).finally(() => {
             this.isLocked = false;
         })
     }
+
     /**
      * Emits open event or performs an opening action
      * @param target target element
@@ -100,69 +99,56 @@ export class CuiOpenHandler extends CuiHandlerBase<CuiOpenArgs> {
     private async run(target: Element): Promise<boolean> {
         let cuiId = (target as any).$cuid;
         if (is(cuiId)) {
-            this._log.debug("Open cUI component")
-            await this.utils.bus.emit(EVENTS.OPEN, cuiId, this.args.state);
+            this.handleClickCui(cuiId);
             return false;
         } else {
             this._log.debug("Open html component")
             if (are(this.args.timeout, this.args.action)) {
                 this._log.debug("Perfrom an action")
                 let actions = CuiActionsListFactory.get(this.args.action)
-                await this.actionsHelper.performActions(target, actions, this.args.timeout, () => {
-                    this.setActiveClass(target)
+                return this.actionsHelper.performActions(target, actions, this.args.timeout, () => {
+                    this.helper.setClass(this.activeClassName, target);
                 });
-                return true;
             }
-            this.setActiveClassAsync(target);
+            this.helper.setClassesAs(target, this.activeClassName);
             return true;
         }
     }
 
-    private setActiveClass(target: Element) {
-        if (is(target) && !this.helper.hasClass(this.activeClassName, target)) {
-            this.helper.setClass(this.activeClassName, target);
-        }
+    handleClickCui(cuid: string) {
+        this._log.debug("Open cUI component")
+        this.utils.bus.emit(EVENTS.OPEN, cuid, this.args.state);
+        return false;
     }
 
-    private setActiveClassAsync(target: Element) {
-        this.fetch(() => {
-            if (is(target) && !this.helper.hasClass(this.activeClassName, target)) {
-                this.helper.setClassesAs(target, this.activeClassName);
-            }
-        })
-
-    }
-
-    private activateTarget(ev: MouseEvent, target: Element, shouldEmit: boolean): void {
-        if (is(target) && !this.helper.hasClass(this.activeClassName, target)) {
-            this.helper.setClassesAs(target, this.activeClassName);
-        }
-        if (shouldEmit)
-            this.emitOpen(ev);
-    }
 
     private emitOpen(ev: MouseEvent) {
-        this.emitEvent(EVENTS.OPENED, {
+        this.emitEvent<InteractionEvent>(EVENTS.OPENED, {
             event: ev,
-            state: this.args.state,
-            timestamp: Date.now()
+            state: this.args.state
         })
     }
 
-    private getTarget(target: string) {
-        if (is(target)) {
-            //@ts-ignore - target checked
-            return document.querySelector(target);
-        }
-        let parent = this.element.parentElement;
-        //@ts-ignore - parent checked
-        let result = is(parent) ? parent.querySelectorAll(`[${CUID_ATTRIBUTE}]`) : undefined;
-        if (!result || result.length < 2) {
-            return undefined;
-        }
+    // private getTarget(target: string) {
+    //     if (is(target)) {
+    //         //@ts-ignore - target checked
+    //         return document.querySelector(target);
+    //     }
+    //     let parent = this.element.parentElement;
+    //     //@ts-ignore - parent checked
+    //     let result = is(parent) ? parent.querySelectorAll(`[${CUID_ATTRIBUTE}]`) : undefined;
+    //     if (!result || result.length < 2) {
+    //         return undefined;
+    //     }
 
-        return getFirstMatching([...result], (el: Element) => {
-            return el !== this.element;
-        })
+    //     return getFirstMatching([...result], (el: Element) => {
+    //         return el !== this.element;
+    //     })
+    // }
+    private getTarget(): Element | undefined {
+        if (!is(this.args.target)) {
+            return getParentCuiElement(this.element);
+        }
+        return document.querySelector(this.args.target) ?? getParentCuiElement(this.element);
     }
 }

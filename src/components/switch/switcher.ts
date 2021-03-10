@@ -1,23 +1,32 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable, CuiElement } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
 import { CuiHandlerBase } from "../../core/handlers/base";
-import { is } from "../../core/utils/functions";
+import { getChildSelectorFromScoped, is } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiClickableArgs } from "src/core/models/arguments";
+import { CuiClickModule } from "../modules/click/click";
 
 const SWITCHER_LIST_ITEM_SELECTOR = "li > a";
 
-export class CuiSwitcherArgs extends CuiAutoParseArgs implements ICuiParsable {
+export class CuiSwitcherArgs extends CuiAutoParseArgs implements CuiClickableArgs {
 
     target: string;
     index: string;
+    prevent: boolean;
+    stopPropagation: boolean;
+    targets: string;
+    isList: boolean;
 
     constructor() {
         super();
         this.index = "";
         this.target = "";
+        this.prevent = false;
+        this.stopPropagation = false;
+        this.targets = SWITCHER_LIST_ITEM_SELECTOR;
+        this.isList = false;
     }
-
 }
 
 export class CuiSwitcherComponent implements ICuiComponent {
@@ -36,89 +45,76 @@ export class CuiSwitcherComponent implements ICuiComponent {
 }
 
 export class CuiSwitcherHandler extends CuiHandlerBase<CuiSwitcherArgs>  {
-    #targetId: string | null;
-    #isList: boolean;
-    #listeners: ((ev: MouseEvent) => void)[];
+
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
         super("CuiSwitcherHandler", element, attribute, new CuiSwitcherArgs(), utils);
-        this.#targetId = null;
-        this.#isList = element.tagName === 'UL';
         this.onClickEvent = this.onClickEvent.bind(this);
-        this.#listeners = [];
+        this.addModule(new CuiClickModule(this.element, this.args, this.onClickEvent.bind(this)))
     }
 
     async onHandle(): Promise<boolean> {
-        this.setEvents();
-        this.getTarget();
+
         return true;
     }
     async onRefresh(): Promise<boolean> {
-        this.getTarget();
+
         return true;
     }
     async onRemove(): Promise<boolean> {
-        this.removeEvents();
         return true;
     }
 
-    getTarget() {
+    /**
+     * Sets current switcher target value
+     * 
+     */
+    getTargetCuid(): string | null {
+        let targetId = null;
         if (!is(this.args.target)) {
-            this.#targetId = null;
+            targetId = null;
         }
 
         let target = <CuiElement>(document.querySelector(this.args.target) as any);
         if (is(target)) {
-            this.#targetId = target.$cuid;
+            targetId = target.$cuid;
         }
-    }
-
-    setEvents() {
-        if (this.#isList) {
-            let elements = this.element.querySelectorAll(SWITCHER_LIST_ITEM_SELECTOR);
-            elements.forEach((el: Element, index: number) => {
-                let list = this.onListItemClick.bind(this, index)
-                this.#listeners.push(list)
-                //@ts-ignore
-                el.addEventListener('click', list)
-            })
-        } else {
-            this.element.addEventListener('click', this.onClickEvent)
-        }
-    }
-
-    removeEvents() {
-        if (this.#isList) {
-            let elements = this.element.querySelectorAll(SWITCHER_LIST_ITEM_SELECTOR);
-            elements.forEach((el: Element, index: number) => {
-                if (this.#listeners.length > index)
-                    //@ts-ignore
-                    el.removeEventListener('click', this.#listeners[index])
-            })
-            this.#listeners = [];
-        } else {
-            this.element.removeEventListener('click', this.onClickEvent);
-        }
+        return targetId
     }
 
     onClickEvent(ev: MouseEvent) {
-        this.getTarget();
-        if (!is(this.args.index)) {
+        const targetId = this.getTargetCuid();
+        if (!targetId) {
             return;
         }
-        this.onClick(this.args.index.trim());
-    }
 
-    onListItemClick(index: number, ev: MouseEvent) {
-        this.getTarget();
-        this.onClick(index);
-    }
-
-    onClick(index: any) {
-        if (!is(this.#targetId)) {
+        if (this.args.isList || this.element.tagName === 'UL') {
+            this.handleListClick(ev, targetId)
             return;
         }
-        //@ts-ignore  targetId checked already
-        this.utils.bus.emit(EVENTS.SWITCH, this.#targetId, index);
+        this.handleItemClick(ev, targetId);
     }
 
+    handleItemClick(ev: MouseEvent, targetCuid: string) {
+        if (!this.args.index) {
+            this._log.warning("Switch cannot be performed since component doesn't specify index")
+            return;
+        }
+        this.utils.bus.emit(EVENTS.SWITCH, targetCuid, this.args.index);
+    }
+
+    handleListClick(ev: MouseEvent, targetCuid: string) {
+        const currentSelector = getChildSelectorFromScoped(this.args.targets);
+        const target = ev.target as HTMLElement;
+        if (!target.matches(currentSelector)) {
+            return;
+        }
+        const switcherElements = [...this.element.querySelectorAll(this.args.targets)]
+        const targetIndex = switcherElements.findIndex(element => element === ev.target);
+        if (targetIndex < 0) {
+            return;
+        }
+
+        this.utils.bus.emit(EVENTS.SWITCH, targetCuid, targetIndex);
+    }
 }
+

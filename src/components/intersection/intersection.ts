@@ -1,11 +1,12 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiChildMutation, CuiHandlerBase, CuiMutableHandler } from "../../core/handlers/base";
 import { CuiIntersectionObserver } from "../../core/observers/intersection";
 import { CuiActionsListFactory, ICuiComponentAction } from "../../core/utils/actions";
-import { is, getRangeValueOrDefault, joinWithScopeSelector } from "../../core/utils/functions";
+import { is, getRangeValueOrDefault, joinWithScopeSelector, isTouchSupported, getChildSelectorFromScoped } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { IntersectionHandlerEvent } from "src/core/models/events";
 
 const DEFAULT_SELCTOR = "> *";
 
@@ -53,45 +54,54 @@ export class CuiIntersectionComponent implements ICuiComponent {
     }
 }
 
-export class CuiIntersectionHandler extends CuiHandlerBase<CuiIntersectionAttributes> {
+export class CuiIntersectionHandler extends CuiMutableHandler<CuiIntersectionAttributes> {
 
     #observer: CuiIntersectionObserver;
     #targets: Element[];
     #actions: ICuiComponentAction[];
+    #childSelector: string;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
         super("CuiIntersectionHandler", element, attribute, new CuiIntersectionAttributes(), utils);
         this.#observer = new CuiIntersectionObserver(this.element);
         this.#targets = [];
         this.#actions = [];
+        this.#childSelector = '';
+
     }
 
-    async onHandle(): Promise<boolean> {
+    onMutation(record: CuiChildMutation): void {
+        if ((record.added.length > 0 && record.added.find(record => (<HTMLElement>record).matches(this.#childSelector)))
+            || (record.added.length > 0 && record.removed.find(record => (<HTMLElement>record).matches(this.#childSelector)))) {
+            this._log.debug("Reinitialize targets from mutation", "onMutation");
+            this.initializeTargets();
+
+        }
+    }
+
+    onInit(): void {
         this.parseArguments();
         this.#observer.setCallback(this.onIntersection.bind(this))
         this.#observer.connect();
         this.#targets.forEach(target => {
             this.#observer.observe(target);
         })
-        return true;
     }
 
-    async onRefresh(): Promise<boolean> {
+    onUpdate(): void {
         this.parseArguments();
-        return true;
     }
 
-    async onRemove(): Promise<boolean> {
+    onDestroy(): void {
         this.#observer.disconnect();
-        return true;
     }
 
     parseArguments() {
         // @ts-ignore prevArgs is correct
         if (!is(this.prevArgs) || (this.prevArgs.target !== this.args.target)) {
-            let el = this.args.isRoot ? document.body : this.element;
-            this.#targets = [...el.querySelectorAll(this.args.target)];
+            this.initializeTargets();
         }
         this.#actions = CuiActionsListFactory.get(this.args.action);
+        this.#childSelector = getChildSelectorFromScoped(this.args.target);
     }
 
     onIntersection(entries: IntersectionObserverEntry[], observer: IntersectionObserver): void {
@@ -109,10 +119,31 @@ export class CuiIntersectionHandler extends CuiHandlerBase<CuiIntersectionAttrib
     }
 
     emitIntersection(entry: IntersectionObserverEntry) {
-        this.emitEvent(EVENTS.INTERSECTION, {
+        this.emitEvent<IntersectionHandlerEvent>(EVENTS.INTERSECTION, {
             entry: entry,
             offset: this.args.offset,
-            timestamp: Date.now()
+        })
+    }
+
+    private initializeTargets() {
+        let el = this.args.isRoot ? document.body : this.element;
+        this.removeObservables();
+        this.#targets = [...el.querySelectorAll(this.args.target)];
+        this.setObservables();
+    }
+
+    private setObservables() {
+        this.#targets.forEach(target => {
+            this.#observer.observe(target);
+        })
+    }
+
+    private removeObservables() {
+        if (!is(this.#targets)) {
+            return;
+        }
+        this.#targets.forEach(target => {
+            this.#observer.observe(target);
         })
     }
 

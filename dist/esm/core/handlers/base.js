@@ -20,7 +20,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _interactions, _emittedEvents, _attribute, _openEventId, _closeEventId, _keyCloseEventId, _openAct, _closeAct, _mutionHandler;
+var _interactions, _emittedEvents, _attribute, _moduleHandler, _openEventId, _closeEventId, _keyCloseEventId, _openAct, _closeAct, _mutionHandler;
 import { CuiComponentMutationHandler } from "../observers/mutations";
 import { AriaAttributes } from "../utils/aria";
 import { CuiActionsHelper } from "../helpers/helpers";
@@ -28,6 +28,7 @@ import { CuiActionsListFactory } from "../utils/actions";
 import { is, getActiveClass, clone } from "../utils/functions";
 import { EVENTS } from "../utils/statics";
 import { CuiDevtoolFactory } from "../development/factory";
+import { CuiModulesHandler } from "./modules/handler";
 export class ComponentHelper {
     constructor(interactions) {
         _interactions.set(this, void 0);
@@ -98,10 +99,10 @@ export class CuiComponentBase {
      * @param event Event name
      * @param data Data to emit
      */
-    emitEvent(event, data) {
+    emitEvent(event, data, source) {
         if (!__classPrivateFieldGet(this, _emittedEvents).includes(event))
             __classPrivateFieldGet(this, _emittedEvents).push(event);
-        this.utils.bus.emit(event, this.cuid, data);
+        this.utils.bus.emit(event, this.cuid, Object.assign(Object.assign({}, data), { name: event, timestamp: Date.now(), source: source !== null && source !== void 0 ? source : this.element }));
     }
     onEvent(event, callback) {
         return this.utils.bus.on(event, callback, this.element);
@@ -160,11 +161,13 @@ export class CuiHandlerBase extends CuiComponentBase {
     constructor(componentName, element, attribute, args, utils) {
         super(componentName, element, utils);
         _attribute.set(this, void 0);
+        _moduleHandler.set(this, void 0);
         this.args = args;
         this.actionsHelper = new CuiActionsHelper(utils.interactions);
         this.prevArgs = undefined;
         this.isInitialized = false;
         __classPrivateFieldSet(this, _attribute, attribute);
+        __classPrivateFieldSet(this, _moduleHandler, new CuiModulesHandler());
     }
     handle(args) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -172,8 +175,7 @@ export class CuiHandlerBase extends CuiComponentBase {
                 this.logWarning("Trying to initialize handler again", 'handle');
                 return false;
             }
-            if (this.isLocked) {
-                this.logWarning("Handler is locked", 'handle');
+            if (!this.checkLock("handle")) {
                 return false;
             }
             this.isLocked = true;
@@ -183,6 +185,7 @@ export class CuiHandlerBase extends CuiComponentBase {
                 this.helper.setClassesAs(this.element, __classPrivateFieldGet(this, _attribute));
             }
             this.logInfo("Init", 'handle');
+            yield __classPrivateFieldGet(this, _moduleHandler).init(args);
             return this.performLifecycleOp("onHandle", this.onHandle(), () => {
                 this.isLocked = false;
                 this.isInitialized = true;
@@ -196,13 +199,14 @@ export class CuiHandlerBase extends CuiComponentBase {
                 this.logError("Cannot update not initialized component", 'refresh');
                 return false;
             }
-            if (!this.checkLock()) {
+            if (!this.checkLock("refresh")) {
                 return false;
             }
             this.isLocked = true;
             this.prevArgs = clone(this.args);
             this.args.parse(args);
             this._log.debug("Component update", 'refresh');
+            yield __classPrivateFieldGet(this, _moduleHandler).update(args);
             return this.performLifecycleOp("onRefresh", this.onRefresh(), () => {
                 this.isLocked = false;
             });
@@ -215,10 +219,11 @@ export class CuiHandlerBase extends CuiComponentBase {
                 this.logError("Cannot update not initialized component", 'destroy');
                 return false;
             }
-            if (!this.checkLock()) {
+            if (!this.checkLock('destroy')) {
                 return false;
             }
             this.isLocked = true;
+            yield __classPrivateFieldGet(this, _moduleHandler).destroy();
             return this.performLifecycleOp("onRemove", this.onRemove(), () => {
                 this.detachEmiitedEvents();
                 this.removeFromDebug();
@@ -244,9 +249,12 @@ export class CuiHandlerBase extends CuiComponentBase {
             return false;
         });
     }
-    checkLock() {
+    addModule(module) {
+        __classPrivateFieldGet(this, _moduleHandler).add(module);
+    }
+    checkLock(method) {
         if (this.isLocked) {
-            this.logWarning("Handler is locked", 'handle');
+            this.logWarning("Handler is locked", method);
             return false;
         }
         return true;
@@ -267,7 +275,7 @@ export class CuiHandlerBase extends CuiComponentBase {
         });
     }
 }
-_attribute = new WeakMap();
+_attribute = new WeakMap(), _moduleHandler = new WeakMap();
 export class CuiInteractableHandler extends CuiHandlerBase {
     constructor(componentName, element, attribute, args, utils) {
         super(componentName, element, attribute, args, utils);
@@ -332,7 +340,6 @@ export class CuiInteractableHandler extends CuiHandlerBase {
                 this.helper.setClass(this.activeClassName, this.element);
                 AriaAttributes.setAria(this.element, 'aria-expanded', 'true');
             });
-            ;
         });
     }
     close(args) {

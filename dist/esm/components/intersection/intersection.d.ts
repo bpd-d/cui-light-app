@@ -1,6 +1,6 @@
 import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
 import { CuiUtils } from "../../core/models/utils";
-import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 /**
  * Intersection
@@ -24,15 +24,19 @@ export declare class CuiIntersectionComponent implements ICuiComponent {
     getStyle(): string | null;
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
-export declare class CuiIntersectionHandler extends CuiHandlerBase<CuiIntersectionAttributes> {
+export declare class CuiIntersectionHandler extends CuiMutableHandler<CuiIntersectionAttributes> {
     #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
-    onHandle(): Promise<boolean>;
-    onRefresh(): Promise<boolean>;
-    onRemove(): Promise<boolean>;
+    onMutation(record: CuiChildMutation): void;
+    onInit(): void;
+    onUpdate(): void;
+    onDestroy(): void;
     parseArguments(): void;
     onIntersection(entries: IntersectionObserverEntry[], observer: IntersectionObserver): void;
     emitIntersection(entry: IntersectionObserverEntry): void;
+    private initializeTargets;
+    private setObservables;
+    private removeObservables;
     private addActions;
     private removeActions;
 }

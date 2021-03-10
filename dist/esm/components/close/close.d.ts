@@ -2,12 +2,14 @@ import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interface
 import { CuiUtils } from "../../core/models/utils";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-export declare class CuiCloseArgs extends CuiAutoParseArgs {
+import { CuiClickableArgs } from "src/core/models/arguments";
+export declare class CuiCloseArgs extends CuiAutoParseArgs implements CuiClickableArgs {
     target: string;
     action: string;
     timeout: number;
-    prevent: boolean;
     state: string;
+    prevent: boolean;
+    stopPropagation: boolean;
     constructor(timeout?: number);
 }
 export declare class CuiCloseComponent implements ICuiComponent {
@@ -23,12 +25,8 @@ export declare class CuiCloseHandler extends CuiHandlerBase<CuiCloseArgs> {
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
-    onClick(ev: MouseEvent): void;
     onClose(ev: MouseEvent): void;
     private run;
-    private removeActiveClass;
-    private removeActiveClassAsync;
-    private onActionFinish;
     private getTarget;
     private emitClose;
 }

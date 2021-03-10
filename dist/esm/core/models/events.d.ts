@@ -3,9 +3,9 @@ import { ICuiComponentAction } from "../utils/actions";
 import { CuiWindowSize } from "../utils/types";
 import { CuiHTMLElement } from "./interfaces";
 export interface EventBase {
-    name: string;
-    timestamp: number;
-    source: CuiHTMLElement | string;
+    name?: string;
+    timestamp?: number;
+    source?: CuiHTMLElement | string;
 }
 export interface ICuiMoveEvent extends EventBase, ICuiMoveData {
 }
@@ -48,4 +48,25 @@ export interface KeyDownEvent extends EventBase {
 }
 export interface GlobalClickEvent extends EventBase {
     ev: MouseEvent;
+}
+export interface CuiAccordionEvent extends EventBase {
+    index: number;
+    previous: number | null;
+    currentTarget: Element;
+    previousTarget: Element | null;
+}
+export interface CuiSpinnerEvent extends EventBase {
+    paused: boolean;
+}
+export interface SortEvent extends EventBase {
+    index: number;
+    target: HTMLElement | null;
+}
+export interface IntersectionHandlerEvent extends EventBase {
+    entry: IntersectionObserverEntry;
+    offset: number;
+}
+export interface InteractionEvent extends EventBase {
+    event: MouseEvent;
+    state: string;
 }
