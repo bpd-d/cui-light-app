@@ -14,6 +14,8 @@ export interface ICuiComponentMutationObserver {
     isObserving(): boolean;
     onMutation(callback: (record: MutationRecord[]) => void): void;
     disable(flag: boolean): void;
+    setSelector(selector: string): void;
+    setAttributes(attributes: string[]): void;
 }
 export declare class CuiMutationObserver implements ICuiMutionObserver {
     #private;
@@ -36,10 +38,15 @@ export declare class CuiMutationObserver implements ICuiMutionObserver {
 }
 export declare class CuiComponentMutationHandler implements ICuiComponentMutationObserver {
     #private;
-    constructor(target: Element);
+    constructor(target: Element, selector?: string);
     observe(): void;
     unobserve(): void;
+    setSelector(selector?: string): void;
+    setAttributes(attributes: string[]): void;
     isObserving(): boolean;
     disable(flag: boolean): void;
     onMutation(callback: (record: MutationRecord[]) => void): void;
+    private mutationCallback;
+    private matchesSelector;
+    private isAnyItemMatching;
 }

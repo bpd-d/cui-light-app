@@ -3,6 +3,9 @@ export interface ICuiPropertyAnimator<T> {
     perform(element: any, progress: number, factor: number): void;
     setProperty(prop: T): void;
 }
+export interface ParallaxAnimations {
+    [name: string]: AnimationProperty<PropsTypes>;
+}
 export interface AnimationProperty<T> {
     [id: string]: T;
 }
@@ -11,8 +14,18 @@ export interface AnimatorPropertyValue {
     to: number;
     unit?: string;
 }
-export interface TransformAnimatorProperty {
+export interface ComplexAnimatorProperty {
     [name: string]: AnimatorPropertyValue;
+}
+export interface ColorProperty {
+    red: number;
+    blue: number;
+    green: number;
+    alpha: number;
+}
+export interface ColorAnimatorProperty {
+    from: ColorProperty;
+    to: ColorProperty;
 }
 export interface OnAnimationFinishCallback {
     (element: Element | undefined, reverted: boolean, error: boolean): void;

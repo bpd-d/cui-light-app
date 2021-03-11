@@ -20,6 +20,8 @@ export interface ICuiComponentMutationObserver {
     isObserving(): boolean;
     onMutation(callback: (record: MutationRecord[]) => void): void;
     disable(flag: boolean): void;
+    setSelector(selector: string): void;
+    setAttributes(attributes: string[]): void;
 }
 
 
@@ -203,31 +205,57 @@ export class CuiMutationObserver implements ICuiMutionObserver {
 
 export class CuiComponentMutationHandler implements ICuiComponentMutationObserver {
     #isObserving: boolean;
-    #observer: MutationObserver | undefined;
+    #observer: MutationObserver;
     #element: Element;
     #disabled: boolean;
+    #selector: string | undefined;
     #options: MutationObserverInit = {
         childList: true,
-        subtree: true
+        subtree: true,
     }
-    constructor(target: Element) {
-        this.#observer = undefined;
+
+    #callback?: (record: MutationRecord[]) => void;
+    constructor(target: Element, selector?: string) {
         this.#disabled = false;
         this.#isObserving = false;
         this.#element = target;
+        this.#selector = selector;
+        this.#callback = undefined;
+        this.#observer = new MutationObserver(this.mutationCallback.bind(this));
     }
 
     observe(): void {
-        if (!this.#isObserving && !this.#disabled && this.#observer) {
+        if (!this.#isObserving && !this.#disabled) {
             this.#observer.observe(this.#element, this.#options);
             this.#isObserving = true;
         }
     }
+
     unobserve(): void {
-        if (this.#isObserving && this.#observer) {
+        if (this.#isObserving) {
             this.#observer.disconnect();
             this.#isObserving = false;
         }
+    }
+
+    setSelector(selector?: string) {
+        this.#selector = selector;
+    }
+
+    setAttributes(attributes: string[]) {
+        if (attributes && attributes.length > 0) {
+            this.#options = {
+                ...this.#options,
+                attributes: true,
+                attributeFilter: attributes
+            }
+        }
+        this.#options = {
+            childList: true,
+            subtree: true,
+        }
+
+        this.unobserve();
     }
 
     isObserving(): boolean {
@@ -242,9 +270,37 @@ export class CuiComponentMutationHandler implements ICuiComponentMutationObserve
     }
 
     onMutation(callback: (record: MutationRecord[]) => void): void {
-        if (this.#isObserving)
-            this.unobserve();
-        this.#observer = new MutationObserver(callback)
+        this.#callback = callback;
     }
 
+    private mutationCallback(record: MutationRecord[]) {
+        let records: MutationRecord[] = record.reduce<MutationRecord[]>((result, record) => {
+            if (this.#selector && record.type === 'childList') {
+                if (this.matchesSelector(record)) {
+                    result.push(record)
+                }
+            } else {
+                result.push(record)
+            }
+            return result;
+        }, [])
+        if (this.#callback) {
+            this.#callback(records);
+        }
+    }
+
+    private matchesSelector(record: MutationRecord): boolean {
+        if (record.addedNodes.length > 0) {
+            return this.isAnyItemMatching([...record.addedNodes] as HTMLElement[]);
+        }
+        if (record.removedNodes.length > 0) {
+            return this.isAnyItemMatching([...record.removedNodes] as HTMLElement[]);
+        }
+        return false;
+    }
+
+    private isAnyItemMatching(array: HTMLElement[]): boolean {
+        //@ts-ignore
+        return (array.find((node) => (<HTMLElement>node).matches(this.#selector)) !== null);
+    }
 }

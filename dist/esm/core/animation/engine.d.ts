@@ -1,5 +1,5 @@
-import { ICuiPropertyAnimator, AnimationProperty, AnimatorPropertyValue, TransformAnimatorProperty, OnAnimationFinishCallback } from "./interfaces";
-export declare type PropsTypes = AnimatorPropertyValue | TransformAnimatorProperty;
+import { ICuiPropertyAnimator, AnimationProperty, AnimatorPropertyValue, ComplexAnimatorProperty, OnAnimationFinishCallback, ColorAnimatorProperty } from "./interfaces";
+export declare type PropsTypes = AnimatorPropertyValue | ComplexAnimatorProperty;
 export declare class CuiAnimation {
     #private;
     constructor(element?: Element);
@@ -9,6 +9,9 @@ export declare class CuiAnimation {
     onFinish(callback: OnAnimationFinishCallback): void;
     perform(props: AnimationProperty<PropsTypes>, timeout?: number, factor?: number): void;
     private reportError;
+}
+export declare class AnimatorFactory {
+    static get(id: string): ICuiPropertyAnimator<AnimatorPropertyValue | ComplexAnimatorProperty | ColorAnimatorProperty> | undefined;
 }
 export declare class CuiAnimationEngine {
     #private;

@@ -126,10 +126,7 @@ export class CuiScrollspyHandler extends CuiHandlerBase<CuiScrollSpyArgs> {
             top: ev.top,
             left: ev.left,
             scrolling: ev.scrolling,
-            initial: ev.initial,
-            source: ev.source,
-            timestamp: timestamp,
-            name: EVENTS.ON_SCROLL
+            initial: ev.initial
         })
     }
 

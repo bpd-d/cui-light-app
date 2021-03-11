@@ -5,6 +5,10 @@ export interface ICuiPropertyAnimator<T> {
     setProperty(prop: T): void;
 }
 
+export interface ParallaxAnimations {
+    [name: string]: AnimationProperty<PropsTypes>;
+}
+
 export interface AnimationProperty<T> {
     [id: string]: T;
 }
@@ -15,8 +19,20 @@ export interface AnimatorPropertyValue {
     unit?: string;
 }
 
-export interface TransformAnimatorProperty {
+export interface ComplexAnimatorProperty {
     [name: string]: AnimatorPropertyValue;
+}
+
+export interface ColorProperty {
+    red: number;
+    blue: number;
+    green: number;
+    alpha: number;
+}
+
+export interface ColorAnimatorProperty {
+    from: ColorProperty;
+    to: ColorProperty;
 }
 
 export interface OnAnimationFinishCallback {

@@ -8,10 +8,11 @@ import { CuiDialogComponent } from "./dialog/dialog";
 import { CuiDropComponenet } from "./drop/drop";
 import { CuiFloatComponent } from "./float/float";
 import { CuiIconComponent } from "./icon/icon";
-import { CuiIntersectionComponent } from "./intersection/intersection";
+//import { CuiIntersectionComponent } from "./intersection/intersection";
 import { CuiOffCanvasComponent } from "./offcanvas/offcanvas";
 import { CuiOffsetComponent } from "./offset/offset";
 import { CuiOpenComponent } from "./open/open";
+import { CuiParallaxComponent } from "./parallax/parallax";
 import { CuiResizeComponent } from "./resize/resize";
 import { CuiScrollComponent } from "./scroll/scroll";
 import { CuiScrollspyComponent } from "./scrollspy/scrollspy";
@@ -41,7 +42,7 @@ export function GetComponents(attributes: ComponentsModuleAttributes): ICuiCompo
         new CuiSpinnerComponent(prefix),
         new CuiScrollComponent(prefix),
         new CuiScrollspyComponent(prefix),
-        new CuiIntersectionComponent(prefix),
+        //new CuiIntersectionComponent(prefix),
         new CuiOpenComponent(prefix),
         new CuiCloseComponent(prefix),
         new CuiToggleComponent(prefix),
@@ -58,5 +59,6 @@ export function GetComponents(attributes: ComponentsModuleAttributes): ICuiCompo
         new CuiCoverComponent(prefix),
         new CuiSortableComponent(prefix),
         new CuiResizeComponent(prefix),
+        new CuiParallaxComponent(prefix)
     ]
 }

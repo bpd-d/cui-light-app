@@ -15,6 +15,7 @@ import { ICuiHandlerModule } from "./modules/interfaces";
 export interface CuiChildMutation {
     removed: Node[];
     added: Node[];
+    changed: Node[];
 }
 
 export class ComponentHelper {
@@ -486,6 +487,14 @@ export abstract class CuiMutableHandler<T extends ICuiParsable> extends CuiHandl
         return true;
     }
 
+    setMutationSelector(selector: string) {
+        this.#mutionHandler.setSelector(selector);
+    }
+
+    setMutationAttributes(attributes: string[]) {
+        this.#mutionHandler.setAttributes(attributes);
+    }
+
     /**
      * Callback attached to mutation observer set on root element
      * 
@@ -498,19 +507,23 @@ export abstract class CuiMutableHandler<T extends ICuiParsable> extends CuiHandl
 
     private prepareRecords(records: MutationRecord[]): CuiChildMutation {
         return records.reduce<CuiChildMutation>((result: CuiChildMutation, item: MutationRecord) => {
-            if (item.type !== "childList") {
+            if (item.type === "childList") {
+                if (item.addedNodes.length > 0) {
+                    result.added.push(...item.addedNodes)
+                }
+                if (item.removedNodes.length > 0) {
+                    result.removed.push(...item.removedNodes)
+                }
                 return result;
             }
-            if (item.addedNodes.length > 0) {
-                result.added.push(...item.addedNodes)
-            }
-            if (item.removedNodes.length > 0) {
-                result.removed.push(...item.removedNodes)
+            if (item.type === "attributes") {
+                result.changed.push(item.target);
             }
             return result;
         }, {
             added: [],
-            removed: []
+            removed: [],
+            changed: []
         })
     }
 

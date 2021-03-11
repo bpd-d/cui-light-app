@@ -1,19 +1,17 @@
 import { is } from "../utils/functions";
-import { OpacityAnimator, TransformAnimator, PropertyAnimator } from "./animators";
-import { ICuiPropertyAnimator, AnimationProperty, AnimatorPropertyValue, TransformAnimatorProperty, OnAnimationFinishCallback } from "./interfaces";
+import { OpacityAnimator, TransformAnimator, PropertyAnimator, ColorAnimator, FilterAnimator } from "./animators";
+import { ICuiPropertyAnimator, AnimationProperty, AnimatorPropertyValue, ComplexAnimatorProperty, OnAnimationFinishCallback, ColorAnimatorProperty } from "./interfaces";
 
-export type PropsTypes = AnimatorPropertyValue | TransformAnimatorProperty;
+export type PropsTypes = AnimatorPropertyValue | ComplexAnimatorProperty;
 
 export class CuiAnimation {
     #engine: CuiAnimationEngine;
     #timeout: number;
-    #factory: AnimatorFactory;
     #onError: ((e: Error) => void) | undefined;
     constructor(element?: Element) {
         this.#engine = new CuiAnimationEngine(true);
         this.#onError = undefined;
         this.#timeout = 0;
-        this.#factory = new AnimatorFactory();
         if (element) {
             this.#engine.setElement(element);
         }
@@ -43,7 +41,7 @@ export class CuiAnimation {
         let animators = [];
         try {
             for (let prop in props) {
-                let animator = this.#factory.get(prop);
+                let animator = AnimatorFactory.get(prop);
                 if (!animator) return;
                 animator.setProperty(props[prop]);
                 animators.push(animator);
@@ -66,17 +64,21 @@ export class CuiAnimation {
 }
 
 
-
-class AnimatorFactory {
-    get(id: string): ICuiPropertyAnimator<AnimatorPropertyValue | TransformAnimatorProperty> | undefined {
+export class AnimatorFactory {
+    static get(id: string): ICuiPropertyAnimator<AnimatorPropertyValue | ComplexAnimatorProperty | ColorAnimatorProperty> | undefined {
         if (!is(id)) {
             return undefined;
+        }
+        if (id.includes('color')) {
+            return new ColorAnimator(id);
         }
         switch (id) {
             case "opacity":
                 return new OpacityAnimator();
             case "transform":
                 return new TransformAnimator();
+            case "filter":
+                return new FilterAnimator();
             default:
                 return new PropertyAnimator(id);
         }
@@ -93,14 +95,12 @@ export class CuiAnimationEngine {
     #element: Element | undefined;
     #cleanOnFinish: boolean;
     #errorOccured: boolean;
-    #factory: AnimatorFactory;
     #onError: ((e: Error) => void) | undefined;
     constructor(cleanOnFinish?: boolean) {
         this.#animators = [];
         this.#element = undefined;
         this.#animStartStamp = undefined;
         this.#cleanOnFinish = cleanOnFinish ?? false;
-        this.#factory = new AnimatorFactory();
         this.#lock = false;
         this.#onFinishCallback = undefined;
         this.#errorOccured = false;
@@ -122,7 +122,7 @@ export class CuiAnimationEngine {
         this.#animators = [];
         try {
             for (let prop in props) {
-                let animator = this.#factory.get(prop);
+                let animator = AnimatorFactory.get(prop);
                 if (!animator) return;
                 animator.setProperty(props[prop]);
                 this.#animators.push(animator);
@@ -217,13 +217,11 @@ export class CuiSwipeAnimationEngine {
     #element: Element | undefined;
     #animators: ICuiPropertyAnimator<PropsTypes>[];
     #animationEngine: CuiAnimationEngine;
-    #factory: AnimatorFactory;
     #onError: ((e: Error) => void) | undefined;
     constructor(shouldCleanOnFinish?: boolean) {
         this.#element = undefined;
         this.#animators = [];
         this.#animationEngine = new CuiAnimationEngine(shouldCleanOnFinish);
-        this.#factory = new AnimatorFactory();
         this.#onError = undefined;
     }
 
@@ -247,7 +245,7 @@ export class CuiSwipeAnimationEngine {
         this.#animators = [];
         try {
             for (let prop in props) {
-                let animator = this.#factory.get(prop);
+                let animator = AnimatorFactory.get(prop);
                 if (!animator) return;
                 animator.setProperty(props[prop]);
                 this.#animators.push(animator);

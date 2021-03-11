@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "noImplicitAny": true,
+    "module": "esnext",
     "target": "es6",
     "jsx": "react",
     "jsxFactory": "h",

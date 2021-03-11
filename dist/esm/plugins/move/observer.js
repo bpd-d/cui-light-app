@@ -78,12 +78,7 @@ export class CuiMoveObserver {
         }
     }
     pushMoveEvent(data) {
-        __classPrivateFieldGet(this, _bus).emit(EVENTS.GLOBAL_MOVE, null, {
-            data,
-            source: "CuiMoveObserver",
-            timestamp: Date.now(),
-            name: EVENTS.GLOBAL_MOVE
-        });
+        __classPrivateFieldGet(this, _bus).emit(EVENTS.GLOBAL_MOVE, null, Object.assign(Object.assign({}, data), { source: "CuiMoveObserver", timestamp: Date.now(), name: EVENTS.GLOBAL_MOVE }));
     }
     onMoveLock(flag) {
         __classPrivateFieldSet(this, _isLocked, flag);

@@ -251,7 +251,10 @@ export function getOffsetLeft(element) {
     return val < 0 ? element.offsetLeft : val;
 }
 export function getIntOrDefault(value, def) {
-    let integer = parseInt(value);
+    if (!value) {
+        return def;
+    }
+    let integer = value.includes && value.includes('.') ? parseFloat(value) : parseInt(value);
     return isNaN(integer) ? def : integer;
 }
 export function getStyleValue(target, property) {

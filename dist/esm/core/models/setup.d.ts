@@ -1,3 +1,4 @@
+import { ParallaxAnimations } from "../animation/interfaces";
 import { ICuiEventBusQueueSetup } from "../bus/interfaces";
 import { ICuiDevelopmentToolFactory } from "../development/interfaces";
 import { CuiLogLevel, CuiInteractionsType } from "../utils/types";
@@ -25,6 +26,7 @@ export declare class CuiSetup implements CuiSetupCommon {
     resizeThreshold: number;
     plugins: any;
     root: HTMLElement;
+    parallaxAnimations: ParallaxAnimations;
     constructor();
     fromInit(init: CuiSetupInit): CuiSetup;
 }
@@ -42,6 +44,7 @@ export declare class CuiSetupInit implements CuiSetupCommon {
     resizeThreshold: number;
     busSetup?: ICuiEventBusQueueSetup[];
     development: ICuiDevelopmentToolFactory | undefined;
+    parallaxAnimations: ParallaxAnimations;
     root: HTMLElement;
     constructor();
 }

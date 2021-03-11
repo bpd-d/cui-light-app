@@ -38,28 +38,22 @@ export class CuiIconComponent implements ICuiComponent {
 
 export class CuiIconHandler extends CuiHandlerBase<CuiIconArgs> {
 
-    #currentIcon: string | null;
+   
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
         super("CuiIconHandler", element, attribute, new CuiIconArgs(), utils);
-        this.#currentIcon = null;
+   
     }
 
     async onHandle(): Promise<boolean> {
-        if (this.#currentIcon !== null) {
-            this._log.debug("Icon already initialized")
-            return false;
-        }
-        this.#currentIcon = this.args.icon;
-        this.addIcon(this.args.icon)
-
+        this.addIcon(this.args.icon);
         return true;
     }
 
     async onRefresh(): Promise<boolean> {
-        if (this.args.icon === this.#currentIcon) {
+        if (!this.prevArgs || this.args.icon === this.prevArgs.icon) {
             return false;
         }
-        this.#currentIcon = this.args.icon;
+   
         this.addIcon(this.args.icon);
         return true;
     }
@@ -70,7 +64,6 @@ export class CuiIconHandler extends CuiHandlerBase<CuiIconArgs> {
             //@ts-ignore checked
             svg.remove();
         }
-        this.#currentIcon = null;
         return true;
     }
 

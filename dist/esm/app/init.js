@@ -23,8 +23,8 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _isInitialized;
 import { is } from "../core/utils/functions";
 import { CuiInitializer } from "./initializer";
-import { GetComponents } from "../components/module";
 import { GetPlugins } from "../plugins/module";
+import { GetComponents } from "../components/module";
 export class CuiInit {
     constructor() {
         _isInitialized.set(this, void 0);
@@ -38,13 +38,29 @@ export class CuiInit {
                 return false;
             }
             const initializer = new CuiInitializer();
-            const pluginList = GetPlugins({
-                autoLight: true,
-                autoPrint: true
-            });
-            const componentList = GetComponents({
-                prefix: (_a = data.setup) === null || _a === void 0 ? void 0 : _a.prefix
-            });
+            let pluginList = [];
+            try {
+                pluginList = GetPlugins({
+                    autoLight: true,
+                    autoPrint: true
+                });
+            }
+            catch (e) {
+                console.error("An error occured during download plugin module");
+                console.error(e);
+                return false;
+            }
+            let componentList = [];
+            try {
+                componentList = GetComponents({
+                    prefix: (_a = data.setup) === null || _a === void 0 ? void 0 : _a.prefix
+                });
+            }
+            catch (e) {
+                console.error("An error occured during download components module");
+                console.error(e);
+                return false;
+            }
             let appPlugins = pluginList;
             if (data.plugins) {
                 appPlugins = Object.assign(Object.assign({}, pluginList), data.plugins);

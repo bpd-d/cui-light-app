@@ -6,6 +6,7 @@ export class CuiSetup {
         this.prefix = "cui";
         this.plugins = {};
         this.root = document.body;
+        this.parallaxAnimations = {};
     }
     fromInit(init) {
         var _a;
@@ -19,6 +20,7 @@ export class CuiSetup {
         this.scrollThreshold = init.scrollThreshold;
         this.resizeThreshold = init.resizeThreshold;
         this.root = init.root;
+        this.parallaxAnimations = init.parallaxAnimations;
         return this;
     }
 }
@@ -38,5 +40,6 @@ export class CuiSetupInit {
         this.root = document.body;
         this.busSetup = undefined;
         this.development = undefined;
+        this.parallaxAnimations = {};
     }
 }

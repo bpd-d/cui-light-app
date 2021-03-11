@@ -1,3 +1,4 @@
+import { ParallaxAnimations } from "../animation/interfaces";
 import { ICuiEventBusQueueSetup } from "../bus/interfaces";
 import { ICuiDevelopmentToolFactory } from "../development/interfaces";
 import { CuiLogLevel, CuiInteractionsType } from "../utils/types";
@@ -27,6 +28,7 @@ export class CuiSetup implements CuiSetupCommon {
     resizeThreshold: number;
     plugins: any;
     root: HTMLElement;
+    parallaxAnimations: ParallaxAnimations;
 
     constructor() {
         this.autoLightMode = false;
@@ -34,7 +36,8 @@ export class CuiSetup implements CuiSetupCommon {
         this.resizeThreshold = 20;
         this.prefix = "cui";
         this.plugins = {};
-        this.root = document.body
+        this.root = document.body;
+        this.parallaxAnimations = {};
     }
 
     fromInit(init: CuiSetupInit): CuiSetup {
@@ -48,6 +51,7 @@ export class CuiSetup implements CuiSetupCommon {
         this.scrollThreshold = init.scrollThreshold;
         this.resizeThreshold = init.resizeThreshold;
         this.root = init.root;
+        this.parallaxAnimations = init.parallaxAnimations;
 
         return this;
     }
@@ -68,6 +72,7 @@ export class CuiSetupInit implements CuiSetupCommon {
     resizeThreshold: number;
     busSetup?: ICuiEventBusQueueSetup[];
     development: ICuiDevelopmentToolFactory | undefined;
+    parallaxAnimations: ParallaxAnimations;
     root: HTMLElement;
     constructor() {
         this.prefix = 'cui';
@@ -84,5 +89,6 @@ export class CuiSetupInit implements CuiSetupCommon {
         this.root = document.body;
         this.busSetup = undefined;
         this.development = undefined;
+        this.parallaxAnimations = {};
     }
 }

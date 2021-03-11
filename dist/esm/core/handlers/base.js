@@ -432,6 +432,12 @@ export class CuiMutableHandler extends CuiHandlerBase {
             return true;
         });
     }
+    setMutationSelector(selector) {
+        __classPrivateFieldGet(this, _mutionHandler).setSelector(selector);
+    }
+    setMutationAttributes(attributes) {
+        __classPrivateFieldGet(this, _mutionHandler).setAttributes(attributes);
+    }
     /**
      * Callback attached to mutation observer set on root element
      *
@@ -443,19 +449,23 @@ export class CuiMutableHandler extends CuiHandlerBase {
     }
     prepareRecords(records) {
         return records.reduce((result, item) => {
-            if (item.type !== "childList") {
+            if (item.type === "childList") {
+                if (item.addedNodes.length > 0) {
+                    result.added.push(...item.addedNodes);
+                }
+                if (item.removedNodes.length > 0) {
+                    result.removed.push(...item.removedNodes);
+                }
                 return result;
             }
-            if (item.addedNodes.length > 0) {
-                result.added.push(...item.addedNodes);
-            }
-            if (item.removedNodes.length > 0) {
-                result.removed.push(...item.removedNodes);
+            if (item.type === "attributes") {
+                result.changed.push(item.target);
             }
             return result;
         }, {
             added: [],
-            removed: []
+            removed: [],
+            changed: []
         });
     }
 }

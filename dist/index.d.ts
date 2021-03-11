@@ -4,7 +4,7 @@
 
 import { ICuiApiHandler } from "src/core/api/interfaces";
 
-export const CUI_LIGHT_VERSION = "0.4.2";
+export const CUI_LIGHT_VERSION = "0.4.3";
 global {
     interface Window {
         cuiInit: CuiInit;
@@ -81,6 +81,7 @@ export class CuiSetup implements CuiSetupCommon {
     resizeThreshold: number;
     plugins: any;
     root: HTMLElement;
+    parallaxAnimations: ParallaxAnimations;
     constructor();
     fromInit(init: CuiSetupInit): CuiSetup;
 }
@@ -98,6 +99,7 @@ export class CuiSetupInit implements CuiSetupCommon {
     resizeThreshold: number;
     busSetup?: ICuiEventBusQueueSetup[];
     development: ICuiDevelopmentToolFactory | undefined;
+    parallaxAnimations: ParallaxAnimations;
     root: HTMLElement;
     constructor();
 }
@@ -289,6 +291,49 @@ export interface CuiAnimationsDefinition {
 }
 export const SWIPE_ANIMATIONS_DEFINITIONS: CuiAnimationsDefinition;
 
+export interface ICuiPropertyAnimator<T> {
+    perform(element: any, progress: number, factor: number): void;
+    setProperty(prop: T): void;
+}
+export interface ParallaxAnimations {
+    [name: string]: AnimationProperty<PropsTypes>;
+}
+export interface AnimationProperty<T> {
+    [id: string]: T;
+}
+export interface AnimatorPropertyValue {
+    from: number;
+    to: number;
+    unit?: string;
+}
+export interface ComplexAnimatorProperty {
+    [name: string]: AnimatorPropertyValue;
+}
+export interface ColorProperty {
+    red: number;
+    blue: number;
+    green: number;
+    alpha: number;
+}
+export interface ColorAnimatorProperty {
+    from: ColorProperty;
+    to: ColorProperty;
+}
+export interface OnAnimationFinishCallback {
+    (element: Element | undefined, reverted: boolean, error: boolean): void;
+}
+export interface AnimationDefinition {
+    previous: DefinitionItem;
+    current: DefinitionItem;
+}
+export interface DefinitionItem {
+    left: AnimationProperty<PropsTypes>;
+    right: AnimationProperty<PropsTypes>;
+}
+export interface CuiAnimationsDefinition {
+    [id: string]: AnimationDefinition;
+}
+
 export interface CuiBusExtStatisticsItem {
     name: string;
     emits: number;
@@ -392,7 +437,7 @@ export class CuiDocumentStyleAppender implements ICuiDocumentStyleAppender {
     append(style: string): boolean;
 }
 
-export type PropsTypes = AnimatorPropertyValue | TransformAnimatorProperty;
+export type PropsTypes = AnimatorPropertyValue | ComplexAnimatorProperty;
 export class CuiAnimation {
         #private;
         constructor(element?: Element);
@@ -401,6 +446,9 @@ export class CuiAnimation {
         onError(callback: (e: Error) => void): void;
         onFinish(callback: OnAnimationFinishCallback): void;
         perform(props: AnimationProperty<PropsTypes>, timeout?: number, factor?: number): void;
+}
+export class AnimatorFactory {
+        static get(id: string): ICuiPropertyAnimator<AnimatorPropertyValue | ComplexAnimatorProperty | ColorAnimatorProperty> | undefined;
 }
 export class CuiAnimationEngine {
         #private;
@@ -437,35 +485,5 @@ export class CuiSwipeAnimationEngine {
             * @param revert - whether animation should return back to 0 or progress to the end
             */
         finish(progress: number, timeout: number, revert: boolean): void;
-}
-
-export interface ICuiPropertyAnimator<T> {
-    perform(element: any, progress: number, factor: number): void;
-    setProperty(prop: T): void;
-}
-export interface AnimationProperty<T> {
-    [id: string]: T;
-}
-export interface AnimatorPropertyValue {
-    from: number;
-    to: number;
-    unit?: string;
-}
-export interface TransformAnimatorProperty {
-    [name: string]: AnimatorPropertyValue;
-}
-export interface OnAnimationFinishCallback {
-    (element: Element | undefined, reverted: boolean, error: boolean): void;
-}
-export interface AnimationDefinition {
-    previous: DefinitionItem;
-    current: DefinitionItem;
-}
-export interface DefinitionItem {
-    left: AnimationProperty<PropsTypes>;
-    right: AnimationProperty<PropsTypes>;
-}
-export interface CuiAnimationsDefinition {
-    [id: string]: AnimationDefinition;
 }
 

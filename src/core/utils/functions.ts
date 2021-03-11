@@ -275,7 +275,10 @@ export function getOffsetLeft(element: HTMLElement) {
 }
 
 export function getIntOrDefault(value: any, def: number): number {
-    let integer = parseInt(value);
+    if (!value) {
+        return def;
+    }
+    let integer = value.includes && value.includes('.') ? parseFloat(value) : parseInt(value);
     return isNaN(integer) ? def : integer;
 }
 
@@ -581,7 +584,6 @@ export function measure(name?: string) {
 
         return descriptor;
     }
-
 };
 
 export function getChildSelectorFromScoped(scopedSelector: string): string {

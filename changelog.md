@@ -1,5 +1,10 @@
 # bpd cUI Light changelog
 
+# [0.4.3] 2020-03-11
+* [Added] New component - parallax
+* [Added] New properties animators - filter, color, position
+* [Changed] Optimization in Icon
+* [Removed] Intersection component
 # [0.4.2] 2020-03-08
 * [Added] Modules to components - they will attach to handler lifecycle
 * [Added] Mixins implementation to improve package size

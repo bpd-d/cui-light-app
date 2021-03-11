@@ -20,7 +20,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _observer, _options, _element, _components, _utils, _queryString, _isObserving, _observer_1, _element_1, _disabled, _options_1;
+var _observer, _options, _element, _components, _utils, _queryString, _isObserving, _observer_1, _element_1, _disabled, _selector, _options_1, _callback;
 import { is, are, joinAttributesForQuery, parseAttribute } from "../utils/functions";
 import { CuiDevtoolFactory } from "../development/factory";
 import { createCuiElement, destroyCuiElement, getMatchingComponents, updateComponent } from "../api/functions";
@@ -194,31 +194,48 @@ export class CuiMutationObserver {
 }
 _observer = new WeakMap(), _options = new WeakMap(), _element = new WeakMap(), _components = new WeakMap(), _utils = new WeakMap(), _queryString = new WeakMap();
 export class CuiComponentMutationHandler {
-    constructor(target) {
+    constructor(target, selector) {
         _isObserving.set(this, void 0);
         _observer_1.set(this, void 0);
         _element_1.set(this, void 0);
         _disabled.set(this, void 0);
+        _selector.set(this, void 0);
         _options_1.set(this, {
             childList: true,
-            subtree: true
+            subtree: true,
         });
-        __classPrivateFieldSet(this, _observer_1, undefined);
+        _callback.set(this, void 0);
         __classPrivateFieldSet(this, _disabled, false);
         __classPrivateFieldSet(this, _isObserving, false);
         __classPrivateFieldSet(this, _element_1, target);
+        __classPrivateFieldSet(this, _selector, selector);
+        __classPrivateFieldSet(this, _callback, undefined);
+        __classPrivateFieldSet(this, _observer_1, new MutationObserver(this.mutationCallback.bind(this)));
     }
     observe() {
-        if (!__classPrivateFieldGet(this, _isObserving) && !__classPrivateFieldGet(this, _disabled) && __classPrivateFieldGet(this, _observer_1)) {
+        if (!__classPrivateFieldGet(this, _isObserving) && !__classPrivateFieldGet(this, _disabled)) {
             __classPrivateFieldGet(this, _observer_1).observe(__classPrivateFieldGet(this, _element_1), __classPrivateFieldGet(this, _options_1));
             __classPrivateFieldSet(this, _isObserving, true);
         }
     }
     unobserve() {
-        if (__classPrivateFieldGet(this, _isObserving) && __classPrivateFieldGet(this, _observer_1)) {
+        if (__classPrivateFieldGet(this, _isObserving)) {
             __classPrivateFieldGet(this, _observer_1).disconnect();
             __classPrivateFieldSet(this, _isObserving, false);
         }
+    }
+    setSelector(selector) {
+        __classPrivateFieldSet(this, _selector, selector);
+    }
+    setAttributes(attributes) {
+        if (attributes && attributes.length > 0) {
+            __classPrivateFieldSet(this, _options_1, Object.assign(Object.assign({}, __classPrivateFieldGet(this, _options_1)), { attributes: true, attributeFilter: attributes }));
+        }
+        __classPrivateFieldSet(this, _options_1, {
+            childList: true,
+            subtree: true,
+        });
+        this.unobserve();
     }
     isObserving() {
         return __classPrivateFieldGet(this, _isObserving);
@@ -230,9 +247,36 @@ export class CuiComponentMutationHandler {
         }
     }
     onMutation(callback) {
-        if (__classPrivateFieldGet(this, _isObserving))
-            this.unobserve();
-        __classPrivateFieldSet(this, _observer_1, new MutationObserver(callback));
+        __classPrivateFieldSet(this, _callback, callback);
+    }
+    mutationCallback(record) {
+        let records = record.reduce((result, record) => {
+            if (__classPrivateFieldGet(this, _selector) && record.type === 'childList') {
+                if (this.matchesSelector(record)) {
+                    result.push(record);
+                }
+            }
+            else {
+                result.push(record);
+            }
+            return result;
+        }, []);
+        if (__classPrivateFieldGet(this, _callback)) {
+            __classPrivateFieldGet(this, _callback).call(this, records);
+        }
+    }
+    matchesSelector(record) {
+        if (record.addedNodes.length > 0) {
+            return this.isAnyItemMatching([...record.addedNodes]);
+        }
+        if (record.removedNodes.length > 0) {
+            return this.isAnyItemMatching([...record.removedNodes]);
+        }
+        return false;
+    }
+    isAnyItemMatching(array) {
+        //@ts-ignore
+        return (array.find((node) => node.matches(__classPrivateFieldGet(this, _selector))) !== null);
     }
 }
-_isObserving = new WeakMap(), _observer_1 = new WeakMap(), _element_1 = new WeakMap(), _disabled = new WeakMap(), _options_1 = new WeakMap();
+_isObserving = new WeakMap(), _observer_1 = new WeakMap(), _element_1 = new WeakMap(), _disabled = new WeakMap(), _selector = new WeakMap(), _options_1 = new WeakMap(), _callback = new WeakMap();

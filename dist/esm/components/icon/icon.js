@@ -7,20 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _currentIcon;
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { ICONS } from "../../core/utils/statics";
 import { is } from "../../core/utils/functions";
@@ -49,26 +35,18 @@ export class CuiIconComponent {
 export class CuiIconHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiIconHandler", element, attribute, new CuiIconArgs(), utils);
-        _currentIcon.set(this, void 0);
-        __classPrivateFieldSet(this, _currentIcon, null);
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (__classPrivateFieldGet(this, _currentIcon) !== null) {
-                this._log.debug("Icon already initialized");
-                return false;
-            }
-            __classPrivateFieldSet(this, _currentIcon, this.args.icon);
             this.addIcon(this.args.icon);
             return true;
         });
     }
     onRefresh() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.args.icon === __classPrivateFieldGet(this, _currentIcon)) {
+            if (!this.prevArgs || this.args.icon === this.prevArgs.icon) {
                 return false;
             }
-            __classPrivateFieldSet(this, _currentIcon, this.args.icon);
             this.addIcon(this.args.icon);
             return true;
         });
@@ -80,7 +58,6 @@ export class CuiIconHandler extends CuiHandlerBase {
                 //@ts-ignore checked
                 svg.remove();
             }
-            __classPrivateFieldSet(this, _currentIcon, null);
             return true;
         });
     }
@@ -108,4 +85,3 @@ export class CuiIconHandler extends CuiHandlerBase {
         this.element.appendChild(iconElement);
     }
 }
-_currentIcon = new WeakMap();

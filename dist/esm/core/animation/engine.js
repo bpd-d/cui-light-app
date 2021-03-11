@@ -11,19 +11,17 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _engine, _timeout, _factory, _onError, _onFinishCallback, _animators, _lock, _animStartStamp, _element, _cleanOnFinish, _errorOccured, _factory_1, _onError_1, _element_1, _animators_1, _animationEngine, _factory_2, _onError_2;
+var _engine, _timeout, _onError, _onFinishCallback, _animators, _lock, _animStartStamp, _element, _cleanOnFinish, _errorOccured, _onError_1, _element_1, _animators_1, _animationEngine, _onError_2;
 import { is } from "../utils/functions";
-import { OpacityAnimator, TransformAnimator, PropertyAnimator } from "./animators";
+import { OpacityAnimator, TransformAnimator, PropertyAnimator, ColorAnimator, FilterAnimator } from "./animators";
 export class CuiAnimation {
     constructor(element) {
         _engine.set(this, void 0);
         _timeout.set(this, void 0);
-        _factory.set(this, void 0);
         _onError.set(this, void 0);
         __classPrivateFieldSet(this, _engine, new CuiAnimationEngine(true));
         __classPrivateFieldSet(this, _onError, undefined);
         __classPrivateFieldSet(this, _timeout, 0);
-        __classPrivateFieldSet(this, _factory, new AnimatorFactory());
         if (element) {
             __classPrivateFieldGet(this, _engine).setElement(element);
         }
@@ -49,7 +47,7 @@ export class CuiAnimation {
         let animators = [];
         try {
             for (let prop in props) {
-                let animator = __classPrivateFieldGet(this, _factory).get(prop);
+                let animator = AnimatorFactory.get(prop);
                 if (!animator)
                     return;
                 animator.setProperty(props[prop]);
@@ -72,17 +70,22 @@ export class CuiAnimation {
         }
     }
 }
-_engine = new WeakMap(), _timeout = new WeakMap(), _factory = new WeakMap(), _onError = new WeakMap();
-class AnimatorFactory {
-    get(id) {
+_engine = new WeakMap(), _timeout = new WeakMap(), _onError = new WeakMap();
+export class AnimatorFactory {
+    static get(id) {
         if (!is(id)) {
             return undefined;
+        }
+        if (id.includes('color')) {
+            return new ColorAnimator(id);
         }
         switch (id) {
             case "opacity":
                 return new OpacityAnimator();
             case "transform":
                 return new TransformAnimator();
+            case "filter":
+                return new FilterAnimator();
             default:
                 return new PropertyAnimator(id);
         }
@@ -98,13 +101,11 @@ export class CuiAnimationEngine {
         _element.set(this, void 0);
         _cleanOnFinish.set(this, void 0);
         _errorOccured.set(this, void 0);
-        _factory_1.set(this, void 0);
         _onError_1.set(this, void 0);
         __classPrivateFieldSet(this, _animators, []);
         __classPrivateFieldSet(this, _element, undefined);
         __classPrivateFieldSet(this, _animStartStamp, undefined);
         __classPrivateFieldSet(this, _cleanOnFinish, cleanOnFinish !== null && cleanOnFinish !== void 0 ? cleanOnFinish : false);
-        __classPrivateFieldSet(this, _factory_1, new AnimatorFactory());
         __classPrivateFieldSet(this, _lock, false);
         __classPrivateFieldSet(this, _onFinishCallback, undefined);
         __classPrivateFieldSet(this, _errorOccured, false);
@@ -123,7 +124,7 @@ export class CuiAnimationEngine {
         __classPrivateFieldSet(this, _animators, []);
         try {
             for (let prop in props) {
-                let animator = __classPrivateFieldGet(this, _factory_1).get(prop);
+                let animator = AnimatorFactory.get(prop);
                 if (!animator)
                     return;
                 animator.setProperty(props[prop]);
@@ -207,18 +208,16 @@ export class CuiAnimationEngine {
         }
     }
 }
-_onFinishCallback = new WeakMap(), _animators = new WeakMap(), _lock = new WeakMap(), _animStartStamp = new WeakMap(), _element = new WeakMap(), _cleanOnFinish = new WeakMap(), _errorOccured = new WeakMap(), _factory_1 = new WeakMap(), _onError_1 = new WeakMap();
+_onFinishCallback = new WeakMap(), _animators = new WeakMap(), _lock = new WeakMap(), _animStartStamp = new WeakMap(), _element = new WeakMap(), _cleanOnFinish = new WeakMap(), _errorOccured = new WeakMap(), _onError_1 = new WeakMap();
 export class CuiSwipeAnimationEngine {
     constructor(shouldCleanOnFinish) {
         _element_1.set(this, void 0);
         _animators_1.set(this, void 0);
         _animationEngine.set(this, void 0);
-        _factory_2.set(this, void 0);
         _onError_2.set(this, void 0);
         __classPrivateFieldSet(this, _element_1, undefined);
         __classPrivateFieldSet(this, _animators_1, []);
         __classPrivateFieldSet(this, _animationEngine, new CuiAnimationEngine(shouldCleanOnFinish));
-        __classPrivateFieldSet(this, _factory_2, new AnimatorFactory());
         __classPrivateFieldSet(this, _onError_2, undefined);
     }
     setElement(element) {
@@ -238,7 +237,7 @@ export class CuiSwipeAnimationEngine {
         __classPrivateFieldSet(this, _animators_1, []);
         try {
             for (let prop in props) {
-                let animator = __classPrivateFieldGet(this, _factory_2).get(prop);
+                let animator = AnimatorFactory.get(prop);
                 if (!animator)
                     return;
                 animator.setProperty(props[prop]);
@@ -287,4 +286,4 @@ export class CuiSwipeAnimationEngine {
         }
     }
 }
-_element_1 = new WeakMap(), _animators_1 = new WeakMap(), _animationEngine = new WeakMap(), _factory_2 = new WeakMap(), _onError_2 = new WeakMap();
+_element_1 = new WeakMap(), _animators_1 = new WeakMap(), _animationEngine = new WeakMap(), _onError_2 = new WeakMap();

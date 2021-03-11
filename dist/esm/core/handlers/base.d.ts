@@ -8,6 +8,7 @@ import { ICuiHandlerModule } from "./modules/interfaces";
 export interface CuiChildMutation {
     removed: Node[];
     added: Node[];
+    changed: Node[];
 }
 export declare class ComponentHelper {
     #private;
@@ -127,6 +128,8 @@ export declare abstract class CuiMutableHandler<T extends ICuiParsable> extends 
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
+    setMutationSelector(selector: string): void;
+    setMutationAttributes(attributes: string[]): void;
     /**
      * Callback attached to mutation observer set on root element
      *

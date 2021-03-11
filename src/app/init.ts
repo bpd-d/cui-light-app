@@ -1,8 +1,8 @@
 import { ICuiPlugin, ICuiComponent } from "../core/models/interfaces";
 import { is } from "../core/utils/functions";
 import { CuiInitData, CuiInitializer } from "./initializer";
-import { GetComponents } from "../components/module";
 import { GetPlugins } from "../plugins/module"
+import { GetComponents } from "../components/module";
 
 
 export class CuiInit {
@@ -17,19 +17,35 @@ export class CuiInit {
             return false;
         }
         const initializer = new CuiInitializer();
-        const pluginList: ICuiPlugin[] = GetPlugins({
-            autoLight: true,
-            autoPrint: true
-        });
+        let pluginList: ICuiPlugin[] = []
+        try {
 
-        const componentList: ICuiComponent[] = GetComponents({
-            prefix: data.setup?.prefix
-        })
+            pluginList = GetPlugins({
+                autoLight: true,
+                autoPrint: true
+            });
+        } catch (e) {
+            console.error("An error occured during download plugin module");
+            console.error(e);
+            return false;
+        }
+
+        let componentList: ICuiComponent[] = []
+        try {
+
+            componentList = GetComponents({
+                prefix: data.setup?.prefix
+            })
+        } catch (e) {
+            console.error("An error occured during download components module");
+            console.error(e);
+            return false;
+        }
+
         let appPlugins = pluginList;
         if (data.plugins) {
             appPlugins = { ...pluginList, ...data.plugins }
         }
-
         let result = await initializer.init({
             ...data,
             plugins: appPlugins,

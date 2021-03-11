@@ -14,7 +14,6 @@ export declare class CuiIconComponent implements ICuiComponent {
     get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
 }
 export declare class CuiIconHandler extends CuiHandlerBase<CuiIconArgs> {
-    #private;
     constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;

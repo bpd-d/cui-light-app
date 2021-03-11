@@ -1,4 +1,5 @@
 import { ICuiEventBus } from "src/core/bus/interfaces";
+import { ICuiMoveEvent } from "src/core/models/events";
 import { CuiMoveEventListener, ICuiMoveData } from "../../core/listeners/move";
 import { EVENTS } from "../../core/utils/statics";
 
@@ -75,8 +76,8 @@ export class CuiMoveObserver {
     }
 
     private pushMoveEvent(data: ICuiMoveData) {
-        this.#bus.emit(EVENTS.GLOBAL_MOVE, null, {
-            data,
+        this.#bus.emit<ICuiMoveEvent>(EVENTS.GLOBAL_MOVE, null, {
+            ...data,
             source: "CuiMoveObserver",
             timestamp: Date.now(),
             name: EVENTS.GLOBAL_MOVE
