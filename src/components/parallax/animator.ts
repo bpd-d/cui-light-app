@@ -1,6 +1,7 @@
 import { enumerateObject } from "../../core/utils/functions";
-import { AnimatorFactory, PropsTypes } from "../../core/animation/engine";
+import { PropsTypes } from "../../core/animation/engine";
 import { AnimationProperty } from "../../core/animation/interfaces";
+import { AnimatorFactory } from "../../core/animation/factory";
 
 export class ParallaxAnimatorsHandler {
     name: string;

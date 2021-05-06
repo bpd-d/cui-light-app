@@ -1,33 +1,36 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _keysObserver;
+import { CuiPlugin } from "../base";
 import { CuiKeysObserver } from "./observer";
-export class CuiKeysObserverPlugin {
-    constructor(keySetup) {
-        this.name = 'keys-plugin';
-        _keysObserver.set(this, void 0);
-        this.description = "CuiKeysObserverPlugin";
-        this.setup = keySetup;
-        __classPrivateFieldSet(this, _keysObserver, undefined);
-    }
-    init(utils) {
-        __classPrivateFieldSet(this, _keysObserver, new CuiKeysObserver(utils.bus));
-        __classPrivateFieldGet(this, _keysObserver).connect();
-    }
-    destroy() {
-        if (__classPrivateFieldGet(this, _keysObserver))
-            __classPrivateFieldGet(this, _keysObserver).disconnect();
-    }
+export function CuiKeysObserverPluginFn(setup) {
+    return new CuiPlugin({
+        name: 'keys-plugin',
+        description: "CuiKeysObserverPlugin",
+        setup: setup,
+        callback: (utils, setup) => {
+            const observer = new CuiKeysObserver(utils.bus);
+            observer.connect();
+            return [
+                [],
+                () => { observer.disconnect(); }
+            ];
+        }
+    });
 }
-_keysObserver = new WeakMap();
+// export class CuiKeysObserverPlugin implements ICuiPlugin {
+//     description: string;
+//     name: string = 'keys-plugin';
+//     setup: CuiKeysObserverPluginSetup;
+//     #keysObserver: ICuiKeysObserver | undefined;
+//     constructor(keySetup: CuiKeysObserverPluginSetup) {
+//         this.description = "CuiKeysObserverPlugin";
+//         this.setup = keySetup;
+//         this.#keysObserver = undefined;
+//     }
+//     init(utils: CuiUtils): void {
+//         this.#keysObserver = new CuiKeysObserver(utils.bus);
+//         this.#keysObserver.connect();
+//     }
+//     destroy(): void {
+//         if (this.#keysObserver)
+//             this.#keysObserver.disconnect();
+//     }
+// }

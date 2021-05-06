@@ -1,6 +1,8 @@
 import { ICuiDictionary, ICuiDictionaryItem } from "../models/interfaces";
 export declare class CuiDictionary<T> implements ICuiDictionary<T> {
-    #private;
+    private _keys;
+    private _values;
+    private _lock;
     constructor(init?: ICuiDictionaryItem<T>[]);
     add(key: string, value: T): void;
     remove(key: string): void;

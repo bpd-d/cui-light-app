@@ -9,6 +9,9 @@ export const CLASSES = {
     swipingOn: "swiping-on",
     selectionOff: "selection-off",
 };
+export const ATTRIBUTES = {
+    root: "data-root"
+};
 export const ICONS = {
     close: "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\" width=\"20\" height=\"20\"><path d=\"M 1.9999999,1.9999999 18,18\"></path><path d=\"M 18,1.9999999 1.9999999,18\"></path></svg>",
     accordion: "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\" width=\"20\" height=\"20\"><path d=\"M 5.0000475,7.4490018 10.000024,12.551028 15,7.4490018\"></path></svg>",
@@ -67,7 +70,7 @@ export const ICONS = {
 //     }
 // }
 export const SCOPE_SELECTOR = ":scope ";
-export const CSS_VARIABLES = {
+export const CSS_VARIABLES = Object.freeze({
     fontSize: "--{prefix}-font-size",
     lineHeight: "--{prefix}-line-height",
     animationTime: "--{prefix}-animation-time",
@@ -122,12 +125,12 @@ export const CSS_VARIABLES = {
     scrollbarWidth: "--{prefix}-scrollbar-width",
     componentSpace: "--{prefix}-component-space",
     accordionIcon: "--{prefix}-accordion-icon"
-};
+});
 export class STATICS {
 }
 STATICS.logLevel = 'none';
 STATICS.prefix = 'cui';
-export const EVENTS = {
+export const EVENTS = Object.freeze({
     INSTANCE_INITIALIZED: 'instance-initialized',
     INSTANCE_FINISHED: 'instance-finished',
     RESIZE: "resize",
@@ -166,7 +169,7 @@ export const EVENTS = {
     GESTURE_RIGHT: "gesture-right",
     NOTIFY: "notify",
     NOTIFIED: "notified",
-};
+});
 // export const GLOBAL_EVENTS = [EVENTS.ALERT, EVENTS.TOAST, EVENTS.KEYDOWN, EVENTS.MOVE_LOCK, EVENTS.GLOBAL_MOVE, EVENTS.RESIZE]
 export const OBSERVABLE_SCROLL = "SCROLL";
 export const OBSERVABLE_INTERSECTION = "INTERSECTION";
@@ -176,3 +179,8 @@ export const SCREEN_SIZE_MEDIUM = 960;
 export const SCREEN_SIZE_LARGE = 1200;
 export const SCREEN_SIZE_XLARGE = 1600;
 export const MEASUREMENT = [];
+export const CuiRAF = window.requestAnimationFrame
+    // || window.mozRequestAnimationFrame
+    || window.webkitRequestAnimationFrame
+    //  || window.msRequestAnimationFrame
+    || function (f) { return setTimeout(f, 1000 / 60); };

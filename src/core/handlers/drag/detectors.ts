@@ -1,42 +1,46 @@
 import { is } from "../../utils/functions";
 import { ICuiElementDetector } from "./interfaces";
 
+/**
+ * threshold keeps a outside margin value to extend box outside of an element
+ */
+
 export class CuiSimpleDragOverDetector implements ICuiElementDetector {
-    #elements: Element[];
-    #count: number;
-    #threshold: number;
+    _elements: Element[];
+    _count: number;
+    _threshold: number;
     constructor() {
-        this.#elements = [];
-        this.#count = 0;
-        this.#threshold = 5;
+        this._elements = [];
+        this._count = 0;
+        this._threshold = 5;
     }
 
     setElements(elements: Element[]): void {
-        this.#elements = elements;
-        this.#count = this.#elements.length;
+        this._elements = elements;
+        this._count = this._elements.length;
     }
 
     setThreshold(value: number) {
-        this.#threshold = value
+        this._threshold = value
     }
 
     detect(x: Number, y: Number): [number, Element | undefined] {
-        if (!is(this.#elements)) {
+        if (!is(this._elements)) {
             return [-1, undefined];
         }
 
         let idx: number = -1;
         let found: Element | undefined = undefined;
 
-        for (let i = 0; i < this.#count; i++) {
-            if (this.isInBounds(this.#elements[i], x, y)) {
+        for (let i = 0; i < this._count; i++) {
+            if (this.isInBounds(this._elements[i], x, y)) {
                 if (i === 0) {
                     idx = i;
-                    found = this.#elements[i];
+                    found = this._elements[i];
                     //break;
-                } else if (i < this.#count - 1) {
+                } else if (i < this._count - 1) {
                     idx = i + 1;
-                    found = this.#elements[i + 1];
+                    found = this._elements[i + 1];
                     //break;
                 }
                 break;
@@ -48,8 +52,8 @@ export class CuiSimpleDragOverDetector implements ICuiElementDetector {
 
     private isInBounds(element: Element, x: Number, y: Number): boolean {
         const box = element.getBoundingClientRect();
-        return x > box.left - this.#threshold && x < box.left + box.width + this.#threshold &&
-            y > box.top - this.#threshold && y < box.top + box.height + this.#threshold;
+        return x > box.left - this._threshold && x < box.left + box.width + this._threshold &&
+            y > box.top - this._threshold && y < box.top + box.height + this._threshold;
     }
 
 }

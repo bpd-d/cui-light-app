@@ -25,45 +25,45 @@ export interface ICuiIntersectionHandler {
  * Constructor gets a root element for observer and optional array of threshold values [0...1]
  */
 export class CuiIntersectionObserver implements ICuiObserver {
-    #observer: IntersectionObserver | undefined;
-    #root: Element;
-    #threshold: number[];
-    #callback: IntersectionObserverCallback | undefined;
+    private _observer: IntersectionObserver | undefined;
+    private _root: Element;
+    private _threshold: number[];
+    private _callback: IntersectionObserverCallback | undefined;
     constructor(root: Element, threshold?: number[]) {
-        this.#root = root;
-        this.#threshold = threshold ?? [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
-        this.#callback = undefined;
-        this.#observer = undefined;
+        this._root = root;
+        this._threshold = threshold ?? [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+        this._callback = undefined;
+        this._observer = undefined;
     }
 
     setCallback(callback: IntersectionObserverCallback) {
-        this.#callback = callback;
+        this._callback = callback;
     }
 
     connect(): void {
-        if (!this.#callback) {
+        if (!this._callback) {
             return;
         }
-        this.#observer = new IntersectionObserver(this.#callback, {
-            root: this.#root,
+        this._observer = new IntersectionObserver(this._callback, {
+            root: this._root,
             rootMargin: '0px',
-            threshold: this.#threshold
+            threshold: this._threshold
         })
     }
 
     observe(target: Element): void {
-        if (this.#observer)
-            this.#observer.observe(target)
+        if (this._observer)
+            this._observer.observe(target)
     }
 
     unobserve(target: Element): void {
-        if (this.#observer)
-            this.#observer.unobserve(target)
+        if (this._observer)
+            this._observer.unobserve(target)
     }
 
     disconnect() {
-        if (this.#observer)
-            this.#observer.disconnect()
+        if (this._observer)
+            this._observer.disconnect()
     }
 
 }

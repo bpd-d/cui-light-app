@@ -7,201 +7,132 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _prefix, _eventId, _intersectionObserver, _currentSize, _currentValue, _lastValue, _currentAction, _isIntersecting, _timeoutToken;
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { EVENTS } from "../../core/utils/statics";
-import { calcWindowSize, is } from "../../core/utils/functions";
+import { calcWindowSize, isInViewport } from "../../core/utils/functions";
 import { CuiIntersectionObserver } from "../../core/observers/intersection";
-import { CuiActionsFatory } from "../../core/utils/actions";
+import { CuiActionsFactory } from "../../core/utils/actions";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiTaskRunner } from "../../core/utils/task";
+import { cuiObserverExtension } from "../extensions/observer/observer";
+import { eventExtension } from "../extensions/event/event";
+import { getEventBusFacade, getCuiHandlerInteractions } from "../../core/handlers/extensions/facades";
+import { getResizeCalculator } from "./calculator";
+import { callbackPerformer } from "../extensions/performers";
+import { CuiComponentBaseHook } from "../base";
 export class CuiResizeArgs extends CuiAutoParseArgs {
     constructor() {
         super();
         this.mode = "simple";
         this.default = "";
         this.small = this.medium = this.large = this.xlarge = '';
-        this.delay = 0;
+        this.delay = 1;
     }
 }
-export class CuiResizeComponent {
-    constructor(prefix) {
-        _prefix.set(this, void 0);
-        __classPrivateFieldSet(this, _prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${__classPrivateFieldGet(this, _prefix)}-resize`;
-    }
-    getStyle() {
-        return null;
-    }
-    get(element, utils) {
-        return new CuiResizeHandler(element, utils, this.attribute);
-    }
+export function CuiResizeComponent(prefix) {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: 'resize',
+        create: (element, utils, prefix, attribute) => {
+            return new CuiResizeHandler(element, utils, attribute);
+        }
+    });
 }
-_prefix = new WeakMap();
 export class CuiResizeHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiResizeHandler", element, attribute, new CuiResizeArgs(), utils);
-        _eventId.set(this, void 0);
-        _intersectionObserver.set(this, void 0);
-        _currentSize.set(this, void 0);
-        _currentValue.set(this, void 0);
-        _lastValue.set(this, void 0);
-        _currentAction.set(this, void 0);
-        _isIntersecting.set(this, void 0);
-        _timeoutToken.set(this, void 0);
-        __classPrivateFieldSet(this, _eventId, null);
-        __classPrivateFieldSet(this, _intersectionObserver, new CuiIntersectionObserver(document.documentElement, [0, 0.1]));
-        __classPrivateFieldGet(this, _intersectionObserver).setCallback(this.onIntersection.bind(this));
-        __classPrivateFieldSet(this, _lastValue, "");
-        __classPrivateFieldSet(this, _currentValue, "");
-        __classPrivateFieldSet(this, _currentSize, "none");
-        __classPrivateFieldSet(this, _isIntersecting, false);
-        __classPrivateFieldSet(this, _timeoutToken, undefined);
-        __classPrivateFieldSet(this, _currentAction, undefined);
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, element);
+        this._lastValue = "";
+        this._currentValue = "";
+        this._isIntersecting = false;
+        this._currentAction = undefined;
+        this._interactions = getCuiHandlerInteractions(utils.interactions);
+        this._resizeValueCalculator = getResizeCalculator(this.args.mode);
+        this._task = new CuiTaskRunner(this.args.delay, false, this.updateAction.bind(this));
+        const intersectionObserver = new CuiIntersectionObserver(document.documentElement, [0, 0.1]);
+        intersectionObserver.setCallback(this.onIntersection.bind(this));
+        this.extend(cuiObserverExtension({
+            type: 'intersection',
+            element: element,
+            observer: intersectionObserver
+        }));
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.RESIZE,
+            performer: callbackPerformer(this.resize.bind(this))
+        }));
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
-            __classPrivateFieldSet(this, _eventId, this.utils.bus.on(EVENTS.RESIZE, this.resize.bind(this)));
-            __classPrivateFieldGet(this, _intersectionObserver).connect();
-            __classPrivateFieldGet(this, _intersectionObserver).observe(this.element);
-            __classPrivateFieldSet(this, _currentSize, calcWindowSize(window.innerWidth));
-            __classPrivateFieldSet(this, _isIntersecting, this.isInViewport(this.element));
-            this.setNewValue();
-            this.updateElement();
+            this.handleUpdate();
             return true;
         });
     }
     onRefresh() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.setNewValue();
-            this.updateElement();
+            this.handleUpdate();
             return true;
         });
     }
     onRemove() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (__classPrivateFieldGet(this, _eventId) !== null) {
-                this.utils.bus.detach(EVENTS.RESIZE, __classPrivateFieldGet(this, _eventId));
-                __classPrivateFieldSet(this, _eventId, null);
-            }
-            __classPrivateFieldGet(this, _intersectionObserver).unobserve(this.element);
-            __classPrivateFieldGet(this, _intersectionObserver).disconnect();
+            this._busFacade.detachEmittedEvents();
             return true;
         });
     }
+    handleUpdate() {
+        this._resizeValueCalculator = getResizeCalculator(this.args.mode);
+        this._isIntersecting = isInViewport(this.element);
+        this._task.setTimeout(this.args.delay);
+        this.setNewValue(calcWindowSize(window.innerWidth));
+        this.updateElement();
+    }
     resize(data) {
-        __classPrivateFieldSet(this, _currentSize, data.current);
-        this.setNewValue();
+        this.setNewValue(data.current);
         this.updateElement();
     }
     onIntersection(entries) {
         if (entries.length > 0) {
-            __classPrivateFieldSet(this, _isIntersecting, entries[0].isIntersecting);
+            this._isIntersecting = entries[0].isIntersecting;
         }
         this.updateElement();
     }
-    setNewValue() {
-        let newValue = this.isSmartMode() ? this.getSmartValue(__classPrivateFieldGet(this, _currentSize)) : this.getValue(__classPrivateFieldGet(this, _currentSize), true);
-        if (newValue && newValue !== __classPrivateFieldGet(this, _currentValue)) {
-            __classPrivateFieldSet(this, _currentValue, newValue);
+    setNewValue(size) {
+        let newValue = this._resizeValueCalculator.get(this.args, size);
+        if (newValue !== this._currentValue) {
+            this._currentValue = newValue;
         }
-    }
-    getValue(size, replace) {
-        let value = undefined;
-        switch (size) {
-            case "xlarge":
-                value = this.args.xlarge;
-                break;
-            case "large":
-                value = this.args.large;
-                break;
-            case "medium":
-                value = this.args.medium;
-                break;
-            case "small":
-                value = this.args.small;
-                break;
-            default:
-                value = this.args.default;
-        }
-        return (replace && !value) ? this.args.default : value;
-    }
-    getSmartValue(size) {
-        var _a, _b, _c, _d;
-        let value = this.args.default;
-        if (size === 'none') {
-            return value;
-        }
-        value = (_a = this.args.small) !== null && _a !== void 0 ? _a : value;
-        if (size === 'small') {
-            return value;
-        }
-        value = (_b = this.args.medium) !== null && _b !== void 0 ? _b : value;
-        if (size === 'medium') {
-            return value;
-        }
-        value = (_c = this.args.large) !== null && _c !== void 0 ? _c : value;
-        if (size === 'large') {
-            return value;
-        }
-        return (_d = this.args.xlarge) !== null && _d !== void 0 ? _d : value;
     }
     updateElement() {
-        if (!__classPrivateFieldGet(this, _isIntersecting) && this.isSmartMode()) {
+        if (this.cannotUpdate()) {
             this.logInfo("Not intersecting");
             return;
         }
-        if (!is(__classPrivateFieldGet(this, _currentValue))) {
-            this.logWarning("Not eligible to set value: " + __classPrivateFieldGet(this, _currentValue));
+        if (!this._currentValue || this._lastValue === this._currentValue) {
+            this.logWarning("Not eligible to set value: " + this._currentValue);
             return;
         }
-        if (__classPrivateFieldGet(this, _lastValue) !== __classPrivateFieldGet(this, _currentValue)) {
-            this.run(() => {
-                //@ts-ignore already checked
-                let newAction = CuiActionsFatory.get(__classPrivateFieldGet(this, _currentValue));
-                this.mutate(() => {
-                    if (__classPrivateFieldGet(this, _currentAction)) {
-                        __classPrivateFieldGet(this, _currentAction).remove(this.element);
-                    }
-                    newAction.add(this.element);
-                    //@ts-ignore already checked
-                    __classPrivateFieldSet(this, _lastValue, __classPrivateFieldGet(this, _currentValue));
-                    __classPrivateFieldSet(this, _currentAction, newAction);
-                });
-            });
-        }
+        this._lastValue = this._currentValue;
+        this._task.start();
     }
-    isSmartMode() {
-        return this.args.mode === 'smart';
+    /**
+     * Checks whether element can be updated
+     * @returns
+     */
+    cannotUpdate() {
+        return !this._isIntersecting && this.args.mode === 'smart';
     }
-    isInViewport(element) {
-        const rect = element.getBoundingClientRect();
-        return (rect.top >= 0 &&
-            rect.left >= 0 &&
-            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-            rect.right <= (window.innerWidth || document.documentElement.clientWidth));
-    }
-    run(callback) {
-        if (__classPrivateFieldGet(this, _timeoutToken)) {
-            clearTimeout(__classPrivateFieldGet(this, _timeoutToken));
-            __classPrivateFieldSet(this, _timeoutToken, undefined);
-        }
-        __classPrivateFieldSet(this, _timeoutToken, setTimeout(() => {
-            callback();
-            __classPrivateFieldSet(this, _timeoutToken, undefined);
-        }, this.args.delay));
+    /**
+     * Used for task to update action on the element after receiving resize
+     */
+    updateAction() {
+        //@ts-ignore already checked
+        let newAction = CuiActionsFactory.get(this._currentValue);
+        this._interactions.mutate(() => {
+            if (this._currentAction) {
+                this._currentAction.remove(this.element);
+            }
+            newAction.add(this.element);
+            this._currentAction = newAction;
+        });
     }
 }
-_eventId = new WeakMap(), _intersectionObserver = new WeakMap(), _currentSize = new WeakMap(), _currentValue = new WeakMap(), _lastValue = new WeakMap(), _currentAction = new WeakMap(), _isIntersecting = new WeakMap(), _timeoutToken = new WeakMap();

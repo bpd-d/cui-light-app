@@ -10,10 +10,15 @@ export interface ICuiMoveData {
     event: MouseEvent | TouchEvent;
 }
 export declare class CuiMoveEventListener implements ICuiEventListener<ICuiMoveData> {
-    #private;
+    private _element;
+    private _onEvent;
+    private _isLocked;
+    private _isAttached;
+    private _preventDefault;
+    private _target;
     constructor(element?: HTMLElement);
     setCallback(callback: (t: ICuiMoveData) => void): void;
-    setTarget(element: Element): void;
+    setTarget(element?: Element): void;
     isInProgress(): boolean;
     preventDefault(flag: boolean): void;
     attach(): void;

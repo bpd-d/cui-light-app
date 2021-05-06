@@ -2,7 +2,15 @@ export interface ElementBuilderAttribute {
     [name: string]: string;
 }
 export declare class ElementBuilder {
-    #private;
+    private _id;
+    private _classes;
+    private _attributes;
+    private _tag;
+    private _text;
+    private _children;
+    private _rawChildren;
+    private _callback;
+    private _evName;
     constructor(tag: string);
     setId(id: string): ElementBuilder;
     setClasses(...classList: string[]): ElementBuilder;

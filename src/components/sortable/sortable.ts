@@ -1,21 +1,27 @@
 import { ElementBuilder } from "../../core/builders/element";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiSimpleDragOverDetector } from "../../core/handlers/drag/detectors";
-import { CuiDragHandler } from "../../core/handlers/drag/drag";
 import { ICuiElementDetector } from "../../core/handlers/drag/interfaces";
 import { CuiSwipeAnimationEngine, PropsTypes } from "../../core/animation/engine";
 import { AnimationProperty } from "../../core/animation/interfaces";
 import { ICuiMoveData } from "../../core/listeners/move";
-import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiParsable, ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { replacePrefix, is, are, joinWithScopeSelector } from "../../core/utils/functions";
 import { EVENTS, CLASSES } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-import { SortEvent } from "src/core/models/events";
+import { SortEvent } from "../../core/models/events";
+import { CuiComponentBaseHook } from "../base";
+import { getCuiHandlerInteractions, getEventBusFacade, ICuiEventBusFacade, ICuiInteractionsFacade } from "../../core/handlers/extensions/facades";
+import { moveExtension } from "../extensions/move/move";
+import { getEaseTimingFunction } from "../../core/animation/calculators";
+import { CuiTimeAnimationEngines } from "../../core/animation/factory";
+import { getDragMovePerformer, ICuiDragExtensionPerformer } from "../extensions/move/performer";
 
 const SORTABLE_IS_MOVING = "{prefix}-moving";
 const DEFAULT_SELECTOR = " > *";
 const SORTABLE_PREVIEW_CLS = "{prefix}-sortable-preview";
+const SORTABLE_LOCKED = "{prefix}-locked";
 
 export class CuiSortableArgs extends CuiAutoParseArgs implements ICuiParsable {
     target: string;
@@ -38,58 +44,68 @@ export class CuiSortableArgs extends CuiAutoParseArgs implements ICuiParsable {
     }
 }
 
-export class CuiSortableComponent implements ICuiComponent {
-    attribute: string;
-    #prefix: string;
-    constructor(prefix?: string) {
-        this.#prefix = prefix ?? "cui";
-        this.attribute = this.#prefix + "-sortable";
-    }
-    getStyle(): string | null {
-        return null;
-    }
-    get(element: HTMLElement, sutils: CuiUtils): ICuiComponentHandler {
-        return new CuiSortableHandler(element, this.attribute, sutils, this.#prefix);
-    }
+export function CuiSortableComponent(prefix?: string): ICuiComponent {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "sortable",
+        create: (element: HTMLElement, utils: CuiCore, prefix: string, attribute: string) => {
+            return new CuiSortableHandler(element, attribute, utils, prefix)
+        }
+    })
 }
 
 export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
-    #dragHandler: CuiDragHandler;
-    #triggers: Element[];
-    #targets: Element[];
-    #currentTarget: HTMLElement | null;
-    #currentIdx: number;
-    #preview: HTMLElement | null;
-    #movingCls: string;
-    #detector: ICuiElementDetector;
-    #currentBefore: HTMLElement | null;
-    #animation: CuiSwipeAnimationEngine;
+    private _triggers: Element[];
+    private _targets: Element[];
+    private _currentTarget: HTMLElement | null;
+    private _currentIdx: number;
+    private _preview: HTMLElement | null;
 
-    #previewCls: string;
-    constructor(element: HTMLElement, attribute: string, utils: CuiUtils, prefix: string) {
+    private _detector: ICuiElementDetector;
+    private _currentBefore: HTMLElement | null;
+    private _animation: CuiSwipeAnimationEngine;
+
+    private _previewCls: string;
+    private _movingCls: string;
+    private _lockedCls: string;
+
+    private _busFacade: ICuiEventBusFacade;
+    private _interactions: ICuiInteractionsFacade;
+    private _dragPerformer: ICuiDragExtensionPerformer;
+
+    constructor(element: HTMLElement, attribute: string, utils: CuiCore, prefix: string) {
         super("CuiSortableHandler", element, attribute, new CuiSortableArgs(), utils);
-        this.#targets = [];
-        this.#triggers = [];
-        this.#currentIdx = -1;
-        this.#currentTarget = null;
-        this.#currentBefore = null;
-        this.#preview = null;
+        this._targets = [];
+        this._triggers = [];
+        this._currentIdx = -1;
+        this._currentTarget = null;
+        this._currentBefore = null;
+        this._preview = null;
 
-        this.#dragHandler = new CuiDragHandler(element);
-        this.#dragHandler.onDragStart(this.onDragStart.bind(this));
-        this.#dragHandler.onDragOver(this.onDragOver.bind(this));
-        this.#dragHandler.onDragEnd(this.onDragEnd.bind(this));
-        this.#movingCls = replacePrefix(SORTABLE_IS_MOVING, prefix);
-        this.#previewCls = replacePrefix(SORTABLE_PREVIEW_CLS, prefix);
-        this.#detector = new CuiSimpleDragOverDetector();
-        this.#animation = new CuiSwipeAnimationEngine();
-        this.#animation.setOnFinish(this.onSortAnimationFinish.bind(this));
+        this._movingCls = replacePrefix(SORTABLE_IS_MOVING, prefix);
+        this._previewCls = replacePrefix(SORTABLE_PREVIEW_CLS, prefix);
+        this._lockedCls = replacePrefix(SORTABLE_LOCKED, prefix);
+
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, element);
+        this._interactions = getCuiHandlerInteractions(utils.interactions);
+        this._dragPerformer = getDragMovePerformer({
+            onStart: this.onDragStart.bind(this),
+            onMove: this.onDragOver.bind(this),
+            onEnd: this.onDragEnd.bind(this)
+        })
+
+        this._detector = new CuiSimpleDragOverDetector();
+        this._animation = new CuiSwipeAnimationEngine(CuiTimeAnimationEngines.get(getEaseTimingFunction()));
+        this.extend(moveExtension({
+            target: element,
+            performer: this._dragPerformer
+        }))
     }
 
     async onHandle(): Promise<boolean> {
-        this.#dragHandler.attach();
         this.getTargetsAndTrggers();
-        this.#detector.setThreshold(this.args.threshold)
+        this._detector.setThreshold(this.args.threshold);
+        this._dragPerformer.setTimeout(this.args.timeout);
         return true;
     }
     async onRefresh(): Promise<boolean> {
@@ -97,11 +113,11 @@ export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
             this.args.trigger !== this.prevArgs.trigger)) {
             this.getTargetsAndTrggers();
         }
-        this.#dragHandler.setLongPressTimeout(this.args.timeout);
+        this._dragPerformer.setTimeout(this.args.timeout);
         return true;
     }
     async onRemove(): Promise<boolean> {
-        this.#dragHandler.detach();
+        this._busFacade.detachEmittedEvents();
         return true;
     }
 
@@ -110,33 +126,29 @@ export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
      * If exception - lists are cleared
      */
     private getTargetsAndTrggers() {
-        try {
-            this.#targets = [...this.element.querySelectorAll(this.args.target)];
-            this.#triggers = [...this.element.querySelectorAll(this.args.trigger)];
-            if (this.#triggers.length !== this.#targets.length) {
-                throw new Error(`Triggers (count ${this.#triggers.length}) and targets (count ${this.#targets.length}) selector are not correct`)
-            }
-            this.#detector.setElements(this.#targets);
-        } catch (e) {
-            this._log.error("Incorrect trigger or target selector")
-            this._log.exception(e, "getTargetsAndTrggers");
-            this.#targets = [];
-            this.#triggers = [];
+        this._targets = [...this.element.querySelectorAll(this.args.target)];
+        this._triggers = [...this.element.querySelectorAll(this.args.trigger)];
+        if (this._triggers.length !== this._targets.length) {
+            this.log.error("Incorrect trigger or target selector")
+            this._targets = [];
+            this._triggers = [];
         }
+        this._detector.setElements(this._targets);
     }
 
-    private onDragStart(data: ICuiMoveData): boolean {
-        this.#currentIdx = this.getPressedElementIdx(data.target as Node);
-        this.#currentTarget = this.#currentIdx > -1 ? this.#targets[this.#currentIdx] as HTMLElement : null;
-        if (!is(this.#currentTarget)) {
+    private async onDragStart(data: ICuiMoveData): Promise<boolean> {
+        this._currentIdx = this.getPressedElementIdx(data.target as Node);
+        this._currentTarget = this._currentIdx > -1 ? this._targets[this._currentIdx] as HTMLElement : null;
+        if (!is(this._currentTarget)) {
             return false;
         }
-        this.utils.bus.emit(EVENTS.MOVE_LOCK, null, true);
+        this.core.bus.emit(EVENTS.MOVE_LOCK, null, true);
         this.startMovementPrep(data);
-        this.emitEvent<SortEvent>(EVENTS.SORT_START, {
-            target: this.#currentTarget,
-            index: this.#currentIdx,
+        this._busFacade.emit<SortEvent>(EVENTS.SORT_START, {
+            target: this._currentTarget,
+            index: this._currentIdx,
         })
+
         return true;
     }
 
@@ -146,98 +158,101 @@ export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
     }
 
     private onDragEnd(data: ICuiMoveData): void {
-        if (!is(this.#preview)) {
+        if (!is(this._preview)) {
             return;
         }
         //@ts-ignore preview
-        this.#animation.setElement(this.#preview);
-        this.#animation.setProps(this.getFinishAnimation());
-        this.#animation.finish(0, 100, false);
+        this._animation.setElement(this._preview);
+        this._animation.setProps(this.getFinishAnimation());
+        this._animation.finish({ progress: 0, timeout: 100, revert: false }).then((status: boolean) => {
+            if (status)
+                this.onSortAnimationFinish();
+        });
     }
 
     private getPressedElementIdx(target: Node) {
-        return this.#triggers.findIndex((trigger: Element) => {
+        return this._triggers.findIndex((trigger: Element) => {
             return trigger.contains(target)
         });
     }
 
     private startMovementPrep(data: ICuiMoveData) {
-        this.mutate(() => {
+        this._interactions.mutate(() => {
             this.createPreview();
-            if (is(this.#currentTarget))
+            if (is(this._currentTarget))
                 //@ts-ignore currentTarget
-                this.helper.setClass(this.#movingCls, this.#currentTarget);
-            this.helper.setClass("cui-locked", this.element);
-            this.helper.setClass(CLASSES.swipingOn, document.body);
+                this.classes.setClass(this._movingCls, this._currentTarget);
+            this.classes.setClass(this._lockedCls, this.element);
+            this.classes.setClass(CLASSES.swipingOn, document.body);
             this.setPreviewPosition(data);
             this.setCurrentPosition(data);
         })
     }
 
     private stopMovementPrep() {
-        this.mutate(() => {
-            if (is(this.#currentTarget))
+        this._interactions.mutate(() => {
+            if (is(this._currentTarget))
                 //@ts-ignore currentTarget
-                this.helper.removeClass(this.#movingCls, this.#currentTarget);
-            this.helper.removeClass(CLASSES.swipingOn, document.body);
-            this.helper.removeClass("cui-locked", this.element);
+                this.classes.removeClass(this._movingCls, this._currentTarget);
+            this.classes.removeClass(CLASSES.swipingOn, document.body);
+            this.classes.removeClass(this._lockedCls, this.element);
             this.removePreview();
-            this.#currentTarget = null;
-            this.#currentBefore = null;
+            this._currentTarget = null;
+            this._currentBefore = null;
             this.getTargetsAndTrggers();
         })
     }
 
     private move(data: ICuiMoveData) {
-        this.mutate(() => {
+        this._interactions.mutate(() => {
             this.setPreviewPosition(data);
             this.setCurrentPosition(data);
         })
     }
 
     private createPreview() {
-        if (!is(this.#currentTarget)) {
+        if (!is(this._currentTarget)) {
             this.logError("Cannot create preview - current target does not exist", "createPreview")
             return;
         }
 
-        this.#preview = new ElementBuilder("div").setClasses(this.#previewCls).build();
+        this._preview = new ElementBuilder("div").setClasses(this._previewCls).build();
         //@ts-ignore currentTarget
-        this.#preview.style.width = `${this.#currentTarget.offsetWidth}px`;
+        this._preview.style.width = `${this._currentTarget.offsetWidth}px`;
         //@ts-ignore currentTarget
-        this.#preview.style.height = `${this.#currentTarget.offsetHeight}px`;
-        document.body.appendChild(this.#preview);
+        this._preview.style.height = `${this._currentTarget.offsetHeight}px`;
+        document.body.appendChild(this._preview);
     }
 
     private removePreview() {
-        if (is(this.#preview)) {
+        if (is(this._preview)) {
             //@ts-ignore currentTarget
-            this.#preview.remove();
-            this.#preview = null;
+            this._preview.remove();
+            this._preview = null;
         }
     }
 
     private setPreviewPosition(data: ICuiMoveData) {
-        if (!is(this.#preview)) {
+        if (!is(this._preview)) {
             return;
         }
         //@ts-ignore preview
-        this.#preview.style.top = `${data.y}px`;
+        this._preview.style.top = `${data.y}px`;
         //@ts-ignore preview
-        this.#preview.style.left = `${data.x}px`;
+        this._preview.style.left = `${data.x}px`;
     }
 
     private setCurrentPosition(data: ICuiMoveData) {
-        if (!this.#currentTarget) {
+        if (!this._currentTarget) {
             return;
         }
-        let [idx, detected] = this.#detector.detect(data.x, data.y);
-        if ((idx !== this.#currentIdx) && detected && this.#currentBefore !== detected) {
+        let [idx, detected] = this._detector.detect(data.x, data.y);
+        if ((idx !== this._currentIdx) && detected && this._currentBefore !== detected) {
             let el = detected;
-            this.insertElement(this.#currentTarget, el);
-            this.#currentBefore = el as HTMLElement;
+            this.insertElement(this._currentTarget, el);
+            this._currentBefore = el as HTMLElement;
             this.getTargetsAndTrggers();
-            this.#currentIdx = idx;
+            this._currentIdx = idx;
         }
     }
 
@@ -250,7 +265,7 @@ export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
     }
 
     private getFinishAnimation(): AnimationProperty<PropsTypes> {
-        if (!are(this.#currentTarget, this.#preview)) {
+        if (!are(this._currentTarget, this._preview)) {
             return {
                 opacity: {
                     from: 1,
@@ -259,7 +274,7 @@ export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
             }
         }
         //@ts-ignore currentTarget
-        const box = this.#currentTarget.getBoundingClientRect();
+        const box = this._currentTarget.getBoundingClientRect();
         return {
             opacity: {
                 from: 1,
@@ -267,16 +282,16 @@ export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
             },
             top: {
                 //@ts-ignore preview
-                from: this.#preview.offsetTop,
+                from: this._preview.offsetTop,
                 //@ts-ignore preview
-                to: box.top > 0 ? box.top : this.#preview.offsetTop,
+                to: box.top > 0 ? box.top : this._preview.offsetTop,
                 unit: "px"
             },
             left: {
                 //@ts-ignore preview
-                from: this.#preview.offsetLeft,
+                from: this._preview.offsetLeft,
                 //@ts-ignore preview
-                to: box.left > 0 ? box.left : this.#preview.offsetLeft,
+                to: box.left > 0 ? box.left : this._preview.offsetLeft,
                 unit: "px"
             }
         }
@@ -284,11 +299,10 @@ export class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
 
     private onSortAnimationFinish() {
         this.stopMovementPrep();
-
-        this.utils.bus.emit(EVENTS.MOVE_LOCK, null, false);
-        this.emitEvent<SortEvent>(EVENTS.SORTED, {
-            target: this.#currentTarget,
-            index: this.#currentIdx,
+        this.core.bus.emit(EVENTS.MOVE_LOCK, null, false);
+        this._busFacade.emit<SortEvent>(EVENTS.SORTED, {
+            target: this._currentTarget,
+            index: this._currentIdx,
         })
     }
 }

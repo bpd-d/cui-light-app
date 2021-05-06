@@ -1,5 +1,5 @@
 
-import { CuiClassAction, ICuiComponentAction, CuiInboundAction, CuiActionsFatory } from '../../src/core/utils/actions';
+import { CuiClassAction, ICuiComponentAction, CuiInboundAction, CuiActionsFactory } from '../../src/core/utils/actions';
 import { CuiUtils } from '../../src/core/models/utils';
 import { CuiSetupInit } from '../../src/core/models/setup';
 import { sleep } from '../../src/core/utils/functions';
@@ -121,7 +121,7 @@ describe("Tests checking method [CuiActions]", function () {
     })
 
     it("Checking class [CuiActionsFatory] - inbound indicator", async function () {
-        let action: ICuiComponentAction = CuiActionsFatory.get("~dark-mode");
+        let action: ICuiComponentAction = CuiActionsFactory.get("~dark-mode");
         let hasToggledAdd: boolean = false;
         let hasToggledRemove: boolean = false;
 
@@ -137,7 +137,7 @@ describe("Tests checking method [CuiActions]", function () {
     })
 
     it("Checking class [CuiActionsFatory] - class indicator ", function () {
-        let action: ICuiComponentAction = CuiActionsFatory.get(".cls");
+        let action: ICuiComponentAction = CuiActionsFactory.get(".cls");
         let onAdd: boolean = false;
         let onRemove: boolean = false;
         action.add(element)
@@ -149,7 +149,7 @@ describe("Tests checking method [CuiActions]", function () {
     })
 
     it("Checking class [AttributeAction] - class indicator ", function () {
-        let action: ICuiComponentAction = CuiActionsFatory.get("&src:http://www.goole.com");
+        let action: ICuiComponentAction = CuiActionsFactory.get("&src:http://www.goole.com");
         let onAdd: boolean = false;
         let value: string = null;
         let onRemove: boolean = false;
@@ -164,7 +164,7 @@ describe("Tests checking method [CuiActions]", function () {
     })
 
     it("Checking class [StyleAction] - class indicator ", function () {
-        let action: ICuiComponentAction = CuiActionsFatory.get("^fontSize:14px");
+        let action: ICuiComponentAction = CuiActionsFactory.get("^fontSize:14px");
         let onAdd: string = undefined;
         let onRemove: string = undefined;
         let el = element as any;

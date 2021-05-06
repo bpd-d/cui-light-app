@@ -11,6 +11,8 @@ export interface ICuiElementBox {
     getScrollTop(): number;
     getScrollLeft(): number;
     queryAll(selector: string): HTMLElement[];
+    get(): CuiElementBoxType;
+    scrollTo(scrollObj: ScrollToOptions): void;
 }
 
 export class CuiElementBoxFactory {
@@ -25,83 +27,98 @@ export class CuiElementBoxFactory {
 }
 
 export class ElementBox implements ICuiElementBox {
-    #box: DOMRect;
-    #element: Element;
+    private _box: DOMRect;
+    private _element: Element;
     constructor(element: Element) {
-        this.#element = element;
-        this.#box = element.getBoundingClientRect();
+        this._element = element;
+        this._box = element.getBoundingClientRect();
     }
 
     getHeight(): number {
-        return this.#box.height;
+        return this._box.height;
     }
     getWidth(): number {
-        return this.#box.width;
+        return this._box.width;
     }
     getTop(): number {
-        return this.#box.top;
+        return this._box.top;
     }
     getLeft(): number {
-        return this.#box.left;
+        return this._box.left;
     }
     getScrollHeight(): number {
-        return this.#element.scrollHeight;
+        return this._element.scrollHeight;
     }
 
     getScrollWidth(): number {
-        return this.#element.scrollWidth;
+        return this._element.scrollWidth;
     }
 
     getScrollTop(): number {
-        return this.#element.scrollTop;
+        return this._element.scrollTop;
     }
 
     getScrollLeft(): number {
-        return this.#element.scrollLeft;
+        return this._element.scrollLeft;
     }
 
     queryAll(selector: string): HTMLElement[] {
-        return [...this.#element.querySelectorAll<HTMLElement>(selector)];
+        return [...this._element.querySelectorAll<HTMLElement>(selector)];
+    }
+
+    get(): CuiElementBoxType {
+        return this._element;
+    }
+
+    scrollTo(options: ScrollToOptions) {
+        this._element.scrollTo(options);
     }
 }
 
 export class HTMLElementBox implements ICuiElementBox {
-    #element: HTMLElement;
+    private _element: HTMLElement;
     constructor(element: HTMLElement) {
-        this.#element = element;
+        this._element = element;
     }
 
     getHeight(): number {
-        return this.#element.offsetHeight;
+        return this._element.offsetHeight;
     }
     getWidth(): number {
-        return this.#element.offsetWidth;
+        return this._element.offsetWidth;
     }
     getTop(): number {
-        return this.#element.offsetTop;
+        return this._element.offsetTop;
     }
     getLeft(): number {
-        return this.#element.offsetLeft;
+        return this._element.offsetLeft;
     }
 
     getScrollHeight(): number {
-        return this.#element.scrollHeight;
+        return this._element.scrollHeight;
     }
 
     getScrollWidth(): number {
-        return this.#element.scrollWidth;
+        return this._element.scrollWidth;
     }
 
     getScrollTop(): number {
-        return this.#element.scrollTop;
+        return this._element.scrollTop;
     }
 
     getScrollLeft(): number {
-        return this.#element.scrollLeft;
+        return this._element.scrollLeft;
     }
 
     queryAll(selector: string): HTMLElement[] {
-        return [...this.#element.querySelectorAll<HTMLElement>(selector)];
+        return [...this._element.querySelectorAll<HTMLElement>(selector)];
+    }
+    get(): CuiElementBoxType {
+        return this._element;
+    }
+
+    scrollTo(options: ScrollToOptions) {
+        this._element.scrollTo(options);
     }
 }
 
@@ -137,4 +154,13 @@ export class WindowElementBox implements ICuiElementBox {
         return [...document.querySelectorAll(selector)] as any[];
     }
 
+    get(): CuiElementBoxType {
+        return window;
+    }
+
+    scrollTo(options: ScrollToOptions) {
+        window.scrollTo(options);
+    }
+
 }
+

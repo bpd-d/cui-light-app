@@ -1,10 +1,11 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { ICONS } from "../../core/utils/statics";
 import { is } from "../../core/utils/functions";
 import { IconBuilder } from "../../core/builders/icon";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiComponentBaseHook } from "../base";
+import { getCuiHandlerInteractions, ICuiInteractionsFacade } from "../../core/handlers/extensions/facades";
 
 export class CuiIconArgs extends CuiAutoParseArgs {
     icon: string;
@@ -19,29 +20,25 @@ export class CuiIconArgs extends CuiAutoParseArgs {
     }
 }
 
-export class CuiIconComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string) {
-        this.attribute = `${prefix ?? 'cui'}-icon`;
-    }
-
-    getStyle(): string | null {
-        return null;
-    }
-
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler {
-        return new CuiIconHandler(element, utils, this.attribute);
-    }
+export function CuiIconComponent(prefix?: string) {
+    return CuiComponentBaseHook({
+        name: 'icon',
+        prefix: prefix,
+        create: (element: HTMLElement, utils: CuiCore, prefix: string, attribute: string) => {
+            return new CuiIconHandler(element, utils, attribute);
+        }
+    })
 }
 
 
 
 export class CuiIconHandler extends CuiHandlerBase<CuiIconArgs> {
 
-   
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
+    private _interactions: ICuiInteractionsFacade;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string) {
         super("CuiIconHandler", element, attribute, new CuiIconArgs(), utils);
-   
+        this._interactions = getCuiHandlerInteractions(utils.interactions, this);
+
     }
 
     async onHandle(): Promise<boolean> {
@@ -53,7 +50,7 @@ export class CuiIconHandler extends CuiHandlerBase<CuiIconArgs> {
         if (!this.prevArgs || this.args.icon === this.prevArgs.icon) {
             return false;
         }
-   
+
         this.addIcon(this.args.icon);
         return true;
     }
@@ -79,10 +76,10 @@ export class CuiIconHandler extends CuiHandlerBase<CuiIconArgs> {
             svg.remove();
         }
         if (this.element.childNodes.length > 0) {
-            this.mutate(this.insertBefore, iconSvg)
+            this._interactions.mutate(this.insertBefore, iconSvg)
             return;
         }
-        this.mutate(this.appendChild, iconSvg)
+        this._interactions.mutate(this.appendChild, iconSvg)
 
     }
 

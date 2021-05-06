@@ -9,6 +9,6 @@ Features:
 * Color themes
 * SVG icons
 
-Current release: 0.2.0
+Current release: 0.5.0
 
 **More info coming soon**

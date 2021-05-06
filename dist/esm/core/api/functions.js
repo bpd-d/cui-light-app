@@ -15,9 +15,9 @@ export function getMatchingComponents(node, components) {
         return node.hasAttribute && node.hasAttribute(component.attribute);
     });
 }
-export function createCuiElement(node, components, utils) {
+export function createCuiElement(node, components, core) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (!are(node, components, utils)) {
+        if (!are(node, components, core)) {
             return false;
         }
         let element = node;
@@ -26,7 +26,7 @@ export function createCuiElement(node, components, utils) {
             node.setAttribute(CUID_ATTRIBUTE, element.$cuid);
         }
         for (let component of components) {
-            yield createComponent(element, component, utils, parseAttribute(element, component.attribute));
+            yield createComponent(element, component, core, parseAttribute(element, component.attribute));
         }
         return true;
     });
@@ -57,7 +57,7 @@ export function addCuiArgument(element, cuiArg, args) {
     element.setAttribute(cuiArg, argArr.join("; "));
     return true;
 }
-export function createComponent(node, component, utils, args) {
+export function createComponent(node, component, core, args) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!node.$handlers) {
             node.$handlers = {};
@@ -67,7 +67,7 @@ export function createComponent(node, component, utils, args) {
             return false;
         }
         try {
-            let handler = component.get(node, utils);
+            let handler = component.get(node, core);
             node.$handlers[component.attribute] = handler;
             yield node.$handlers[component.attribute].handle(args);
         }

@@ -7,38 +7,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _elements, _isLocked, _logger, _cDt, _utils, _actionsHelper;
 import { is, are } from "../../core/utils/functions";
 import { CuiActionsHelper } from "../../core/helpers/helpers";
-import { CuiActionsFatory, CuiClassAction } from "../../core/utils/actions";
+import { CuiActionsFactory, CuiClassAction } from "../../core/utils/actions";
 import { CuiDevtoolFactory } from "../../core/development/factory";
 export class ElementManager {
     constructor(elements, utils) {
-        _elements.set(this, void 0);
-        _isLocked.set(this, void 0);
-        _logger.set(this, void 0);
-        _cDt.set(this, void 0);
-        _utils.set(this, void 0);
-        _actionsHelper.set(this, void 0);
-        __classPrivateFieldSet(this, _elements, elements);
-        __classPrivateFieldSet(this, _isLocked, false);
-        __classPrivateFieldSet(this, _logger, CuiDevtoolFactory.get("ElementManager"));
-        __classPrivateFieldSet(this, _utils, utils);
-        __classPrivateFieldSet(this, _cDt, Date.now());
-        __classPrivateFieldSet(this, _actionsHelper, new CuiActionsHelper(utils.interactions));
+        this._elements = elements;
+        this._isLocked = false;
+        this._logger = CuiDevtoolFactory.get("ElementManager");
+        this._core = utils;
+        this._cDt = Date.now();
+        this._actionsHelper = new CuiActionsHelper(utils.interactions);
     }
     toggleClass(className) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -62,12 +42,12 @@ export class ElementManager {
             }
             return this.call((element) => {
                 let classes = element.classList;
-                __classPrivateFieldGet(this, _utils).interactions.fetch(() => {
+                this._core.interactions.fetch(() => {
                     if (!classes.contains(className)) {
-                        __classPrivateFieldGet(this, _utils).interactions.mutate(classes.add, classes, className);
+                        this._core.interactions.mutate(classes.add, classes, className);
                     }
                     else {
-                        __classPrivateFieldGet(this, _utils).interactions.mutate(classes.remove, classes, className);
+                        this._core.interactions.mutate(classes.remove, classes, className);
                     }
                 }, this);
             }, 'toggleClassAs');
@@ -92,9 +72,9 @@ export class ElementManager {
             }
             return this.call((element) => {
                 let classes = element.classList;
-                __classPrivateFieldGet(this, _utils).interactions.fetch(() => {
+                this._core.interactions.fetch(() => {
                     if (!classes.contains(className)) {
-                        __classPrivateFieldGet(this, _utils).interactions.mutate(classes.add, classes, className);
+                        this._core.interactions.mutate(classes.add, classes, className);
                     }
                 }, this);
             }, 'setClassAs');
@@ -119,9 +99,9 @@ export class ElementManager {
             }
             return this.call((element) => {
                 let classes = element.classList;
-                __classPrivateFieldGet(this, _utils).interactions.fetch(() => {
+                this._core.interactions.fetch(() => {
                     if (classes.contains(className)) {
-                        __classPrivateFieldGet(this, _utils).interactions.mutate(classes.remove, classes, className);
+                        this._core.interactions.mutate(classes.remove, classes, className);
                     }
                 }, this);
             }, 'removeClass');
@@ -131,7 +111,7 @@ export class ElementManager {
         if (!is(attributeName)) {
             return [];
         }
-        return __classPrivateFieldGet(this, _elements).reduce((val, current) => {
+        return this._elements.reduce((val, current) => {
             let attr = current.getAttribute(attributeName);
             if (attr != null) {
                 val.push(attr);
@@ -155,7 +135,7 @@ export class ElementManager {
                 return false;
             }
             return this.call((element) => {
-                __classPrivateFieldGet(this, _utils).interactions.mutate(element.setAttribute, element, attributeName, attributeValue !== null && attributeValue !== void 0 ? attributeValue : "");
+                this._core.interactions.mutate(element.setAttribute, element, attributeName, attributeValue !== null && attributeValue !== void 0 ? attributeValue : "");
             }, 'setAttributeAs');
         });
     }
@@ -175,7 +155,7 @@ export class ElementManager {
                 return false;
             }
             return this.call((element) => {
-                __classPrivateFieldGet(this, _utils).interactions.mutate(element.removeAttribute, element, attributeName);
+                this._core.interactions.mutate(element.removeAttribute, element, attributeName);
             }, 'removeAttributeAs');
         });
     }
@@ -200,12 +180,12 @@ export class ElementManager {
                 return false;
             }
             return this.call((element) => {
-                __classPrivateFieldGet(this, _utils).interactions.fetch(() => {
+                this._core.interactions.fetch(() => {
                     if (element.hasAttribute(attributeName)) {
-                        __classPrivateFieldGet(this, _utils).interactions.mutate(element.removeAttribute, element, attributeName);
+                        this._core.interactions.mutate(element.removeAttribute, element, attributeName);
                     }
                     else {
-                        __classPrivateFieldGet(this, _utils).interactions.mutate(element.setAttribute, element, attributeName, attributeValue !== null && attributeValue !== void 0 ? attributeValue : "");
+                        this._core.interactions.mutate(element.setAttribute, element, attributeName, attributeValue !== null && attributeValue !== void 0 ? attributeValue : "");
                     }
                 }, this);
             }, 'toggleAttributeAs');
@@ -234,11 +214,11 @@ export class ElementManager {
     }
     call(callback, functionName) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (__classPrivateFieldGet(this, _isLocked)) {
-                __classPrivateFieldGet(this, _logger).error("Element is locked", functionName);
+            if (this._isLocked) {
+                this._logger.error("Element is locked", functionName);
             }
             this.lock();
-            __classPrivateFieldGet(this, _elements).forEach((element, index) => {
+            this._elements.forEach((element, index) => {
                 callback(element, index);
             });
             this.unlock();
@@ -250,7 +230,7 @@ export class ElementManager {
             if (!is(actionStr)) {
                 return false;
             }
-            let act = CuiActionsFatory.get(actionStr);
+            let act = CuiActionsFactory.get(actionStr);
             return this.animate(animationClass, timeout, (element) => {
                 act.add(element);
             });
@@ -261,7 +241,7 @@ export class ElementManager {
             if (!is(actionStr)) {
                 return false;
             }
-            let act = CuiActionsFatory.get(actionStr);
+            let act = CuiActionsFactory.get(actionStr);
             return this.animate(animationClass, timeout, (element) => {
                 act.remove(element);
             });
@@ -279,10 +259,10 @@ export class ElementManager {
             if (!is(animationClass)) {
                 return false;
             }
-            const delay = (_a = timeout !== null && timeout !== void 0 ? timeout : __classPrivateFieldGet(this, _utils).setup.animationTime) !== null && _a !== void 0 ? _a : 0;
+            const delay = (_a = timeout !== null && timeout !== void 0 ? timeout : this._core.setup.animationTime) !== null && _a !== void 0 ? _a : 0;
             const action = new CuiClassAction(animationClass);
             return this.call((element) => {
-                return __classPrivateFieldGet(this, _actionsHelper).performAction(element, action, delay, () => {
+                return this._actionsHelper.performAction(element, action, delay, () => {
                     if (callback)
                         callback(element);
                 });
@@ -291,27 +271,27 @@ export class ElementManager {
     }
     emit(event, ...args) {
         if (!is(event)) {
-            __classPrivateFieldGet(this, _logger).warning("Not enough data to emit event", "emit");
+            this._logger.warning("Not enough data to emit event", "emit");
             return;
         }
         this.call((element) => {
             let cuid = element.$cuid;
             if (is(cuid)) {
-                __classPrivateFieldGet(this, _logger).debug(`Emitting event ${event} to ${cuid}`);
-                __classPrivateFieldGet(this, _utils).bus.emit(event, cuid, ...args);
+                this._logger.debug(`Emitting event ${event} to ${cuid}`);
+                this._core.bus.emit(event, cuid, ...args);
             }
         }, "emit");
     }
     on(event, callback) {
         let ids = [];
         if (!are(event, callback)) {
-            __classPrivateFieldGet(this, _logger).error("Incorrect arguments", "on");
+            this._logger.error("Incorrect arguments", "on");
             return ids;
         }
         this.call((element) => {
             let cuiElement = element;
             if (is(cuiElement)) {
-                let disposeId = __classPrivateFieldGet(this, _utils).bus.on(event, callback, cuiElement);
+                let disposeId = this._core.bus.on(event, callback, cuiElement);
                 if (disposeId != null)
                     ids.push(disposeId);
             }
@@ -320,38 +300,37 @@ export class ElementManager {
     }
     detach(event, id) {
         if (!are(event, id)) {
-            __classPrivateFieldGet(this, _logger).error("Incorrect arguments", "detach");
+            this._logger.error("Incorrect arguments", "detach");
         }
         this.call((element) => {
             let cuiElement = element;
             if (is(cuiElement)) {
-                __classPrivateFieldGet(this, _utils).bus.detach(event, id, cuiElement);
+                this._core.bus.detach(event, id, cuiElement);
             }
         }, "detach");
     }
     read(callback, ...args) {
-        __classPrivateFieldGet(this, _utils).interactions.fetch(callback, this, ...args);
+        this._core.interactions.fetch(callback, this, ...args);
     }
     change(callback, ...args) {
-        __classPrivateFieldGet(this, _utils).interactions.mutate(callback, this, ...args);
+        this._core.interactions.mutate(callback, this, ...args);
     }
     elements() {
-        return __classPrivateFieldGet(this, _elements);
+        return this._elements;
     }
     count() {
-        return __classPrivateFieldGet(this, _elements).length;
+        return this._elements.length;
     }
     lock() {
-        __classPrivateFieldSet(this, _isLocked, true);
+        this._isLocked = true;
     }
     unlock() {
-        __classPrivateFieldSet(this, _isLocked, false);
+        this._isLocked = false;
     }
     isLocked() {
-        return __classPrivateFieldGet(this, _isLocked);
+        return this._isLocked;
     }
     refresh() {
-        return (Date.now() - __classPrivateFieldGet(this, _cDt)) < 360000;
+        return (Date.now() - this._cDt) < 360000;
     }
 }
-_elements = new WeakMap(), _isLocked = new WeakMap(), _logger = new WeakMap(), _cDt = new WeakMap(), _utils = new WeakMap(), _actionsHelper = new WeakMap();

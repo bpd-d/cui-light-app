@@ -1,8 +1,9 @@
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 import { CuiClickableArgs } from "src/core/models/arguments";
+import { ICuiClickPerfromerHook } from "../extensions/click/performer";
 export declare class CuiSwitcherArgs extends CuiAutoParseArgs implements CuiClickableArgs {
     target: string;
     index: string;
@@ -12,17 +13,14 @@ export declare class CuiSwitcherArgs extends CuiAutoParseArgs implements CuiClic
     isList: boolean;
     constructor();
 }
-export declare class CuiSwitcherComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
-}
+export declare function CuiSwitcherComponent(prefix?: string): ICuiComponent;
 export declare class CuiSwitcherHandler extends CuiHandlerBase<CuiSwitcherArgs> {
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
+    _perfromer: ICuiClickPerfromerHook;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
+    private handleArguments;
     /**
      * Sets current switcher target value
      *

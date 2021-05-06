@@ -1,5 +1,5 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiOpenable, ICuiClosable } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent, ICuiOpenable, ICuiClosable } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 export interface CuiDropEvent {
@@ -17,16 +17,21 @@ export declare class CuiDropArgs extends CuiAutoParseArgs {
     margin: number;
     constructor(prefix: string);
 }
-export declare class CuiDropComponenet implements ICuiComponent {
-    #private;
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
-}
+export declare function CuiDropComponent(prefix?: string): ICuiComponent;
 export declare class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implements ICuiOpenable, ICuiClosable {
-    #private;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string);
+    private _prefix;
+    private _bodyClass;
+    private _triggerHoverListener;
+    private _trigger;
+    private _windowClickEventId;
+    private _positionCalculator;
+    private _posClass;
+    private _autoTask;
+    private _actions;
+    private _busFacade;
+    private _interactions;
+    private _windowClickPerformer;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string, prefix: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
@@ -47,11 +52,6 @@ export declare class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implemen
         * Set of actions performed during drop close
         */
     onClose(): void;
-    /**
-     * Event invoked when window is clicked
-     * @param ev
-     */
-    private onWindowClick;
     private isAnyActive;
     /**
      * Finds and opens other active drop element

@@ -1,14 +1,4 @@
-import { ICuiPlugin } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiPlugin } from "src/core/models/interfaces";
 export interface CuiToastPluginSetup {
 }
-export declare class CuiToastPlugin implements ICuiPlugin {
-    #private;
-    description: string;
-    name: string;
-    setup: any;
-    constructor(setup: CuiToastPluginSetup);
-    init(utils: CuiUtils): void;
-    destroy(): void;
-    private onToastShow;
-}
+export declare function CuiToastP(setup?: CuiToastPluginSetup): ICuiPlugin;

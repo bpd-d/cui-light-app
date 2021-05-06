@@ -1,27 +1,24 @@
 import { ICuiPlugin } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { CuiCore } from "../../core/models/core";
+import { CuiPlugin } from "../base";
 import { CuiMoveObserver } from "./observer";
 
-
-export class CuiMoveObserverPlugin implements ICuiPlugin {
-    description: string;
-    name: string = 'move-observer-plugin';
-    setup: any;
-    #moveObserver: CuiMoveObserver | undefined;
-    #gesturesEnabled: boolean;
-    constructor(gestures?: boolean) {
-        this.description = "CuiMoveObserverPlugin";
-        this.#moveObserver = undefined;
-        this.#gesturesEnabled = gestures === false ? false : true;
-    }
-
-    init(utils: CuiUtils): void {
-        this.#moveObserver = new CuiMoveObserver(utils.bus, this.#gesturesEnabled);
-        this.#moveObserver.attach();
-    }
-
-    destroy(): void {
-        if (this.#moveObserver && this.#moveObserver.isAttached())
-            this.#moveObserver.detach();
-    }
+export function CuiMoveObserverPluginFn(gestures?: boolean): ICuiPlugin {
+    return new CuiPlugin({
+        name: 'move-observer-plugin',
+        description: "CuiMoveObserverPlugin",
+        setup: gestures === true,
+        callback: (utils: CuiCore, gestures: boolean) => {
+            const observer = new CuiMoveObserver(utils.bus, gestures);
+            observer.attach();
+            return [
+                [],
+                () => {
+                    if (observer.isAttached()) {
+                        observer.detach();
+                    }
+                }
+            ]
+        }
+    })
 }

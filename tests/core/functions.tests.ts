@@ -1,4 +1,4 @@
-import { is, getName, createElementFromString, getRangeValue, joinAttributesForQuery, clone, are, getMatchingAttribute, getRangeValueOrDefault, getStyleValue, getOffsetTop, getOffsetLeft, parseJsonString, parseAttributeString, prepLogString, jsonify, isInRange, getIntOrDefault, isString, replacePrefix, parseAttribute, isStringTrue, boolStringOrDefault, getStringOrDefault, generateCUID, generateRandomString, getRandomInt, hasFunction, mapObject, mapObjectArray } from "../../src/core/utils/functions";
+import { is, getName, createElementFromString, getRangeValue, joinAttributesForQuery, clone, are, getMatchingAttribute, getRangeValueOrDefault, getStyleValue, getOffsetTop, getOffsetLeft, parseJsonString, parseAttributeString, prepLogString, jsonify, isInRange, getIntOrDefault, isString, replacePrefix, parseAttribute, isStringTrue, boolStringOrDefault, getStringOrDefault, generateCUID, generateRandomString, getRandomInt, hasFunction, mapObject, mapObjectArray, splitText, generateSplitText } from "../../src/core/utils/functions";
 import { SampleTask } from "../helpers/models";
 
 /**
@@ -754,5 +754,53 @@ describe("Tests checking method [mapObjects]", function () {
         expect(mapped[0].a).toEqual(1);
         expect(mapped[0].b).toEqual(11);
         expect(mapped[1]).toBeUndefined();
+    })
+})
+
+describe("Test checking method [splitText]", () => {
+    let text: string;
+
+    beforeAll(() => {
+        text = 'a:1;b:2';
+    })
+
+    it("Splits text", () => {
+        let result = splitText(text, ';');
+        expect(result.length).toEqual(2);
+        expect(result[0]).toEqual('a:1');
+        expect(result[1]).toEqual('b:2');
+    })
+
+
+    it("Returns empty array on empty text", () => {
+        let result = splitText("", ';');
+        expect(result.length).toEqual(0);
+    })
+
+    it("Returns empty array on null", () => {
+        let result = splitText(null, ';');
+        expect(result.length).toEqual(0);
+    })
+})
+
+describe("Test checking method [generateSplitText]", () => {
+    let text: string;
+
+    beforeAll(() => {
+        text = 'a:1;b:2';
+    })
+
+    it("Splits text, returns generator", () => {
+        let result = generateSplitText(text, ';');
+
+        expect(result.next().value).toEqual('a:1');
+        expect(result.next().value).toEqual('b:2');
+        expect(result.next().done).toBeTrue();
+    })
+
+
+    it("Returns empty array on empty text", () => {
+        let result = generateSplitText("", ';');
+        expect(result.next().done).toBeTrue();
     })
 })

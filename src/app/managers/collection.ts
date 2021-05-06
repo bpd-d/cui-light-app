@@ -4,27 +4,27 @@ import { IUIInteractionProvider, CuiCachable } from "../../core/models/interface
 import { CollectionManagerHelper } from "../helpers/collection";
 
 export class CollectionManager implements CuiCachable {
-    #log: ICuiDevelopmentTool;
-    #cDt: number;
-    #helper: CollectionManagerHelper;
+    private _log: ICuiDevelopmentTool;
+    private _cDt: number;
+    private _helper: CollectionManagerHelper;
 
     constructor(elements: Element[], interactions: IUIInteractionProvider) {
-        this.#log = CuiDevtoolFactory.get('CollectionManager');
-        this.#helper = new CollectionManagerHelper(interactions);
-        this.#helper.setElements(elements);
-        this.#cDt = Date.now();
+        this._log = CuiDevtoolFactory.get('CollectionManager');
+        this._helper = new CollectionManagerHelper(interactions);
+        this._helper.setElements(elements);
+        this._cDt = Date.now();
     }
 
     setToggle(className: string) {
-        this.#helper.setToggle(className)
+        this._helper.setToggle(className)
     }
 
     setElements(elements: Element[]) {
-        this.#helper.setElements(elements);
+        this._helper.setElements(elements);
     }
 
     click(callback: (element: Element, index: number) => void): void {
-        this.#helper.elements().forEach((element, index) => {
+        this._helper.elements().forEach((element, index) => {
             element.addEventListener('click', () => {
                 this.set(index).then(() => {
                     if (callback) {
@@ -36,46 +36,46 @@ export class CollectionManager implements CuiCachable {
     }
 
     async next(): Promise<boolean> {
-        if (!this.#helper.check()) {
+        if (!this._helper.check()) {
             return false;
         }
-        let newIdx = this.#helper.getCurrentIndex() + 1;
+        let newIdx = this._helper.getCurrentIndex() + 1;
         return this.set(newIdx >= this.length() ? 0 : newIdx);
     }
 
     async previous(): Promise<boolean> {
-        if (!this.#helper.check()) {
+        if (!this._helper.check()) {
             return false;
         }
-        let newIdx = this.#helper.getCurrentIndex() - 1;
+        let newIdx = this._helper.getCurrentIndex() - 1;
         return this.set(newIdx < 0 ? this.length() - 1 : newIdx)
     }
 
     async set(index: number): Promise<boolean> {
-        let current = this.#helper.getCurrentIndex();
-        if (!this.#helper.check() || !this.#helper.verifyIndex(index, current, this.length())) {
+        let current = this._helper.getCurrentIndex();
+        if (!this._helper.check() || !this._helper.verifyIndex(index, current, this.length())) {
             return false;
         }
-        return this.#helper.setCurrent(index, current)
+        return this._helper.setCurrent(index, current)
     }
 
     async setWithAnimation(index: number, animClassIn: string, animClassOut: string, duration: number): Promise<boolean> {
-        let current = this.#helper.getCurrentIndex();
-        if (!this.#helper.check() || !this.#helper.verifyIndex(index, current, this.length())) {
+        let current = this._helper.getCurrentIndex();
+        if (!this._helper.check() || !this._helper.verifyIndex(index, current, this.length())) {
             return false;
         }
-        return this.#helper.setCurrentWithAnimation(index, animClassIn, animClassOut, duration, current)
+        return this._helper.setCurrentWithAnimation(index, animClassIn, animClassOut, duration, current)
     }
 
     getCurrentIndex(): number {
-        return this.#helper.getCurrentIndex();
+        return this._helper.getCurrentIndex();
     }
 
     length() {
-        return this.#helper.count();
+        return this._helper.count();
     }
 
     refresh(): boolean {
-        return this.length() > 0 && Date.now() - this.#cDt > 360000;
+        return this.length() > 0 && Date.now() - this._cDt > 360000;
     }
 }

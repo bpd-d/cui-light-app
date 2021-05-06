@@ -6,13 +6,13 @@ import { GetComponents } from "../components/module";
 
 
 export class CuiInit {
-    #isInitialized: boolean;
+    private _isInitialized: boolean;
     constructor() {
-        this.#isInitialized = false;
+        this._isInitialized = false;
     }
 
     async init(data: CuiInitData): Promise<boolean> {
-        if (this.#isInitialized) {
+        if (this._isInitialized) {
             console.log("Module is already initialized")
             return false;
         }
@@ -53,7 +53,7 @@ export class CuiInit {
             components: is(data.components) ? [...componentList, ...data.components] : componentList,
         })
         if (result.result) {
-            this.#isInitialized = true;
+            this._isInitialized = true;
             return true;
         } else {
             console.error(`A cUI instance failed to initialize: [${result.message ?? "#"}]`);

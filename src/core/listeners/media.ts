@@ -2,58 +2,58 @@ import { ICuiEventListener } from "../models/interfaces";
 
 export class CuiMediaQueryListener implements ICuiEventListener<MediaQueryListEvent> {
 
-    #mediaQuery: string;
-    #callback: ((t: MediaQueryListEvent) => void) | undefined;
-    #isInitialized: boolean;
-    #inProgress: boolean;
+    private _mediaQuery: string;
+    private _callback: ((t: MediaQueryListEvent) => void) | undefined;
+    private _isInitialized: boolean;
+    private _inProgress: boolean;
 
     #onEventBound: (ev: MediaQueryListEvent) => void;
     constructor(mediaQuery: string) {
-        this.#mediaQuery = mediaQuery;
-        this.#isInitialized = false;
-        this.#callback = undefined;
-        this.#inProgress = false;
+        this._mediaQuery = mediaQuery;
+        this._isInitialized = false;
+        this._callback = undefined;
+        this._inProgress = false;
 
         this.#onEventBound = this.event.bind(this);
     }
     setCallback(callback: (t: MediaQueryListEvent) => void): void {
-        this.#callback = callback;
+        this._callback = callback;
     }
 
     isInProgress(): boolean {
-        return this.#inProgress;
+        return this._inProgress;
     }
     attach(): void {
-        if (!window.matchMedia || this.#isInitialized || !this.#mediaQuery) {
+        if (!window.matchMedia || this._isInitialized || !this._mediaQuery) {
             return;
         }
-        window.matchMedia(this.#mediaQuery)
+        window.matchMedia(this._mediaQuery)
             .addEventListener('change', this.#onEventBound)
-        this.#isInitialized = true
+        this._isInitialized = true
     }
 
     detach(): void {
-        if (this.#isInitialized) {
-            window.matchMedia(this.#mediaQuery).removeEventListener('change', this.#onEventBound);
-            this.#isInitialized = false
+        if (this._isInitialized) {
+            window.matchMedia(this._mediaQuery).removeEventListener('change', this.#onEventBound);
+            this._isInitialized = false
         }
     }
 
     isAttached(): boolean {
-        return this.#isInitialized;
+        return this._isInitialized;
     }
 
     private event(ev: MediaQueryListEvent): void {
-        if (this.#inProgress || !this.#callback) {
+        if (this._inProgress || !this._callback) {
             return
         }
-        this.#inProgress = true;
+        this._inProgress = true;
         try {
-            this.#callback(ev);
+            this._callback(ev);
         } catch (e) {
             console.error(e)
         } finally {
-            this.#inProgress = false;
+            this._inProgress = false;
         }
     }
 }

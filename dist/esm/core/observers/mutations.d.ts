@@ -1,6 +1,5 @@
 import { ICuiComponent, ICuiPluginManager } from "../models/interfaces";
-import { CuiUtils } from "../models/utils";
-import { ICuiDevelopmentTool } from "../development/interfaces";
+import { CuiCore } from "../models/core";
 export interface ICuiMutionObserver {
     setPlugins(plugins: ICuiPluginManager): ICuiMutionObserver;
     setComponents(components: ICuiComponent[]): ICuiMutionObserver;
@@ -18,10 +17,15 @@ export interface ICuiComponentMutationObserver {
     setAttributes(attributes: string[]): void;
 }
 export declare class CuiMutationObserver implements ICuiMutionObserver {
-    #private;
-    _log: ICuiDevelopmentTool;
-    plugins: ICuiPluginManager | undefined;
-    constructor(element: HTMLElement, utils: CuiUtils);
+    private _log;
+    private _observer;
+    private _options;
+    private _element;
+    private _plugins;
+    private _components;
+    private _core;
+    private _queryString;
+    constructor(element: HTMLElement, core: CuiCore);
     setPlugins(plugins: ICuiPluginManager): ICuiMutionObserver;
     setComponents(components: ICuiComponent[]): ICuiMutionObserver;
     setAttributes(attributes: string[]): ICuiMutionObserver;
@@ -37,7 +41,13 @@ export declare class CuiMutationObserver implements ICuiMutionObserver {
     private handleDestroyChildren;
 }
 export declare class CuiComponentMutationHandler implements ICuiComponentMutationObserver {
-    #private;
+    private _isObserving;
+    private _observer;
+    private _element;
+    private _disabled;
+    private _selector;
+    private _options;
+    private _callback?;
     constructor(target: Element, selector?: string);
     observe(): void;
     unobserve(): void;

@@ -12,15 +12,15 @@ interface ICuiBusMapping {
 }
 
 export class CuiEventBus implements ICuiEventBus {
-    #events: { [event: string]: CuiEventReceiver }
-    #log: ICuiDevelopmentTool;
-    #eventHandler: ICuiEventEmitHandler;
-    #name: string;
+    private _events: { [event: string]: CuiEventReceiver }
+    private _log: ICuiDevelopmentTool;
+    private _eventHandler: ICuiEventEmitHandler;
+    private _name: string;
     constructor(emitHandler: ICuiEventEmitHandler, name?: string) {
-        this.#events = {};
-        this.#eventHandler = emitHandler;
-        this.#name = name ?? "CuiEventBus"
-        this.#log = CuiDevtoolFactory.get(this.#name);
+        this._events = {};
+        this._eventHandler = emitHandler;
+        this._name = name ?? "CuiEventBus"
+        this._log = CuiDevtoolFactory.get(this._name);
     }
 
     /**
@@ -36,18 +36,18 @@ export class CuiEventBus implements ICuiEventBus {
             throw new ArgumentError("Missing argument")
         }
         // When context is not provided (e.g. anonymous function) then generate random
-        let id = this.#name + "-" + generateRandomString();
+        let id = this._name + "-" + generateRandomString();
 
 
-        if (!this.#events[name]) {
-            this.#events[name] = {}
+        if (!this._events[name]) {
+            this._events[name] = {}
         }
-        if (this.isAttached(this.#events[name], id, cui)) {
+        if (this.isAttached(this._events[name], id, cui)) {
             return null;
         }
-        this.#log.debug(`Attaching new event: [${name}] for: [${id}]`)
+        this._log.debug(`Attaching new event: [${name}] for: [${id}]`)
 
-        this.#events[name][id] = { callback: callback, $cuid: this.getCuid(cui) }
+        this._events[name][id] = { callback: callback, $cuid: this.getCuid(cui) }
         return id;
     }
 
@@ -62,8 +62,8 @@ export class CuiEventBus implements ICuiEventBus {
         if (!are(name, id)) {
             throw new ArgumentError("Missing argument")
         }
-        let ev = this.#events[name]
-        this.#log.debug(`Detaching item: [${id}] from [${name}]`)
+        let ev = this._events[name]
+        this._log.debug(`Detaching item: [${id}] from [${name}]`)
         if (this.isAttached(ev, id)) {
             delete ev[id];
         }
@@ -75,10 +75,10 @@ export class CuiEventBus implements ICuiEventBus {
     * @param {string} name - Event name
     */
     detachAll(name: string): void {
-        if (is(name) && this.#events[name]) {
-            delete this.#events[name]
+        if (is(name) && this._events[name]) {
+            delete this._events[name]
         } else {
-            this.#log.error(`Event name is missing or incorrect`, "detachAll")
+            this._log.error(`Event name is missing or incorrect`, "detachAll")
         }
     }
 
@@ -94,10 +94,10 @@ export class CuiEventBus implements ICuiEventBus {
             throw new ArgumentError("Event name is incorrect");
         }
 
-        let callbacks = this.#events[event];
+        let callbacks = this._events[event];
         if (is(callbacks)) {
-            this.#log.debug(`Emit: [${event}]`)
-            await this.#eventHandler.handle(callbacks, cuid, args)
+            this._log.debug(`Emit: [${event}]`)
+            await this._eventHandler.handle(callbacks, cuid, args)
         }
         return true;
     }
@@ -110,7 +110,7 @@ export class CuiEventBus implements ICuiEventBus {
     * @param {CuiElement} cui - optional - cui element which event shall be attached to
     */
     isSubscribing(name: string, id: string, cui?: CuiElement) {
-        let ev = this.#events[name]
+        let ev = this._events[name]
         return this.isAttached(ev, id, cui)
     }
 
@@ -123,7 +123,7 @@ export class CuiEventBus implements ICuiEventBus {
         if (!are(event, cuid)) {
             return;
         }
-        let ev = this.#events[event];
+        let ev = this._events[event];
         if (!is(ev)) {
             return;
         }
@@ -152,32 +152,32 @@ export class CuiEventBus implements ICuiEventBus {
 
 
 export class CuiEventExtBus implements ICuiEventBus {
-    #events: { [event: string]: number };
-    #log: ICuiDevelopmentTool;
-    #buses: ICuiEventBus[];
-    #last: number;
+    private _events: { [event: string]: number };
+    private _log: ICuiDevelopmentTool;
+    private _buses: ICuiEventBus[];
+    private _last: number;
     constructor(setup: ICuiEventBusQueueSetup[]) {
-        this.#log = CuiDevtoolFactory.get("CuiEventBus");
-        this.#buses = [];
-        this.#events = {};
-        this.#last = 0;
+        this._log = CuiDevtoolFactory.get("CuiEventBus");
+        this._buses = [];
+        this._events = {};
+        this._last = 0;
         if (is(setup)) {
-            this.#log.debug("Initiating buses")
+            this._log.debug("Initiating buses")
             let sorted = setup.length === 1 ? setup : setup.sort((first, second) => {
                 return first.priority - second.priority
             })
             sorted.forEach((item, index) => {
-                this.#buses.push(this.initBusInstance(item.name, item.handler))
-                this.#events = {
-                    ...this.#events,
+                this._buses.push(this.initBusInstance(item.name, item.handler))
+                this._events = {
+                    ...this._events,
                     ...this.mapEvents(item.eventsDef, index),
                 }
-                this.#log.debug(`Bus ${item.name} has been initialized with number: ${index}`)
+                this._log.debug(`Bus ${item.name} has been initialized with number: ${index}`)
             })
 
-            this.#buses.push(this.initBusInstance("DefaultEventBus", 'tasked'))
-            this.#last = this.#buses.length - 1;
-            this.#log.debug(`Bus initialization finished`);
+            this._buses.push(this.initBusInstance("DefaultEventBus", 'tasked'))
+            this._last = this._buses.length - 1;
+            this._log.debug(`Bus initialization finished`);
         }
     }
 
@@ -294,8 +294,8 @@ export class CuiEventExtBus implements ICuiEventBus {
      * @param event 
      */
     private get(event: string): ICuiEventBus {
-        let idx = this.#events[event];
-        return this.#buses[idx ?? this.#last];
+        let idx = this._events[event];
+        return this._buses[idx ?? this._last];
     }
 }
 

@@ -1,6 +1,6 @@
 import { CuiHandlerBase } from "../../core/handlers/base";
-import { ICuiParsable, ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiParsable, ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 export declare class CuiSortableArgs extends CuiAutoParseArgs implements ICuiParsable {
     target: string;
@@ -9,16 +9,23 @@ export declare class CuiSortableArgs extends CuiAutoParseArgs implements ICuiPar
     threshold: number;
     constructor();
 }
-export declare class CuiSortableComponent implements ICuiComponent {
-    #private;
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, sutils: CuiUtils): ICuiComponentHandler;
-}
+export declare function CuiSortableComponent(prefix?: string): ICuiComponent;
 export declare class CuiSortableHandler extends CuiHandlerBase<CuiSortableArgs> {
-    #private;
-    constructor(element: HTMLElement, attribute: string, utils: CuiUtils, prefix: string);
+    private _triggers;
+    private _targets;
+    private _currentTarget;
+    private _currentIdx;
+    private _preview;
+    private _detector;
+    private _currentBefore;
+    private _animation;
+    private _previewCls;
+    private _movingCls;
+    private _lockedCls;
+    private _busFacade;
+    private _interactions;
+    private _dragPerformer;
+    constructor(element: HTMLElement, attribute: string, utils: CuiCore, prefix: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;

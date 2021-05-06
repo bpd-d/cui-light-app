@@ -1,15 +1,18 @@
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { ICuiComponentAction, CuiActionsListFactory } from "../../core/utils/actions";
 import { getRangeValueOrDefault, getEnumOrDefault, joinWithScopeSelector } from "../../core/utils/functions";
-import { EVENTS } from "../../core/utils/statics";
-import { CuiIntersectionListener } from "../../core/intersection/intersection";
+import { ATTRIBUTES, EVENTS } from "../../core/utils/statics";
 import { CuiIntersectionResult } from "../../core/intersection/interfaces";
-import { CuiElementBoxFactory, CuiElementBoxType, ICuiElementBox } from "../../core/models/elements";
+import { CuiElementBoxFactory, ICuiElementBox } from "../../core/models/elements";
 import { CuiScrollSpyModeHandlerFactory, CuiScrollspyUpdateResult, ICuiScrollspyModeHandler } from "./mode";
 import { CuiScrollspyScrollEvent } from "../../core/models/events";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiComponentBaseHook } from "../base";
+import { getEventBusFacade, getCuiHandlerInteractions, ICuiEventBusFacade, ICuiInteractionsFacade } from "../../core/handlers/extensions/facades";
+import { getCuiIntersectionPerformer, ICuiIntersectionPerformer } from "../extensions/scroll/performers";
+import { getCuiScrollExtension } from "../extensions/scroll/scroll";
 
 const DEFAULT_SELECTOR = "> *";
 
@@ -34,7 +37,6 @@ export class CuiScrollSpyArgs extends CuiAutoParseArgs {
     link: string; // Link selector
     linkAction: string; //Actions to be triggered on link
     ratio: number; // Value 0..1 telling how much of a child view must be in view to be added to intersecting items
-    isRoot: boolean; // Attach to window or element
     mode: "single" | "multi"; // Action is triggered on single (last) intersecting item or all intersecting items
     threshold: number; // Threshold value (in px) for scroll listener
 
@@ -51,78 +53,82 @@ export class CuiScrollSpyArgs extends CuiAutoParseArgs {
         this.threshold = -1;
         this.selector = joinWithScopeSelector(DEFAULT_SELECTOR);
         this.action = "";
-        this.isRoot = false;
         this.link = "";
         this.linkAction = "";
     }
 }
-export class CuiScrollspyComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string) {
-        this.attribute = `${prefix ?? 'cui'}-scrollspy`;
-    }
 
-    getStyle(): string | null {
-        return null;
-    }
 
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler {
-        return new CuiScrollspyHandler(element, utils, this.attribute);
-    }
+export function CuiScrollspyComponent(prefix?: string): ICuiComponent {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "scrollspy",
+        create: (element: HTMLElement, utils: CuiCore, prefix: string, attribute: string) => {
+            return new CuiScrollspyHandler(element, utils, attribute)
+        }
+    })
 }
 
 export class CuiScrollspyHandler extends CuiHandlerBase<CuiScrollSpyArgs> {
-    #listener: CuiIntersectionListener;
-    #links: HTMLElement[];
-    #actions: ICuiComponentAction[];
-    #linkActions: ICuiComponentAction[];
-    #root: CuiElementBoxType | undefined;
-    #rootBox: ICuiElementBox | undefined;
-    #modeHandler: ICuiScrollspyModeHandler | undefined;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
+    private _links: HTMLElement[];
+    private _actions: ICuiComponentAction[];
+    private _linkActions: ICuiComponentAction[];
+    private _modeHandler: ICuiScrollspyModeHandler;
+
+    private _busFacade: ICuiEventBusFacade;
+    private _interactions: ICuiInteractionsFacade;
+    private _intersectionPerformer: ICuiIntersectionPerformer;
+    private _root: ICuiElementBox;
+
+
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string) {
         super("CuiScrollspyHandler", element, attribute, new CuiScrollSpyArgs(), utils);
-        this.element = element as HTMLElement;
-        this.#listener = new CuiIntersectionListener(this.element, { threshold: this.utils.setup.scrollThreshold });
-        this.#links = [];
-        this.#actions = [];
-        this.#linkActions = [];
-        this.#root = undefined;
-        this.#rootBox = undefined;
-        this.#modeHandler = undefined;
+        this._links = [];
+        this._actions = [];
+        this._linkActions = [];
+        this._modeHandler = CuiScrollSpyModeHandlerFactory.get(this.args.mode);
+        this._interactions = getCuiHandlerInteractions(utils.interactions);
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, element);
+        const root = element.hasAttribute(ATTRIBUTES.root) ? window : element;
+        this._root = CuiElementBoxFactory.get(root);
+        this._intersectionPerformer = getCuiIntersectionPerformer({
+            callback: this.onIntersection.bind(this),
+            element: root
+        })
+        this.extend(getCuiScrollExtension({
+            element: root,
+            performer: this._intersectionPerformer,
+            threshold: 5
+        }))
     }
 
     async onHandle(): Promise<boolean> {
-        this.init();
-        this.#listener.setCallback(this.onIntersection.bind(this));
-        this.#listener.attach();
+        this.updateSetup();
+        this._intersectionPerformer.callInitialEvent();
         return true;
     }
     async onRefresh(): Promise<boolean> {
-        this.update();
+        this.updateSetup();
         return true;
     }
     async onRemove(): Promise<boolean> {
-        this.#listener.detach();
+        this._busFacade.detachEmittedEvents();
         return true;
     }
 
     private onIntersection(ev: CuiIntersectionResult): void {
-        if (!this.#modeHandler) {
-            this.logError("Cannot perform - mode handler not initialized", "OnIntersection")
-            return;
-        }
         let timestamp = Date.now();
-        this.mutate(() => {
+        this._interactions.mutate(() => {
             //@ts-ignore - modeHandler checked
-            let updateResult: CuiScrollspyUpdateResult = this.#modeHandler.update(ev.items, this.args.ratio, this.#actions, this.#links, this.#linkActions)
+            let updateResult: CuiScrollspyUpdateResult = this._modeHandler.update(ev.items, this.args.ratio, this._actions, this._links, this._linkActions)
             if (updateResult.changed) {
-                this.emitEvent(EVENTS.TARGET_CHANGE, {
+                this._busFacade.emit(EVENTS.TARGET_CHANGE, {
                     intersecting: updateResult.intersecting,
                     timestamp: timestamp
                 })
             }
         })
-        this.emitEvent<CuiScrollspyScrollEvent>(EVENTS.ON_SCROLL, {
+        this._busFacade.emit<CuiScrollspyScrollEvent>(EVENTS.ON_SCROLL, {
             top: ev.top,
             left: ev.left,
             scrolling: ev.scrolling,
@@ -130,34 +136,13 @@ export class CuiScrollspyHandler extends CuiHandlerBase<CuiScrollSpyArgs> {
         })
     }
 
-    private init() {
-        this.#root = this.args.isRoot ? window : this.element;
-        this.#rootBox = CuiElementBoxFactory.get(this.#root);
-        let targets = this.args.selector ? this.#rootBox.queryAll(this.args.selector) : [];
-        this.#listener.setChildren(targets);
-        this.#listener.setThreshold(this.args.threshold);
-        this.#links = this.args.link ? [...document.querySelectorAll<HTMLElement>(this.args.link)] : [];
-        this.#actions = CuiActionsListFactory.get(this.args.action);
-        this.#linkActions = CuiActionsListFactory.get(this.args.linkAction);
-        this.#modeHandler = CuiScrollSpyModeHandlerFactory.get(this.args.mode);
-
-    }
-
-    private update() {
-        if (this.prevArgs && this.args.isRoot !== this.prevArgs.isRoot) {
-            this.#root = this.args.isRoot ? window : this.element;
-            this.#rootBox = CuiElementBoxFactory.get(this.#root);
-            this.#listener.setParent(this.#root);
-        }
-        if (this.prevArgs && this.#rootBox && this.args.selector !== this.prevArgs.selector) {
-            let targets = this.args.selector ? this.#rootBox.queryAll(this.args.selector) : [];
-            this.#listener.setChildren(targets);
-        }
-        this.#listener.setThreshold(this.args.threshold);
-        this.#links = this.args.link ? [...document.querySelectorAll<HTMLElement>(this.args.link)] : [];
-        this.#actions = CuiActionsListFactory.get(this.args.action);
-        this.#linkActions = CuiActionsListFactory.get(this.args.linkAction);
-        this.#modeHandler = CuiScrollSpyModeHandlerFactory.get(this.args.mode);
+    private updateSetup() {
+        let targets = this.args.selector ? this._root.queryAll(this.args.selector) : [];
+        this._intersectionPerformer.setChildren(targets);
+        this._links = this.args.link ? [...document.querySelectorAll<HTMLElement>(this.args.link)] : [];
+        this._actions = CuiActionsListFactory.get(this.args.action);
+        this._linkActions = CuiActionsListFactory.get(this.args.linkAction);
+        this._modeHandler = CuiScrollSpyModeHandlerFactory.get(this.args.mode);
 
     }
 }

@@ -3,6 +3,7 @@ import { CuiLogLevel } from "./types";
 import { counter } from "./functions";
 import { ICuiDevelopmentToolFactory } from "../development/interfaces";
 import { ICuiMeasure } from "../models/interfaces";
+
 export const CUID_ATTRIBUTE = "cuid";
 
 export const CLASSES = {
@@ -12,6 +13,10 @@ export const CLASSES = {
     active: 'active',
     swipingOn: "swiping-on",
     selectionOff: "selection-off",
+}
+
+export const ATTRIBUTES = {
+    root: "data-root"
 }
 
 export const ICONS: any = {
@@ -79,7 +84,7 @@ export const ICONS: any = {
 
 export const SCOPE_SELECTOR = ":scope ";
 
-export const CSS_VARIABLES: any = {
+export const CSS_VARIABLES: any = Object.freeze({
     fontSize: "--{prefix}-font-size",
     lineHeight: "--{prefix}-line-height",
     animationTime: "--{prefix}-animation-time",
@@ -134,7 +139,7 @@ export const CSS_VARIABLES: any = {
     scrollbarWidth: "--{prefix}-scrollbar-width",
     componentSpace: "--{prefix}-component-space",
     accordionIcon: "--{prefix}-accordion-icon"
-}
+})
 
 
 export class STATICS {
@@ -143,7 +148,7 @@ export class STATICS {
     static devTool: ICuiDevelopmentToolFactory;
 }
 
-export const EVENTS = {
+export const EVENTS = Object.freeze({
     INSTANCE_INITIALIZED: 'instance-initialized',
     INSTANCE_FINISHED: 'instance-finished',
     RESIZE: "resize",
@@ -182,7 +187,7 @@ export const EVENTS = {
     GESTURE_RIGHT: "gesture-right",
     NOTIFY: "notify",
     NOTIFIED: "notified",
-}
+})
 
 // export const GLOBAL_EVENTS = [EVENTS.ALERT, EVENTS.TOAST, EVENTS.KEYDOWN, EVENTS.MOVE_LOCK, EVENTS.GLOBAL_MOVE, EVENTS.RESIZE]
 
@@ -196,3 +201,9 @@ export const SCREEN_SIZE_LARGE = 1200;
 export const SCREEN_SIZE_XLARGE = 1600;
 
 export const MEASUREMENT: ICuiMeasure[] = []
+
+export const CuiRAF = window.requestAnimationFrame
+    // || window.mozRequestAnimationFrame
+    || window.webkitRequestAnimationFrame
+    //  || window.msRequestAnimationFrame
+    || function (f: any) { return setTimeout(f, 1000 / 60) }

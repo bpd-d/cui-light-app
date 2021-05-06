@@ -1,17 +1,3 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _box, _element, _element_1;
 export class CuiElementBoxFactory {
     static get(element) {
         if (element instanceof Window) {
@@ -25,74 +11,81 @@ export class CuiElementBoxFactory {
 }
 export class ElementBox {
     constructor(element) {
-        _box.set(this, void 0);
-        _element.set(this, void 0);
-        __classPrivateFieldSet(this, _element, element);
-        __classPrivateFieldSet(this, _box, element.getBoundingClientRect());
+        this._element = element;
+        this._box = element.getBoundingClientRect();
     }
     getHeight() {
-        return __classPrivateFieldGet(this, _box).height;
+        return this._box.height;
     }
     getWidth() {
-        return __classPrivateFieldGet(this, _box).width;
+        return this._box.width;
     }
     getTop() {
-        return __classPrivateFieldGet(this, _box).top;
+        return this._box.top;
     }
     getLeft() {
-        return __classPrivateFieldGet(this, _box).left;
+        return this._box.left;
     }
     getScrollHeight() {
-        return __classPrivateFieldGet(this, _element).scrollHeight;
+        return this._element.scrollHeight;
     }
     getScrollWidth() {
-        return __classPrivateFieldGet(this, _element).scrollWidth;
+        return this._element.scrollWidth;
     }
     getScrollTop() {
-        return __classPrivateFieldGet(this, _element).scrollTop;
+        return this._element.scrollTop;
     }
     getScrollLeft() {
-        return __classPrivateFieldGet(this, _element).scrollLeft;
+        return this._element.scrollLeft;
     }
     queryAll(selector) {
-        return [...__classPrivateFieldGet(this, _element).querySelectorAll(selector)];
+        return [...this._element.querySelectorAll(selector)];
+    }
+    get() {
+        return this._element;
+    }
+    scrollTo(options) {
+        this._element.scrollTo(options);
     }
 }
-_box = new WeakMap(), _element = new WeakMap();
 export class HTMLElementBox {
     constructor(element) {
-        _element_1.set(this, void 0);
-        __classPrivateFieldSet(this, _element_1, element);
+        this._element = element;
     }
     getHeight() {
-        return __classPrivateFieldGet(this, _element_1).offsetHeight;
+        return this._element.offsetHeight;
     }
     getWidth() {
-        return __classPrivateFieldGet(this, _element_1).offsetWidth;
+        return this._element.offsetWidth;
     }
     getTop() {
-        return __classPrivateFieldGet(this, _element_1).offsetTop;
+        return this._element.offsetTop;
     }
     getLeft() {
-        return __classPrivateFieldGet(this, _element_1).offsetLeft;
+        return this._element.offsetLeft;
     }
     getScrollHeight() {
-        return __classPrivateFieldGet(this, _element_1).scrollHeight;
+        return this._element.scrollHeight;
     }
     getScrollWidth() {
-        return __classPrivateFieldGet(this, _element_1).scrollWidth;
+        return this._element.scrollWidth;
     }
     getScrollTop() {
-        return __classPrivateFieldGet(this, _element_1).scrollTop;
+        return this._element.scrollTop;
     }
     getScrollLeft() {
-        return __classPrivateFieldGet(this, _element_1).scrollLeft;
+        return this._element.scrollLeft;
     }
     queryAll(selector) {
-        return [...__classPrivateFieldGet(this, _element_1).querySelectorAll(selector)];
+        return [...this._element.querySelectorAll(selector)];
+    }
+    get() {
+        return this._element;
+    }
+    scrollTo(options) {
+        this._element.scrollTo(options);
     }
 }
-_element_1 = new WeakMap();
 export class WindowElementBox {
     getHeight() {
         return window.innerHeight;
@@ -120,5 +113,11 @@ export class WindowElementBox {
     }
     queryAll(selector) {
         return [...document.querySelectorAll(selector)];
+    }
+    get() {
+        return window;
+    }
+    scrollTo(options) {
+        window.scrollTo(options);
     }
 }

@@ -1,17 +1,32 @@
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { EVENTS } from "../../core/utils/statics";
-import { calcWindowSize, is } from "../../core/utils/functions";
+import { calcWindowSize, is, isInViewport } from "../../core/utils/functions";
 import { CuiIntersectionObserver } from "../../core/observers/intersection";
 import { CuiWindowSize } from "../../core/utils/types";
-import { CuiActionsFatory, ICuiComponentAction } from "../../core/utils/actions";
+import { CuiActionsFactory, ICuiComponentAction } from "../../core/utils/actions";
 import { CuiResizeData } from "../../core/models/events";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiTaskRunner, ICuiTask } from "../../core/utils/task";
+import { cuiObserverExtension } from "../extensions/observer/observer";
+import { eventExtension } from "../extensions/event/event";
+import { getEventBusFacade, getCuiHandlerInteractions, ICuiEventBusFacade, ICuiInteractionsFacade } from "../../core/handlers/extensions/facades";
+import { getResizeCalculator, ICuiResizeCalculator } from "./calculator";
+import { callbackPerformer } from "../extensions/performers";
+import { CuiComponentBaseHook } from "../base";
 
 type CuiResizeComponentMode = "smart" | "simple";
 
-export class CuiResizeArgs extends CuiAutoParseArgs {
+export interface CuiSizeArgs {
+    small?: string;
+    medium?: string;
+    large?: string;
+    xlarge?: string;
+    default: string;
+}
+
+export class CuiResizeArgs extends CuiAutoParseArgs implements CuiSizeArgs {
     mode: CuiResizeComponentMode;
     default: string;
     small?: string;
@@ -24,186 +39,131 @@ export class CuiResizeArgs extends CuiAutoParseArgs {
         this.mode = "simple";
         this.default = "";
         this.small = this.medium = this.large = this.xlarge = '';
-        this.delay = 0;
+        this.delay = 1;
     }
 }
 
-export class CuiResizeComponent implements ICuiComponent {
-    attribute: string;
-    #prefix: string;
-
-    constructor(prefix?: string) {
-        this.#prefix = prefix ?? 'cui';
-        this.attribute = `${this.#prefix}-resize`;
-    }
-
-    getStyle(): string | null {
-        return null;
-    }
-
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler {
-        return new CuiResizeHandler(element, utils, this.attribute);
-    }
+export function CuiResizeComponent(prefix?: string): ICuiComponent {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: 'resize',
+        create: (element: HTMLElement, utils: CuiCore, prefix: string, attribute: string) => {
+            return new CuiResizeHandler(element, utils, attribute);
+        }
+    });
 }
 
 export class CuiResizeHandler extends CuiHandlerBase<CuiResizeArgs> {
-    #eventId: string | null;
-    #intersectionObserver: CuiIntersectionObserver;
-    #currentSize: CuiWindowSize;
-    #currentValue: string | undefined;
-    #lastValue: string;
-    #currentAction: ICuiComponentAction | undefined;
-    #isIntersecting: boolean;
-    #timeoutToken: any | undefined;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
+
+    private _currentValue: string | undefined;
+    private _lastValue: string;
+    private _currentAction: ICuiComponentAction | undefined;
+    private _isIntersecting: boolean;
+    private _task: ICuiTask;
+    private _busFacade: ICuiEventBusFacade;
+    private _resizeValueCalculator: ICuiResizeCalculator<CuiResizeArgs>;
+    private _interactions: ICuiInteractionsFacade;
+
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string) {
         super("CuiResizeHandler", element, attribute, new CuiResizeArgs(), utils);
-        this.#eventId = null;
-        this.#intersectionObserver = new CuiIntersectionObserver(document.documentElement, [0, 0.1])
-        this.#intersectionObserver.setCallback(this.onIntersection.bind(this));
-        this.#lastValue = "";
-        this.#currentValue = "";
-        this.#currentSize = "none";
-        this.#isIntersecting = false;
-        this.#timeoutToken = undefined;
-        this.#currentAction = undefined;
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, element);
+        this._lastValue = "";
+        this._currentValue = "";
+        this._isIntersecting = false;
+        this._currentAction = undefined;
+        this._interactions = getCuiHandlerInteractions(utils.interactions);
+        this._resizeValueCalculator = getResizeCalculator(this.args.mode);
+        this._task = new CuiTaskRunner(this.args.delay, false, this.updateAction.bind(this));
+        const intersectionObserver = new CuiIntersectionObserver(document.documentElement, [0, 0.1])
+        intersectionObserver.setCallback(this.onIntersection.bind(this));
+        this.extend(cuiObserverExtension({
+            type: 'intersection',
+            element: element,
+            observer: intersectionObserver
+        }));
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.RESIZE,
+            performer: callbackPerformer(this.resize.bind(this))
+        }))
     }
 
     async onHandle(): Promise<boolean> {
-        this.#eventId = this.utils.bus.on(EVENTS.RESIZE, this.resize.bind(this));
-        this.#intersectionObserver.connect();
-        this.#intersectionObserver.observe(this.element);
-        this.#currentSize = calcWindowSize(window.innerWidth);
-        this.#isIntersecting = this.isInViewport(this.element);
-        this.setNewValue();
-        this.updateElement();
-        return true;
-    }
-    async onRefresh(): Promise<boolean> {
-        this.setNewValue();
-        this.updateElement();
-        return true;
-    }
-    async onRemove(): Promise<boolean> {
-        if (this.#eventId !== null) {
-            this.utils.bus.detach(EVENTS.RESIZE, this.#eventId);
-            this.#eventId = null
-        }
-        this.#intersectionObserver.unobserve(this.element);
-        this.#intersectionObserver.disconnect();
+        this.handleUpdate();
         return true;
     }
 
+    async onRefresh(): Promise<boolean> {
+        this.handleUpdate();
+        return true;
+    }
+
+    async onRemove(): Promise<boolean> {
+        this._busFacade.detachEmittedEvents();
+        return true;
+    }
+
+    handleUpdate() {
+        this._resizeValueCalculator = getResizeCalculator(this.args.mode);
+        this._isIntersecting = isInViewport(this.element);
+        this._task.setTimeout(this.args.delay)
+        this.setNewValue(calcWindowSize(window.innerWidth));
+        this.updateElement();
+    }
+
     private resize(data: CuiResizeData) {
-        this.#currentSize = data.current;
-        this.setNewValue();
+
+        this.setNewValue(data.current);
         this.updateElement();
     }
 
     private onIntersection(entries: IntersectionObserverEntry[]) {
         if (entries.length > 0) {
-            this.#isIntersecting = entries[0].isIntersecting;
+            this._isIntersecting = entries[0].isIntersecting;
         }
         this.updateElement();
     }
 
-    private setNewValue() {
-        let newValue = this.isSmartMode() ? this.getSmartValue(this.#currentSize) : this.getValue(this.#currentSize, true);
-        if (newValue && newValue !== this.#currentValue) {
-            this.#currentValue = newValue;
+    private setNewValue(size: CuiWindowSize) {
+        let newValue = this._resizeValueCalculator.get(this.args, size);
+        if (newValue !== this._currentValue) {
+            this._currentValue = newValue;
         }
-    }
-
-    private getValue(size: CuiWindowSize, replace?: boolean): string | undefined {
-        let value = undefined;
-        switch (size) {
-            case "xlarge":
-                value = this.args.xlarge;
-                break;
-            case "large":
-                value = this.args.large;
-                break;
-            case "medium":
-                value = this.args.medium;
-                break;
-            case "small":
-                value = this.args.small;
-                break;
-            default:
-                value = this.args.default;
-        }
-        return (replace && !value) ? this.args.default : value;
-    }
-
-    private getSmartValue(size: CuiWindowSize) {
-        let value = this.args.default;
-        if (size === 'none') {
-            return value;
-        }
-        value = this.args.small ?? value;
-        if (size === 'small') {
-            return value;
-        }
-        value = this.args.medium ?? value;
-        if (size === 'medium') {
-            return value;
-        }
-        value = this.args.large ?? value;
-        if (size === 'large') {
-            return value;
-        }
-        return this.args.xlarge ?? value;
     }
 
     private updateElement() {
-        if (!this.#isIntersecting && this.isSmartMode()) {
+        if (this.cannotUpdate()) {
             this.logInfo("Not intersecting")
             return;
         }
-        if (!is(this.#currentValue)) {
-            this.logWarning("Not eligible to set value: " + this.#currentValue)
+        if (!this._currentValue || this._lastValue === this._currentValue) {
+            this.logWarning("Not eligible to set value: " + this._currentValue)
             return;
         }
-        if (this.#lastValue !== this.#currentValue) {
-            this.run(() => {
-                //@ts-ignore already checked
-                let newAction = CuiActionsFatory.get(this.#currentValue);
-                this.mutate(() => {
-                    if (this.#currentAction) {
-                        this.#currentAction.remove(this.element);
-                    }
-                    newAction.add(this.element);
-                    //@ts-ignore already checked
-                    this.#lastValue = this.#currentValue;
-                    this.#currentAction = newAction;
 
-                })
-            })
-
-        }
+        this._lastValue = this._currentValue;
+        this._task.start();
     }
 
-    private isSmartMode() {
-        return this.args.mode === 'smart';
+    /**
+     * Checks whether element can be updated
+     * @returns 
+     */
+    private cannotUpdate() {
+        return !this._isIntersecting && this.args.mode === 'smart';
     }
 
-    private isInViewport(element: Element): boolean {
-        const rect = element.getBoundingClientRect();
-        return (
-            rect.top >= 0 &&
-            rect.left >= 0 &&
-            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-            rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-        );
-    }
-
-    private run(callback: () => void) {
-        if (this.#timeoutToken) {
-            clearTimeout(this.#timeoutToken);
-            this.#timeoutToken = undefined;
-        }
-        this.#timeoutToken = setTimeout(() => {
-            callback();
-            this.#timeoutToken = undefined;
-        }, this.args.delay);
+    /**
+     * Used for task to update action on the element after receiving resize
+     */
+    private updateAction() {
+        //@ts-ignore already checked
+        let newAction = CuiActionsFactory.get(this._currentValue);
+        this._interactions.mutate(() => {
+            if (this._currentAction) {
+                this._currentAction.remove(this.element);
+            }
+            newAction.add(this.element);
+            this._currentAction = newAction;
+        })
     }
 }

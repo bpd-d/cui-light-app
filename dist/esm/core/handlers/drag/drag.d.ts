@@ -1,6 +1,13 @@
 import { ICuiMoveData } from "../../listeners/move";
 export declare class CuiDragHandler {
-    #private;
+    private _root;
+    private _moveHandler;
+    private _onDragStart;
+    private _onDragOver;
+    private _onDragEnd;
+    private _timeout;
+    private _isTracking;
+    private _timeoutId;
     constructor(root: HTMLElement);
     setLongPressTimeout(timeout: number): void;
     onDragStart(callback: (data: ICuiMoveData) => boolean): void;

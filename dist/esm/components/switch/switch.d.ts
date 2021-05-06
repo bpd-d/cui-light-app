@@ -1,6 +1,6 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable, ICuiSwitchable } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
-import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
+import { ICuiComponent, ICuiParsable, ICuiSwitchable } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 export declare class CuiSwitchArgs extends CuiAutoParseArgs implements ICuiParsable {
     targets: string;
@@ -12,23 +12,25 @@ export declare class CuiSwitchArgs extends CuiAutoParseArgs implements ICuiParsa
     autoTimeout: number;
     height: 'auto' | string;
     loop: boolean;
+    keyChange: boolean;
     constructor(prefix: string, timeout?: number);
 }
-export declare class CuiSwitchComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
-}
-export declare class CuiSwitchHandler extends CuiMutableHandler<CuiSwitchArgs> implements ICuiSwitchable {
-    #private;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
-    onMutation(record: CuiChildMutation): void;
+export declare function CuiSwitchComponent(prefix?: string): ICuiComponent;
+export declare class CuiSwitchHandler extends CuiHandlerBase<CuiSwitchArgs> implements ICuiSwitchable {
+    private _targets;
+    private _task;
+    private _asyncStyles;
+    private _switchPerformer;
+    private _busFacade;
+    private _actionsHelper;
+    private _mutationPerformer;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string);
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
+    handleUpdate(): void;
+    onMutation(record: MutationRecord[]): void;
     switch(index: any): Promise<boolean>;
-    private onPushSwitch;
     private getActiveIndex;
     private getElementHeight;
     /**
@@ -39,7 +41,6 @@ export declare class CuiSwitchHandler extends CuiMutableHandler<CuiSwitchArgs> i
      * Query target elements
      */
     private getTargets;
-    private getSwitches;
     private setLinkActive;
     /**
      * Sets propers active state on attached switches
@@ -56,4 +57,5 @@ export declare class CuiSwitchHandler extends CuiMutableHandler<CuiSwitchArgs> i
      * Runs task if arguments setup allows for it - auto flag must be set to true
      */
     private startTask;
+    private setTargetHeight;
 }

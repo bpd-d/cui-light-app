@@ -19,9 +19,9 @@ export interface CuiInitResult {
 }
 
 export class CuiInitializer {
-    #window: any;
+    private _window: any;
     constructor() {
-        this.#window = window;
+        this._window = window;
     }
 
     async init(setup: CuiInitData): Promise<CuiInitResult> {
@@ -30,7 +30,7 @@ export class CuiInitializer {
         const result: CuiInitResult = {
             result: false
         }
-        if (is(this.#window[appPrefix])) {
+        if (is(this._window[appPrefix])) {
             result.message = "Instance is already initialized";
             return result;
         }
@@ -46,8 +46,8 @@ export class CuiInitializer {
 
         }
         try {
-            this.#window[appPrefix] = new CuiInstance(settings, setup.plugins ?? [], setup.components ?? [])
-            await this.#window[appPrefix].init();
+            this._window[appPrefix] = new CuiInstance(settings, setup.plugins ?? [], setup.components ?? [])
+            await this._window[appPrefix].init();
         } catch (e) {
             console.error(e);
             result.message = "An error occured during initialization";

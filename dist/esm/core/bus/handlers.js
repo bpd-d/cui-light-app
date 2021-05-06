@@ -7,20 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _executor, _executor_1;
 import { CuiDevtoolFactory } from "../development/factory";
 import { CuiQueue } from "../queue/queue";
 import { is } from "../utils/functions";
@@ -49,9 +35,8 @@ export class EmitHandler {
 }
 export class SimpleEventEmitHandlerAdapter {
     constructor(executor) {
-        _executor.set(this, void 0);
         this.type = 'single';
-        __classPrivateFieldSet(this, _executor, executor);
+        this._executor = executor;
     }
     onFlush(items) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -59,19 +44,17 @@ export class SimpleEventEmitHandlerAdapter {
                 for (let id in task.events) {
                     let event = task.events[id];
                     if (idMatches(task.cuid, event.$cuid))
-                        yield __classPrivateFieldGet(this, _executor).execute(event.callback, task.args);
+                        yield this._executor.execute(event.callback, task.args);
                 }
             }
             return true;
         });
     }
 }
-_executor = new WeakMap();
 export class TaskedEventEmitHandlerAdapter {
     constructor(executor) {
-        _executor_1.set(this, void 0);
         this.type = 'single';
-        __classPrivateFieldSet(this, _executor_1, executor);
+        this._executor = executor;
     }
     onFlush(items) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -80,7 +63,7 @@ export class TaskedEventEmitHandlerAdapter {
                 for (let id in task.events) {
                     let event = task.events[id];
                     if (idMatches(task.cuid, event.$cuid))
-                        promises.push(__classPrivateFieldGet(this, _executor_1).execute(event.callback, task.args));
+                        promises.push(this._executor.execute(event.callback, task.args));
                 }
                 yield Promise.all(promises);
             }
@@ -88,7 +71,6 @@ export class TaskedEventEmitHandlerAdapter {
         });
     }
 }
-_executor_1 = new WeakMap();
 export class CuiEventEmitHandlerFactory {
     static get(name, executor) {
         switch (name) {

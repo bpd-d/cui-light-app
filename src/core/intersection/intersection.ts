@@ -1,22 +1,22 @@
 import { CuiScrollEvent, CuiScrollListener } from "../listeners/scroll";
 import { CuiElementBoxFactory, CuiElementBoxType, ICuiElementBox } from "../models/elements";
-import { ICuiEventListener } from "../models/interfaces";
+import { ICuiEventListener, ICuiObserver } from "../models/interfaces";
 import { are, getRangeValue, is } from "../utils/functions";
 import { CuiIntersectionCallback, CuiIntersectionListenerOptions, CuiIntersectionResult } from "./interfaces";
 
 const DEFAULT_OPTION_THRESHOLD: number = 0;
 
 export class CuiIntersectionListener implements ICuiEventListener<CuiIntersectionResult> {
-    #scrollListener: CuiScrollListener;
-    #callback: CuiIntersectionCallback | undefined;
-    #children: HTMLElement[];
-    #box: ICuiElementBox;
+    private _scrollListener: CuiScrollListener;
+    private _callback: CuiIntersectionCallback | undefined;
+    private _children: HTMLElement[];
+    private _box: ICuiElementBox;
     constructor(element: CuiElementBoxType, options?: CuiIntersectionListenerOptions) {
-        this.#box = CuiElementBoxFactory.get(element);
-        this.#scrollListener = new CuiScrollListener(element as Element, options?.threshold ?? DEFAULT_OPTION_THRESHOLD);
-        this.#scrollListener.setCallback(this.onScroll.bind(this));
-        this.#children = [];
-        this.#callback = undefined;
+        this._box = CuiElementBoxFactory.get(element);
+        this._scrollListener = new CuiScrollListener(element as Element, options?.threshold ?? DEFAULT_OPTION_THRESHOLD);
+        this._scrollListener.setCallback(this.onScroll.bind(this));
+        this._children = [];
+        this._callback = undefined;
     }
 
     /**
@@ -24,50 +24,50 @@ export class CuiIntersectionListener implements ICuiEventListener<CuiIntersectio
      * @param children 
      */
     setChildren(children: HTMLElement[]) {
-        this.#children = children;
+        this._children = children;
     }
 
     setThreshold(threshold: number) {
-        this.#scrollListener.setThreshold(threshold)
+        this._scrollListener.setThreshold(threshold)
     }
 
     setCallback(callback: (t: CuiIntersectionResult) => void): void {
-        this.#callback = callback;
+        this._callback = callback;
     }
 
     setParent(target: CuiElementBoxType) {
-        this.#box = CuiElementBoxFactory.get(target);
-        this.#scrollListener.setTarget(target);
+        this._box = CuiElementBoxFactory.get(target);
+        this._scrollListener.setTarget(target);
     }
 
     isInProgress(): boolean {
-        return this.#scrollListener.isInProgress();
+        return this._scrollListener.isInProgress();
     }
 
     attach(): void {
         if (this.isAttached()) {
             return;
         }
-        this.#scrollListener.attach();
+        this._scrollListener.attach();
     }
 
     detach(): void {
         if (!this.isAttached()) {
             return;
         }
-        this.#scrollListener.detach();
+        this._scrollListener.detach();
     }
 
     isAttached(): boolean {
-        return this.#scrollListener && this.#scrollListener.isAttached();
+        return this._scrollListener && this._scrollListener.isAttached();
     }
 
     private onScroll(ev: CuiScrollEvent): void {
-        if (!are(this.#children, this.#callback)) {
+        if (!are(this._children, this._callback)) {
             return;
         }
-        if (this.#callback)
-            this.#callback(this.prepareCallbackResult(ev))
+        if (this._callback)
+            this._callback(this.prepareCallbackResult(ev))
     }
 
     private calcChildVerticalRatio(child: HTMLElement, currentTop: number, currentBottom: number): number {
@@ -97,8 +97,8 @@ export class CuiIntersectionListener implements ICuiEventListener<CuiIntersectio
     }
 
     private prepareCallbackResult(ev: CuiScrollEvent): CuiIntersectionResult {
-        let parentBottom = ev.top + this.#box.getHeight();
-        let parentRight = ev.left + this.#box.getWidth();
+        let parentBottom = ev.top + this._box.getHeight();
+        let parentRight = ev.left + this._box.getWidth();
         let result: CuiIntersectionResult = {
             ev: ev.base,
             top: ev.top,
@@ -106,7 +106,7 @@ export class CuiIntersectionListener implements ICuiEventListener<CuiIntersectio
             scrolling: ev.scrolling ?? false,
             initial: ev.initial ?? false,
             source: ev.source,
-            items: this.#children.map((child: HTMLElement, index: number) => {
+            items: this._children.map((child: HTMLElement, index: number) => {
                 let verticalRatio = this.calcChildVerticalRatio(child, ev.top, parentBottom)
                 let horizontalRatio = this.calcChildHorizontalRatio(child, ev.left, parentRight);
                 return {

@@ -1,6 +1,6 @@
 import { CuiLightMode, CuiWindowSize } from "./types";
 import { ArgumentError } from "../models/errors";
-import { CuiElement } from "../models/interfaces";
+import { CuiElement, CuiHTMLElement, ICuiKeysCombo, ICuiPair } from "../models/interfaces";
 import { COMPONENTS_COUNTER, MEASUREMENT, SCOPE_SELECTOR, SCREEN_SIZE_LARGE, SCREEN_SIZE_MEDIUM, SCREEN_SIZE_SMALL, SCREEN_SIZE_XLARGE } from "./statics";
 
 /**
@@ -190,6 +190,23 @@ export function calcWindowSize(width: number): CuiWindowSize {
 }
 
 /**
+ * Simply splits text by character or returns empty array
+ * @param text Text to split
+ * @param splitBy character to split by
+ * @returns array of split characters
+ */
+export function splitText(text: string, splitBy: string): string[] {
+    return text ? text.split(splitBy) : [];
+}
+
+export function* generateSplitText(text: string, splitBy: string) {
+    let array = splitText(text, splitBy);
+    for (const item of array) {
+        yield item;
+    }
+}
+
+/**
  * Creates object from string.
  * Supported syntaxes are:
  * - JSON
@@ -213,20 +230,29 @@ export function parseAttributeString(attribute: string | null): any {
             ret = {}
             //@ts-ignore - null already checked
             attribute.split(';').forEach(val => {
-                let sp = splitColon(val);
-                let tag = undefined;
-                let value = "";
-                if (sp.length < 2) {
-                    return;
+                const pair = parseSingleAttribute(val);
+                if (pair) {
+                    ret[pair.key] = pair.value;
                 }
-                tag = sp[0].trim();
-                value = sp[1].trim();
-                if (tag)
-                    ret[tag] = value.replace('U+0003B', ';');
             })
         }
     }
     return ret
+}
+
+export function parseSingleAttribute(value: string): ICuiPair<string, string> | undefined {
+    let sp = splitColon(value);
+
+    if (sp.length < 2) {
+        return undefined;
+    }
+
+    let tag = sp[0].trim();
+    let val = sp[1].trim();
+    return {
+        key: tag,
+        value: val.replace('U+0003B', ';')
+    }
 }
 
 /**
@@ -484,7 +510,7 @@ export function calculateNextIndex(val: any, currentIndex: number, totalLength: 
         case 'last':
             idx = totalLength - 1;
         default:
-            idx = getIntOrDefault(val, -1);
+            idx = getRangeValueOrDefault(val, 0, totalLength, -1);
             break;
     }
     return idx;
@@ -602,4 +628,46 @@ export function applyMixins(derivedCtor: any, constructors: any[]) {
             );
         });
     });
+}
+
+export function isInViewport(element: HTMLElement): boolean {
+    const rect = element.getBoundingClientRect();
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+    );
+}
+
+export function matchesKeyCombo(event: KeyboardEvent, compare: ICuiKeysCombo): boolean {
+    return compare.key !== undefined && (compare.key === event.key) &&
+        (event.ctrlKey === compare.isCtrl) &&
+        (event.altKey === compare.isAlt) &&
+        (event.shiftKey === compare.isShift);
+}
+
+/**
+ * Performs query all and returns result as an array
+ * @param root - root element to query from
+ * @param selector - query selector
+ * @returns list of found elements
+ */
+export function queryAll(root: Document | Element, selector: string): HTMLElement[] {
+    return [...root.querySelectorAll(selector)] as HTMLElement[];
+}
+
+export function findMatchingElementIndex<T>(item: T, items: T[]) {
+    return items.findIndex(i => i === item)
+}
+
+export function getCuiElementsBySelector(selector: string): CuiHTMLElement[] {
+    let switches = is(selector) ? [...document.querySelectorAll(selector)] : [];
+    return switches.reduce((result, item: any) => {
+        if (item.$cuid) {
+            //@ts-ignore
+            result.push(item);
+        }
+        return result;
+    }, [])
 }

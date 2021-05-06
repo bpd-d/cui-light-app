@@ -1,5 +1,13 @@
 # bpd cUI Light changelog
 
+# [0.5.0] 2020-03-31
+* [Added] Support for keys in switch
+* [Added] Parallax component
+* [Changed] Enhanced animation engine that supports timing functions
+* [Changed] Components architecture from inhertance to composition
+* [Changed] Plugins have been refactored
+* [Changed] CuiUtils now are CuiCore
+* [Fixed] Some cleanup
 # [0.4.3] 2020-03-11
 * [Added] New component - parallax
 * [Added] New properties animators - filter, color, position

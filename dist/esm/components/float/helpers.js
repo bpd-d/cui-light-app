@@ -53,3 +53,48 @@ export class OptionalResizeCalculator {
     }
 }
 _element_2 = new WeakMap();
+export function getMoveAction(type, calculator, element, interactions, styles) {
+    const callback = floatCallbacks[type];
+    if (!callback) {
+        return undefined;
+    }
+    return floatActionBase(calculator, element, callback(interactions, styles));
+}
+function fitsWindow(top, left, width, height) {
+    return (top + height < window.innerHeight - 10) &&
+        (top > 10) && (left > 10) &&
+        (left + width < window.innerWidth - 10);
+}
+const floatCallbacks = {
+    'resize': onResizeSwipe,
+    'move': onMoveSwipe
+};
+function floatActionBase(calculator, element, onMove) {
+    return {
+        init: (ev) => {
+            ev.event.preventDefault();
+        },
+        move: (x, y, diffX, diffY) => {
+            const [newX, newY] = calculator.calculate(x, y, diffX, diffY);
+            if (fitsWindow(newY, newX, element.offsetWidth, element.offsetHeight)) {
+                onMove(newX, newY, element);
+            }
+        }
+    };
+}
+function onResizeSwipe(interactions, styles) {
+    return (x, y, element) => {
+        interactions.mutate(() => {
+            styles.setStyle('width', x + "px", element);
+            styles.setStyle('height', y + "px", element);
+        });
+    };
+}
+function onMoveSwipe(_interactions, styles) {
+    return (x, y, element) => {
+        _interactions.mutate(() => {
+            styles.setStyle('left', x + "px", element);
+            styles.setStyle('top', y + "px", element);
+        });
+    };
+}

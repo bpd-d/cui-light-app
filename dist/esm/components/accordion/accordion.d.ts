@@ -1,5 +1,5 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiSwitchable } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent, ICuiSwitchable } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 import { CuiClickableArgs } from "../../core/models/arguments";
@@ -13,23 +13,46 @@ export declare class CuiAccordionArgs extends CuiAutoParseArgs implements CuiCli
     stopPropagation: boolean;
     constructor(prefix: string, timeout?: number);
 }
-export declare class CuiAccordionComponent implements ICuiComponent {
-    #private;
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
-}
+export declare function CuiAccordionComponent(prefix?: string): ICuiComponent;
 export declare class CuiAccordionHandler extends CuiHandlerBase<CuiAccordionArgs> implements ICuiSwitchable {
-    #private;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string);
+    private _currentIndex;
+    private _busFacade;
+    private _interactions;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string, prefix: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
-    switch(index: number): Promise<boolean>;
-    private openCloseTarget;
-    private onSwitch;
+    switch(index: any): Promise<boolean>;
+    /**
+     * Toggles target and closes not needed is setup allows for that
+     * @param index - current index to remain opened
+     * @param target - target to toggle
+     * @param targets - all targets
+     */
+    private updateTargets;
+    /**
+     * Sets or remove active class on target
+     * @param target target to toggle
+     * @returns Whethet target was opened or not
+     */
+    private toggleTarget;
+    /**
+     * Closes all targets except the one that should remain opened
+     * @param currentIndex index of current target - to remain opened
+     * @param targets - list of targets to operate on
+     */
     private closeAllExcept;
+    /**
+     * Handles element click
+     * @param ev
+     */
     private onElementClick;
+    /**
+     * Finds match
+     * @param target
+     * @returns index of matching element or -1
+     */
+    private findMatchingTrigger;
     private queryItems;
+    private getOpenedIndex;
 }

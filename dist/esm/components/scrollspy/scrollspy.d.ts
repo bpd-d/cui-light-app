@@ -1,5 +1,5 @@
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 export interface CuiScrollspyTargetChangeEvent {
@@ -20,24 +20,24 @@ export declare class CuiScrollSpyArgs extends CuiAutoParseArgs {
     link: string;
     linkAction: string;
     ratio: number;
-    isRoot: boolean;
     mode: "single" | "multi";
     threshold: number;
     constructor();
 }
-export declare class CuiScrollspyComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
-}
+export declare function CuiScrollspyComponent(prefix?: string): ICuiComponent;
 export declare class CuiScrollspyHandler extends CuiHandlerBase<CuiScrollSpyArgs> {
-    #private;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
+    private _links;
+    private _actions;
+    private _linkActions;
+    private _modeHandler;
+    private _busFacade;
+    private _interactions;
+    private _intersectionPerformer;
+    private _root;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
     private onIntersection;
-    private init;
-    private update;
+    private updateSetup;
 }

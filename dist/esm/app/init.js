@@ -7,33 +7,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _isInitialized;
 import { is } from "../core/utils/functions";
 import { CuiInitializer } from "./initializer";
 import { GetPlugins } from "../plugins/module";
 import { GetComponents } from "../components/module";
 export class CuiInit {
     constructor() {
-        _isInitialized.set(this, void 0);
-        __classPrivateFieldSet(this, _isInitialized, false);
+        this._isInitialized = false;
     }
     init(data) {
         var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
-            if (__classPrivateFieldGet(this, _isInitialized)) {
+            if (this._isInitialized) {
                 console.log("Module is already initialized");
                 return false;
             }
@@ -69,7 +54,7 @@ export class CuiInit {
                 // @ts-ignore already checked
                 components: is(data.components) ? [...componentList, ...data.components] : componentList }));
             if (result.result) {
-                __classPrivateFieldSet(this, _isInitialized, true);
+                this._isInitialized = true;
                 return true;
             }
             else {
@@ -80,4 +65,3 @@ export class CuiInit {
         });
     }
 }
-_isInitialized = new WeakMap();

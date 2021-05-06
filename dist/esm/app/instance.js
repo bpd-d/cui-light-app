@@ -7,24 +7,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _log, _mutationObserver, _utils, _plugins, _components, _rootElement, _mutatedAttributes, _api;
 import { is, joinAttributesForQuery, are } from "../core/utils/functions";
 import { STATICS, EVENTS, CSS_VARIABLES } from "../core/utils/statics";
 import { CuiMutationObserver } from "../core/observers/mutations";
-import { CuiUtils } from "../core/models/utils";
+import { CuiCore } from "../core/models/core";
 import { CuiInstanceInitError } from "../core/models/errors";
 import { ElementManager } from "./managers/element";
 import { CuiPluginManager } from "./managers/plugins";
@@ -33,83 +19,75 @@ import { CuiApiHandler } from "../core/api/handler";
 import { getMatchingComponents, createCuiElement, addCuiArgument } from "../core/api/functions";
 export class CuiInstance {
     constructor(setup, plugins, components) {
-        _log.set(this, void 0);
-        _mutationObserver.set(this, void 0);
-        _utils.set(this, void 0);
-        _plugins.set(this, void 0);
-        _components.set(this, void 0);
-        _rootElement.set(this, void 0);
-        _mutatedAttributes.set(this, void 0);
-        _api.set(this, void 0);
         STATICS.prefix = setup.prefix;
         STATICS.logLevel = setup.logLevel;
         if (setup.development)
             STATICS.devTool = setup.development;
-        __classPrivateFieldSet(this, _plugins, new CuiPluginManager(plugins));
-        __classPrivateFieldSet(this, _components, components !== null && components !== void 0 ? components : []);
-        __classPrivateFieldSet(this, _utils, new CuiUtils(setup, plugins.map(plugin => { return plugin.name; })));
-        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get("CuiInstance"));
-        __classPrivateFieldSet(this, _rootElement, setup.root);
-        __classPrivateFieldSet(this, _mutationObserver, undefined);
-        __classPrivateFieldSet(this, _mutatedAttributes, []);
-        __classPrivateFieldSet(this, _api, new CuiApiHandler(__classPrivateFieldGet(this, _components), __classPrivateFieldGet(this, _utils)));
+        this._plugins = new CuiPluginManager(plugins);
+        this._components = components !== null && components !== void 0 ? components : [];
+        this._core = new CuiCore(setup, plugins.map(plugin => { return plugin.name; }));
+        this._log = CuiDevtoolFactory.get("CuiInstance");
+        this._rootElement = setup.root;
+        this._mutationObserver = undefined;
+        this._mutatedAttributes = [];
+        this._api = new CuiApiHandler(this._components, this._core);
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
-            __classPrivateFieldGet(this, _log).debug("Instance started", "init");
+            this._log.debug("Instance started", "init");
             // Init elements
             if (!is(window.MutationObserver)) {
                 throw new CuiInstanceInitError("Mutation observer does not exists");
             }
-            __classPrivateFieldSet(this, _mutatedAttributes, __classPrivateFieldGet(this, _components).map(x => { return x.attribute; })); // MUTATED_ATTRIBUTES; 
-            const initElements = is(__classPrivateFieldGet(this, _mutatedAttributes)) ? __classPrivateFieldGet(this, _rootElement).querySelectorAll(joinAttributesForQuery(__classPrivateFieldGet(this, _mutatedAttributes))) : null;
+            this._mutatedAttributes = this._components.map(x => { return x.attribute; }); // MUTATED_ATTRIBUTES; 
+            const initElements = is(this._mutatedAttributes) ? this._rootElement.querySelectorAll(joinAttributesForQuery(this._mutatedAttributes)) : null;
             if (is(initElements)) {
                 //@ts-ignore initElements already checked
-                __classPrivateFieldGet(this, _log).debug(`Initiating ${initElements.length} elements`);
+                this._log.debug(`Initiating ${initElements.length} elements`);
                 let promises = [];
                 //@ts-ignore initElements already checked
                 for (let element of initElements) {
                     try {
-                        let matchingComponents = getMatchingComponents(element, __classPrivateFieldGet(this, _components));
-                        promises.push(createCuiElement(element, matchingComponents, __classPrivateFieldGet(this, _utils)));
+                        let matchingComponents = getMatchingComponents(element, this._components);
+                        promises.push(createCuiElement(element, matchingComponents, this._core));
                     }
                     catch (e) {
-                        __classPrivateFieldGet(this, _log).exception(e);
+                        this._log.exception(e);
                     }
                 }
                 yield Promise.all(promises);
             }
-            __classPrivateFieldGet(this, _log).debug("Init plugins", "init");
+            this._log.debug("Init plugins", "init");
             // Init plugins
-            __classPrivateFieldGet(this, _plugins).init(__classPrivateFieldGet(this, _utils));
-            if (are(__classPrivateFieldGet(this, _components), __classPrivateFieldGet(this, _mutatedAttributes))) {
-                __classPrivateFieldGet(this, _log).debug("Init mutation observer", "init");
-                __classPrivateFieldSet(this, _mutationObserver, new CuiMutationObserver(__classPrivateFieldGet(this, _rootElement), __classPrivateFieldGet(this, _utils)));
-                __classPrivateFieldGet(this, _mutationObserver).setComponents(__classPrivateFieldGet(this, _components)).setAttributes(__classPrivateFieldGet(this, _mutatedAttributes));
-                __classPrivateFieldGet(this, _mutationObserver).setPlugins(__classPrivateFieldGet(this, _plugins));
-                __classPrivateFieldGet(this, _mutationObserver).start();
+            this._plugins.init(this._core);
+            if (are(this._components, this._mutatedAttributes)) {
+                this._log.debug("Init mutation observer", "init");
+                this._mutationObserver = new CuiMutationObserver(this._rootElement, this._core);
+                this._mutationObserver.setComponents(this._components).setAttributes(this._mutatedAttributes);
+                this._mutationObserver.setPlugins(this._plugins);
+                this._mutationObserver.start();
             }
-            __classPrivateFieldGet(this, _log).debug("Setting CSS globals", 'init');
-            __classPrivateFieldGet(this, _utils).interactions.mutate(() => {
-                __classPrivateFieldGet(this, _utils).setProperty(CSS_VARIABLES.animationTimeLong, `${__classPrivateFieldGet(this, _utils).setup.animationTimeLong}ms`);
-                __classPrivateFieldGet(this, _utils).setProperty(CSS_VARIABLES.animationTime, `${__classPrivateFieldGet(this, _utils).setup.animationTime}ms`);
-                __classPrivateFieldGet(this, _utils).setProperty(CSS_VARIABLES.animationTimeShort, `${__classPrivateFieldGet(this, _utils).setup.animationTimeShort}ms`);
+            this._log.debug("Setting CSS globals", 'init');
+            this._core.interactions.mutate(() => {
+                this._core.setProperty(CSS_VARIABLES.animationTimeLong, `${this._core.setup.animationTimeLong}ms`);
+                this._core.setProperty(CSS_VARIABLES.animationTime, `${this._core.setup.animationTime}ms`);
+                this._core.setProperty(CSS_VARIABLES.animationTimeShort, `${this._core.setup.animationTimeShort}ms`);
             }, null);
-            __classPrivateFieldGet(this, _utils).bus.emit(EVENTS.INSTANCE_INITIALIZED, null);
+            this._core.bus.emit(EVENTS.INSTANCE_INITIALIZED, null);
             return this;
         });
     }
     finish() {
-        if (__classPrivateFieldGet(this, _mutationObserver))
-            __classPrivateFieldGet(this, _mutationObserver).stop();
-        __classPrivateFieldGet(this, _utils).bus.emit(EVENTS.INSTANCE_FINISHED, null);
+        if (this._mutationObserver)
+            this._mutationObserver.stop();
+        this._core.bus.emit(EVENTS.INSTANCE_FINISHED, null);
     }
     get(selector) {
         const elements = this.all(selector);
         if (!elements) {
             return undefined;
         }
-        const newElement = new ElementManager(elements, __classPrivateFieldGet(this, _utils));
+        const newElement = new ElementManager(elements, this._core);
         return newElement;
     }
     all(selector) {
@@ -120,30 +98,30 @@ export class CuiInstance {
         return [...nodes];
     }
     getUtils() {
-        return __classPrivateFieldGet(this, _utils); //;
+        return this._core; //;
     }
     on(event, callback, element) {
         if (!are(event, callback)) {
-            __classPrivateFieldGet(this, _log).error("Incorrect arguments", "on");
+            this._log.error("Incorrect arguments", "on");
             return null;
         }
-        return __classPrivateFieldGet(this, _utils).bus.on(event, callback, element);
+        return this._core.bus.on(event, callback, element);
     }
     detach(event, id) {
         if (!are(event, id)) {
-            __classPrivateFieldGet(this, _log).error("Incorrect arguments", "detach");
+            this._log.error("Incorrect arguments", "detach");
         }
-        __classPrivateFieldGet(this, _utils).bus.detach(event, id);
+        this._core.bus.detach(event, id);
     }
     detachAll(event) {
         if (!is(event)) {
-            __classPrivateFieldGet(this, _log).error("Incorrect arguments", "detachAll");
+            this._log.error("Incorrect arguments", "detachAll");
         }
-        __classPrivateFieldGet(this, _utils).bus.detachAll(event);
+        this._core.bus.detachAll(event);
     }
     emit(event, element, ...args) {
         if (!are(event, element)) {
-            __classPrivateFieldGet(this, _log).warning("Not enough data to emit event", "emit");
+            this._log.warning("Not enough data to emit event", "emit");
             return;
         }
         let cuid = null;
@@ -155,16 +133,16 @@ export class CuiInstance {
             cuid = el.$cuid;
         }
         if (!is(cuid)) {
-            __classPrivateFieldGet(this, _log).warning("Element is not a cUI element", "emit");
+            this._log.warning("Element is not a cUI element", "emit");
             return;
         }
-        __classPrivateFieldGet(this, _utils).bus.emit(event, cuid, ...args);
+        this._core.bus.emit(event, cuid, ...args);
     }
     getPlugin(name) {
-        return __classPrivateFieldGet(this, _plugins).get(name);
+        return this._plugins.get(name);
     }
     api() {
-        return __classPrivateFieldGet(this, _api);
+        return this._api;
     }
     /**
      * Creates cUI element outside of cUI root scope
@@ -174,18 +152,17 @@ export class CuiInstance {
      */
     createCuiElement(element, arg, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!is(arg) || !__classPrivateFieldGet(this, _mutatedAttributes).includes(arg)) {
-                __classPrivateFieldGet(this, _log).error("Element cannot be created: Unknown attribute");
+            if (!is(arg) || !this._mutatedAttributes.includes(arg)) {
+                this._log.error("Element cannot be created: Unknown attribute");
                 return false;
             }
-            let component = __classPrivateFieldGet(this, _components).find(component => component.attribute === arg);
+            let component = this._components.find(component => component.attribute === arg);
             if (!component)
                 return false;
             if (addCuiArgument(element, arg, data)) {
-                return createCuiElement(element, [component], __classPrivateFieldGet(this, _utils));
+                return createCuiElement(element, [component], this._core);
             }
             return false;
         });
     }
 }
-_log = new WeakMap(), _mutationObserver = new WeakMap(), _utils = new WeakMap(), _plugins = new WeakMap(), _components = new WeakMap(), _rootElement = new WeakMap(), _mutatedAttributes = new WeakMap(), _api = new WeakMap();

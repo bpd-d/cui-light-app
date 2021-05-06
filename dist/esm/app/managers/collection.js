@@ -7,40 +7,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _log, _cDt, _helper;
 import { CuiDevtoolFactory } from "../../core/development/factory";
 import { CollectionManagerHelper } from "../helpers/collection";
 export class CollectionManager {
     constructor(elements, interactions) {
-        _log.set(this, void 0);
-        _cDt.set(this, void 0);
-        _helper.set(this, void 0);
-        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get('CollectionManager'));
-        __classPrivateFieldSet(this, _helper, new CollectionManagerHelper(interactions));
-        __classPrivateFieldGet(this, _helper).setElements(elements);
-        __classPrivateFieldSet(this, _cDt, Date.now());
+        this._log = CuiDevtoolFactory.get('CollectionManager');
+        this._helper = new CollectionManagerHelper(interactions);
+        this._helper.setElements(elements);
+        this._cDt = Date.now();
     }
     setToggle(className) {
-        __classPrivateFieldGet(this, _helper).setToggle(className);
+        this._helper.setToggle(className);
     }
     setElements(elements) {
-        __classPrivateFieldGet(this, _helper).setElements(elements);
+        this._helper.setElements(elements);
     }
     click(callback) {
-        __classPrivateFieldGet(this, _helper).elements().forEach((element, index) => {
+        this._helper.elements().forEach((element, index) => {
             element.addEventListener('click', () => {
                 this.set(index).then(() => {
                     if (callback) {
@@ -52,48 +35,47 @@ export class CollectionManager {
     }
     next() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!__classPrivateFieldGet(this, _helper).check()) {
+            if (!this._helper.check()) {
                 return false;
             }
-            let newIdx = __classPrivateFieldGet(this, _helper).getCurrentIndex() + 1;
+            let newIdx = this._helper.getCurrentIndex() + 1;
             return this.set(newIdx >= this.length() ? 0 : newIdx);
         });
     }
     previous() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!__classPrivateFieldGet(this, _helper).check()) {
+            if (!this._helper.check()) {
                 return false;
             }
-            let newIdx = __classPrivateFieldGet(this, _helper).getCurrentIndex() - 1;
+            let newIdx = this._helper.getCurrentIndex() - 1;
             return this.set(newIdx < 0 ? this.length() - 1 : newIdx);
         });
     }
     set(index) {
         return __awaiter(this, void 0, void 0, function* () {
-            let current = __classPrivateFieldGet(this, _helper).getCurrentIndex();
-            if (!__classPrivateFieldGet(this, _helper).check() || !__classPrivateFieldGet(this, _helper).verifyIndex(index, current, this.length())) {
+            let current = this._helper.getCurrentIndex();
+            if (!this._helper.check() || !this._helper.verifyIndex(index, current, this.length())) {
                 return false;
             }
-            return __classPrivateFieldGet(this, _helper).setCurrent(index, current);
+            return this._helper.setCurrent(index, current);
         });
     }
     setWithAnimation(index, animClassIn, animClassOut, duration) {
         return __awaiter(this, void 0, void 0, function* () {
-            let current = __classPrivateFieldGet(this, _helper).getCurrentIndex();
-            if (!__classPrivateFieldGet(this, _helper).check() || !__classPrivateFieldGet(this, _helper).verifyIndex(index, current, this.length())) {
+            let current = this._helper.getCurrentIndex();
+            if (!this._helper.check() || !this._helper.verifyIndex(index, current, this.length())) {
                 return false;
             }
-            return __classPrivateFieldGet(this, _helper).setCurrentWithAnimation(index, animClassIn, animClassOut, duration, current);
+            return this._helper.setCurrentWithAnimation(index, animClassIn, animClassOut, duration, current);
         });
     }
     getCurrentIndex() {
-        return __classPrivateFieldGet(this, _helper).getCurrentIndex();
+        return this._helper.getCurrentIndex();
     }
     length() {
-        return __classPrivateFieldGet(this, _helper).count();
+        return this._helper.count();
     }
     refresh() {
-        return this.length() > 0 && Date.now() - __classPrivateFieldGet(this, _cDt) > 360000;
+        return this.length() > 0 && Date.now() - this._cDt > 360000;
     }
 }
-_log = new WeakMap(), _cDt = new WeakMap(), _helper = new WeakMap();

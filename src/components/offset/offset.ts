@@ -1,12 +1,18 @@
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
-import { CuiScrollListener, CuiScrollEvent } from "../../core/listeners/scroll";
+import { CuiScrollEvent } from "../../core/listeners/scroll";
 import { ICuiComponentAction, CuiActionsListFactory } from "../../core/utils/actions";
-import { are, getRangeValue, is } from "../../core/utils/functions";
+import { are, getRangeValue } from "../../core/utils/functions";
 import { CuiOffsetModeFactory, ICuiOffsetMode } from "./modes";
-import { EVENTS } from "../../core/utils/statics";
+import { ATTRIBUTES, EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiComponentBaseHook } from "../base";
+import { getEventBusFacade, getCuiHandlerInteractions, ICuiEventBusFacade, ICuiInteractionsFacade } from "../../core/handlers/extensions/facades";
+import { getCuiScrollExtension } from "../extensions/scroll/scroll";
+import { CuiElementBoxFactory, ICuiElementBox } from "../../core/models/elements";
+import { getOffsetPerformer } from "./performer";
+import { ICuiExtensionPerformer } from "../extensions/interfaces";
 
 /**
  * Toggles an action after specified offset is reached in relation to the element or document
@@ -43,134 +49,129 @@ export class CuiOffsetArgs extends CuiAutoParseArgs {
     action: string;
     offsetY: number;
     offsetX: number
-    root: boolean;
     mode: "static" | "dynamic";
     constructor() {
         super();
         this.offsetX = -1;
         this.offsetY = -1;
         this.target = "";
-        this.root = false;
         this.action = "";
         this.mode = 'static';
     }
 }
-export class CuiOffsetComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string) {
-        this.attribute = `${prefix ?? 'cui'}-offset`;
-    }
 
-    getStyle(): string | null {
-        return null;
-    }
-
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler {
-        return new CuiOffsetHandler(element, utils, this.attribute);
-    }
+export function CuiOffsetComponent(prefix?: string): ICuiComponent {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "offset",
+        create: (element: HTMLElement, utils: CuiCore, prefix: string, attribute: string) => {
+            return new CuiOffsetHandler(element, utils, attribute)
+        }
+    })
 }
 
 export class CuiOffsetHandler extends CuiHandlerBase<CuiOffsetArgs> {
-    #listener: CuiScrollListener | undefined;
-    #target: Element;
-    #utils: CuiUtils;
-    #matched: boolean;
-    #action: ICuiComponentAction[];
-    #prevX: number;
-    #prevY: number;
-    #threshold: number;
-    #root: Element;
-    #modeHandler: ICuiOffsetMode | null;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
-        super("CuiOffsetHandler", element, attribute, new CuiOffsetArgs(), utils);
-        this.element = element as HTMLElement;
+    private _targets: HTMLElement[];
+    private _matched: boolean;
+    private _actions: ICuiComponentAction[];
 
-        this.#target = this.element;
-        this.#utils = utils;
-        this.#matched = false;
-        this.#action = [];
-        this.#prevX = 0;
-        this.#prevY = 0;
-        this.#threshold = 20;
-        this.#root = this.element;
-        this.#modeHandler = null;
-        this.#listener = undefined;
+    private _root: ICuiElementBox;
+    private _modeHandler: ICuiOffsetMode;
+
+
+    private _busFacade: ICuiEventBusFacade;
+    private _interactions: ICuiInteractionsFacade;
+    private _performer: ICuiExtensionPerformer<CuiScrollEvent>;
+
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string) {
+        super("CuiOffsetHandler", element, attribute, new CuiOffsetArgs(), utils);
+
+        this._targets = [this.element];
+        this._matched = false;
+        this._actions = [];
+        this._modeHandler = CuiOffsetModeFactory.get(this.args.mode);
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, element);
+        this._interactions = getCuiHandlerInteractions(utils.interactions);
+        const root = this.element.hasAttribute(ATTRIBUTES.root) ? window : element
+        this._root = CuiElementBoxFactory.get(root);
+        this._performer = getOffsetPerformer({
+            callback: this.checkAndPerformActions.bind(this),
+            threshold: 20,
+        })
+
+        this.extend(getCuiScrollExtension({
+            element: root,
+            threshold: 5,
+            performer: this._performer
+        }))
+
 
     }
 
     async onHandle(): Promise<boolean> {
         this.parseAttribute();
-        this.#listener = new CuiScrollListener(this.args.root ? (window as any) : this.element, this.utils.setup.scrollThreshold);
-        this.#listener.setCallback(this.onScroll.bind(this));
-        this.#listener.attach();
+        // Perform initial call to performer to settle up component - if it is scrolled or just matching conditions then actions will be set
+        this._performer.perform({
+            base: undefined,
+            initial: true,
+            left: this._root.getScrollLeft(),
+            top: this._root.getScrollTop(),
+            scrolling: false,
+            source: "CuiOffsetHandler"
+        })
         return true;
     }
+
     async onRefresh(): Promise<boolean> {
         this.parseAttribute();
         return true;
     }
+
     async onRemove(): Promise<boolean> {
-        if (this.#listener)
-            this.#listener.detach();
+        this._busFacade.detachEmittedEvents();
         return true;
     }
 
-    private onScroll(ev: CuiScrollEvent): void {
-        this.checkAndPerformActions(ev);
-    }
-
     private parseAttribute() {
-        this.#root = this.getRoot();
-        this.#target = this.getTarget();
-        this.#action = CuiActionsListFactory.get(this.args.action);
-        this.#modeHandler = CuiOffsetModeFactory.get(this.args.mode);
+        this._targets = this.getTargets();
+        this._actions = CuiActionsListFactory.get(this.args.action);
+        this._modeHandler = CuiOffsetModeFactory.get(this.args.mode);
 
     }
 
     private checkAndPerformActions(ev: CuiScrollEvent) {
-        if (!is(this.#modeHandler)) {
-            this.logError("Cannot perform - mode handler not initialized", "checkAndPerformActions")
-        }
         // @ts-ignore modehandler
-        let matchesOffset = this.#modeHandler.matches(ev.top, ev.left, this.args.offsetX, this.args.offsetY);
+        let matchesOffset = this._modeHandler.matches(ev.top, ev.left, this.args.offsetX, this.args.offsetY);
         /**
          * Act and emit event when offset has been reached
          */
-        if (matchesOffset !== this.#matched) {
+        if (matchesOffset !== this._matched) {
             this.act(matchesOffset);
-            this.#matched = matchesOffset;
-            this.callEvent(this.#matched, ev.left, ev.top, ev.scrolling, ev.source, ...this.calcaRatio(ev.left, ev.top));
-            return;
+            this._matched = matchesOffset;
         }
-        /**
-         * Emit event periodically
-         */
-        if (this.exceededThreshold(ev.left, ev.top)) {
-            this.callEvent(this.#matched, ev.left, ev.top, ev.scrolling, ev.source, ...this.calcaRatio(ev.left, ev.top));
-            this.#prevX = ev.left;
-            this.#prevY = ev.top;
-        }
+        this.callEvent(this._matched, ev.left, ev.top, ev.scrolling, ev.source, ...this.calcaRatio(ev.left, ev.top));
     }
 
 
     private act(matching: boolean) {
-        if (!are(this.#action, this.#target)) {
+        if (!are(this._actions, this._targets)) {
             return;
         }
-        this.isLocked = true;
-        this.#action.forEach(action => {
-            if (matching) {
-                action.add(this.#target, this.#utils)
-            } else {
-                action.remove(this.#target, this.#utils)
-            }
-        });
-        this.isLocked = false;
+
+        this._interactions.mutate(() => {
+            this._actions.forEach(action => {
+                this.actForTargets(matching ? action.add.bind(action) : action.remove.bind(action))
+            })
+        })
+    }
+
+    private actForTargets(callback: (target: Element) => void) {
+        this._targets.forEach(target => callback(target))
     }
 
     private callEvent(matches: boolean, x: number, y: number, scrolling: boolean, source: string, ratioX: number, ratioY: number) {
-        this.emitEvent(EVENTS.OFFSET, {
-            matches: this.#matched,
+        this._busFacade.emit(EVENTS.OFFSET, {
+            matches: this._matched,
             offsetX: x,
             offsetY: y,
             ratioX: ratioX,
@@ -181,22 +182,14 @@ export class CuiOffsetHandler extends CuiHandlerBase<CuiOffsetArgs> {
         })
     }
 
-    private getRoot(): Element {
-        return this.args.root ? document.body : this.element;
-    }
-
-    private exceededThreshold(x: number, y: number): boolean {
-        return Math.abs(x - this.#prevX) > this.#threshold || Math.abs(y - this.#prevY) > this.#threshold;
-    }
 
     private calcaRatio(x: number, y: number): [number, number] {
-        let ratY = parseFloat(((this.#root.clientHeight + y) / this.#root.scrollHeight).toFixed(2))
-        let ratX = parseFloat(((this.#root.clientWidth + x) / this.#root.scrollWidth).toFixed(2))
+        let ratY = parseFloat(((this._root.getHeight() + y) / this._root.getScrollHeight()).toFixed(2))
+        let ratX = parseFloat(((this._root.getWidth() + x) / this._root.getScrollWidth()).toFixed(2))
         return [getRangeValue(ratX, 0, 1), getRangeValue(ratY, 0, 1)];
     }
 
-    private getTarget(): Element {
-        let target = this.args.target ? this.#root.querySelector(this.args.target) : null;
-        return target ?? this.element;
+    private getTargets(): HTMLElement[] {
+        return this.args.target ? this._root.queryAll(this.args.target) : [this.element];
     }
 }

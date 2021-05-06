@@ -7,26 +7,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _prefix, _eventId;
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { is, are, getParentCuiElement } from "../../core/utils/functions";
 import { CuiActionsListFactory } from "../../core/utils/actions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-import { CuiClickModule } from "../modules/click/click";
+import { clickExtension } from "../extensions/click/click";
+import { eventExtension } from "../extensions/event/event";
+import { getEventBusFacade } from "../../core/handlers/extensions/facades";
+import { CuiActionsHelper } from "../../core/helpers/helpers";
+import { CuiComponentBaseHook } from "../base";
+import { callbackPerformer } from "../extensions/performers";
 export class CuiOpenArgs extends CuiAutoParseArgs {
     constructor(timeout) {
         super({
@@ -40,30 +31,32 @@ export class CuiOpenArgs extends CuiAutoParseArgs {
         this.state = "";
     }
 }
-export class CuiOpenComponent {
-    constructor(prefix) {
-        _prefix.set(this, void 0);
-        __classPrivateFieldSet(this, _prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${__classPrivateFieldGet(this, _prefix)}-open`;
-    }
-    getStyle() {
-        return null;
-    }
-    get(element, utils) {
-        return new CuiOpenHandler(element, utils, this.attribute, __classPrivateFieldGet(this, _prefix));
-    }
+export function CuiOpenComponent(prefix) {
+    return CuiComponentBaseHook({
+        name: 'open',
+        prefix: prefix,
+        create: (element, utils, prefix, attribute) => {
+            return new CuiOpenHandler(element, utils, attribute);
+        }
+    });
 }
-_prefix = new WeakMap();
 export class CuiOpenHandler extends CuiHandlerBase {
-    constructor(element, utils, attribute, prefix) {
+    constructor(element, utils, attribute) {
         super("CuiOpenHandler", element, attribute, new CuiOpenArgs(utils.setup.animationTime), utils);
-        _eventId.set(this, void 0);
-        __classPrivateFieldSet(this, _eventId, null);
-        this.addModule(new CuiClickModule(this.element, this.args, this.onOpen.bind(this)));
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, element);
+        this._actionsHelper = new CuiActionsHelper(utils.interactions);
+        this.extend(clickExtension({
+            element: element,
+            performer: callbackPerformer(this.onOpen.bind(this))
+        }));
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.OPEN,
+            type: "open",
+            performer: callbackPerformer(this.onOpen.bind(this))
+        }));
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
-            __classPrivateFieldSet(this, _eventId, this.onEvent(EVENTS.OPEN, this.onOpen.bind(this)));
             return true;
         });
     }
@@ -74,29 +67,28 @@ export class CuiOpenHandler extends CuiHandlerBase {
     }
     onRemove() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.detachEvent(EVENTS.OPEN, __classPrivateFieldGet(this, _eventId));
+            this._busFacade.detachEmittedEvents();
             return true;
         });
     }
     onOpen(ev) {
-        if (this.isLocked) {
+        if (!this.lock()) {
             return;
         }
         const target = this.getTarget();
         if (!is(target)) {
-            this._log.warning(`Target ${this.args.target} not found`, 'onClick');
+            this.log.warning(`Target ${this.args.target} not found`, 'onClick');
             return;
         }
-        this.isLocked = true;
         //@ts-ignore - target checked
         this.run(target).then((result) => {
             //@ts-ignore - target checked
             if (result)
                 this.emitOpen(ev);
         }).catch((e) => {
-            this._log.exception(e);
+            this.log.exception(e);
         }).finally(() => {
-            this.isLocked = false;
+            this.unlock();
         });
     }
     /**
@@ -106,51 +98,37 @@ export class CuiOpenHandler extends CuiHandlerBase {
      */
     run(target) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log(target);
             let cuiId = target.$cuid;
             if (is(cuiId)) {
                 this.handleClickCui(cuiId);
                 return false;
             }
             else {
-                this._log.debug("Open html component");
+                this.log.debug("Open html component");
                 if (are(this.args.timeout, this.args.action)) {
-                    this._log.debug("Perfrom an action");
+                    this.log.debug("Perfrom an action");
                     let actions = CuiActionsListFactory.get(this.args.action);
-                    return this.actionsHelper.performActions(target, actions, this.args.timeout, () => {
-                        this.helper.setClass(this.activeClassName, target);
+                    return this._actionsHelper.performActions(target, actions, this.args.timeout, () => {
+                        this.classes.setClass(this.activeClassName, target);
                     });
                 }
-                this.helper.setClassesAs(target, this.activeClassName);
+                this.asyncClasses.setClasses(target, this.activeClassName);
                 return true;
             }
         });
     }
     handleClickCui(cuid) {
-        this._log.debug("Open cUI component");
-        this.utils.bus.emit(EVENTS.OPEN, cuid, this.args.state);
+        this.log.debug("Open cUI component");
+        this.core.bus.emit(EVENTS.OPEN, cuid, this.args.state);
         return false;
     }
     emitOpen(ev) {
-        this.emitEvent(EVENTS.OPENED, {
+        this._busFacade.emit(EVENTS.OPENED, {
             event: ev,
             state: this.args.state
         });
     }
-    // private getTarget(target: string) {
-    //     if (is(target)) {
-    //         //@ts-ignore - target checked
-    //         return document.querySelector(target);
-    //     }
-    //     let parent = this.element.parentElement;
-    //     //@ts-ignore - parent checked
-    //     let result = is(parent) ? parent.querySelectorAll(`[${CUID_ATTRIBUTE}]`) : undefined;
-    //     if (!result || result.length < 2) {
-    //         return undefined;
-    //     }
-    //     return getFirstMatching([...result], (el: Element) => {
-    //         return el !== this.element;
-    //     })
-    // }
     getTarget() {
         var _a;
         if (!is(this.args.target)) {
@@ -159,4 +137,3 @@ export class CuiOpenHandler extends CuiHandlerBase {
         return (_a = document.querySelector(this.args.target)) !== null && _a !== void 0 ? _a : getParentCuiElement(this.element);
     }
 }
-_eventId = new WeakMap();

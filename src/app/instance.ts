@@ -3,7 +3,7 @@ import { is, joinAttributesForQuery, are } from "../core/utils/functions";
 import { STATICS, EVENTS, CSS_VARIABLES } from "../core/utils/statics";
 import { ICuiPlugin, ICuiComponent, ICuiPluginManager, CuiElement } from "../core/models/interfaces";
 import { ICuiMutionObserver, CuiMutationObserver } from "../core/observers/mutations";
-import { CuiUtils } from "../core/models/utils";
+import { CuiCore } from "../core/models/core";
 import { CuiInstanceInitError } from "../core/models/errors";
 import { ElementManager } from "./managers/element";
 import { CuiPluginManager } from "./managers/plugins";
@@ -14,79 +14,79 @@ import { CuiApiHandler } from "../core/api/handler";
 import { getMatchingComponents, createCuiElement, addCuiArgument } from "../core/api/functions";
 
 export class CuiInstance {
-    #log: ICuiDevelopmentTool;
-    #mutationObserver: ICuiMutionObserver | undefined;
-    #utils: CuiUtils;
-    #plugins: ICuiPluginManager;
-    #components: ICuiComponent[];
-    #rootElement: HTMLElement;
-    #mutatedAttributes: string[];
-    #api: ICuiApiHandler;
+    private _log: ICuiDevelopmentTool;
+    private _mutationObserver: ICuiMutionObserver | undefined;
+    private _core: CuiCore;
+    private _plugins: ICuiPluginManager;
+    private _components: ICuiComponent[];
+    private _rootElement: HTMLElement;
+    private _mutatedAttributes: string[];
+    private _api: ICuiApiHandler;
     constructor(setup: CuiSetupInit, plugins: ICuiPlugin[], components: ICuiComponent[]) {
         STATICS.prefix = setup.prefix;
         STATICS.logLevel = setup.logLevel;
         if (setup.development)
             STATICS.devTool = setup.development;
-        this.#plugins = new CuiPluginManager(plugins);
-        this.#components = components ?? [];
-        this.#utils = new CuiUtils(setup, plugins.map(plugin => { return plugin.name; }));
-        this.#log = CuiDevtoolFactory.get("CuiInstance");
-        this.#rootElement = setup.root;
-        this.#mutationObserver = undefined;
-        this.#mutatedAttributes = [];
-        this.#api = new CuiApiHandler(this.#components, this.#utils);
+        this._plugins = new CuiPluginManager(plugins);
+        this._components = components ?? [];
+        this._core = new CuiCore(setup, plugins.map(plugin => { return plugin.name; }));
+        this._log = CuiDevtoolFactory.get("CuiInstance");
+        this._rootElement = setup.root;
+        this._mutationObserver = undefined;
+        this._mutatedAttributes = [];
+        this._api = new CuiApiHandler(this._components, this._core);
     }
 
     async init(): Promise<CuiInstance> {
-        this.#log.debug("Instance started", "init")
+        this._log.debug("Instance started", "init")
         // Init elements
         if (!is(window.MutationObserver)) {
             throw new CuiInstanceInitError("Mutation observer does not exists");
         }
-        this.#mutatedAttributes = this.#components.map(x => { return x.attribute }); // MUTATED_ATTRIBUTES; 
-        const initElements = is(this.#mutatedAttributes) ? this.#rootElement.querySelectorAll(joinAttributesForQuery(this.#mutatedAttributes)) : null;
+        this._mutatedAttributes = this._components.map(x => { return x.attribute }); // MUTATED_ATTRIBUTES; 
+        const initElements = is(this._mutatedAttributes) ? this._rootElement.querySelectorAll(joinAttributesForQuery(this._mutatedAttributes)) : null;
         if (is(initElements)) {
             //@ts-ignore initElements already checked
-            this.#log.debug(`Initiating ${initElements.length} elements`)
+            this._log.debug(`Initiating ${initElements.length} elements`)
             let promises = [];
             //@ts-ignore initElements already checked
             for (let element of initElements) {
                 try {
-                    let matchingComponents = getMatchingComponents(element, this.#components)
-                    promises.push(createCuiElement(element, matchingComponents, this.#utils));
+                    let matchingComponents = getMatchingComponents(element, this._components)
+                    promises.push(createCuiElement(element, matchingComponents, this._core));
                 } catch (e) {
-                    this.#log.exception(e);
+                    this._log.exception(e);
                 }
             }
             await Promise.all(promises);
         }
-        this.#log.debug("Init plugins", "init")
+        this._log.debug("Init plugins", "init")
         // Init plugins
-        this.#plugins.init(this.#utils);
+        this._plugins.init(this._core);
 
-        if (are(this.#components, this.#mutatedAttributes)) {
-            this.#log.debug("Init mutation observer", "init")
-            this.#mutationObserver = new CuiMutationObserver(this.#rootElement, this.#utils)
-            this.#mutationObserver.setComponents(this.#components).setAttributes(this.#mutatedAttributes)
-            this.#mutationObserver.setPlugins(this.#plugins);
-            this.#mutationObserver.start();
+        if (are(this._components, this._mutatedAttributes)) {
+            this._log.debug("Init mutation observer", "init")
+            this._mutationObserver = new CuiMutationObserver(this._rootElement, this._core)
+            this._mutationObserver.setComponents(this._components).setAttributes(this._mutatedAttributes)
+            this._mutationObserver.setPlugins(this._plugins);
+            this._mutationObserver.start();
         }
 
-        this.#log.debug("Setting CSS globals", 'init')
-        this.#utils.interactions.mutate(() => {
-            this.#utils.setProperty(CSS_VARIABLES.animationTimeLong, `${this.#utils.setup.animationTimeLong}ms`)
-            this.#utils.setProperty(CSS_VARIABLES.animationTime, `${this.#utils.setup.animationTime}ms`);
-            this.#utils.setProperty(CSS_VARIABLES.animationTimeShort, `${this.#utils.setup.animationTimeShort}ms`);
+        this._log.debug("Setting CSS globals", 'init')
+        this._core.interactions.mutate(() => {
+            this._core.setProperty(CSS_VARIABLES.animationTimeLong, `${this._core.setup.animationTimeLong}ms`)
+            this._core.setProperty(CSS_VARIABLES.animationTime, `${this._core.setup.animationTime}ms`);
+            this._core.setProperty(CSS_VARIABLES.animationTimeShort, `${this._core.setup.animationTimeShort}ms`);
         }, null)
 
-        this.#utils.bus.emit(EVENTS.INSTANCE_INITIALIZED, null)
+        this._core.bus.emit(EVENTS.INSTANCE_INITIALIZED, null)
         return this;
     }
 
     finish(): void {
-        if (this.#mutationObserver)
-            this.#mutationObserver.stop();
-        this.#utils.bus.emit(EVENTS.INSTANCE_FINISHED, null)
+        if (this._mutationObserver)
+            this._mutationObserver.stop();
+        this._core.bus.emit(EVENTS.INSTANCE_FINISHED, null)
     }
 
     get(selector: string): ElementManager | undefined {
@@ -94,7 +94,7 @@ export class CuiInstance {
         if (!elements) {
             return undefined;
         }
-        const newElement = new ElementManager(elements, this.#utils);
+        const newElement = new ElementManager(elements, this._core);
         return newElement
     }
 
@@ -106,35 +106,35 @@ export class CuiInstance {
         return [...nodes];
     }
 
-    getUtils(): CuiUtils {
-        return this.#utils//;
+    getUtils(): CuiCore {
+        return this._core//;
     }
 
     on(event: string, callback: any, element?: CuiElement): string | null {
         if (!are(event, callback)) {
-            this.#log.error("Incorrect arguments", "on")
+            this._log.error("Incorrect arguments", "on")
             return null;
         }
-        return this.#utils.bus.on(event, callback, element);
+        return this._core.bus.on(event, callback, element);
     }
 
     detach(event: string, id: string): void {
         if (!are(event, id)) {
-            this.#log.error("Incorrect arguments", "detach")
+            this._log.error("Incorrect arguments", "detach")
         }
-        this.#utils.bus.detach(event, id);
+        this._core.bus.detach(event, id);
     }
 
     detachAll(event: string): void {
         if (!is(event)) {
-            this.#log.error("Incorrect arguments", "detachAll")
+            this._log.error("Incorrect arguments", "detachAll")
         }
-        this.#utils.bus.detachAll(event);
+        this._core.bus.detachAll(event);
     }
 
     emit(event: string, element: Element | string, ...args: any[]): void {
         if (!are(event, element)) {
-            this.#log.warning("Not enough data to emit event", "emit")
+            this._log.warning("Not enough data to emit event", "emit")
             return;
         }
         let cuid = null
@@ -145,18 +145,18 @@ export class CuiInstance {
             cuid = (<CuiElement>(el as any)).$cuid;
         }
         if (!is(cuid)) {
-            this.#log.warning("Element is not a cUI element", "emit")
+            this._log.warning("Element is not a cUI element", "emit")
             return
         }
-        this.#utils.bus.emit(event, cuid, ...args);
+        this._core.bus.emit(event, cuid, ...args);
     }
 
     getPlugin(name: string): ICuiPlugin | undefined {
-        return this.#plugins.get(name);
+        return this._plugins.get(name);
     }
 
     api(): ICuiApiHandler {
-        return this.#api;
+        return this._api;
     }
 
 
@@ -167,17 +167,17 @@ export class CuiInstance {
      * @param data 
      */
     async createCuiElement<T extends object>(element: HTMLElement, arg: string, data: T): Promise<boolean> {
-        if (!is(arg) || !this.#mutatedAttributes.includes(arg)) {
-            this.#log.error("Element cannot be created: Unknown attribute")
+        if (!is(arg) || !this._mutatedAttributes.includes(arg)) {
+            this._log.error("Element cannot be created: Unknown attribute")
             return false;
         }
-        let component = this.#components.find(component => component.attribute === arg);
+        let component = this._components.find(component => component.attribute === arg);
 
         if (!component)
             return false;
 
         if (addCuiArgument(element, arg, data)) {
-            return createCuiElement(element, [component], this.#utils);
+            return createCuiElement(element, [component], this._core);
         }
 
         return false;

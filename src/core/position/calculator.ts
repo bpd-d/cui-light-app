@@ -5,51 +5,51 @@ import { CuiBasePositionEvaluator } from "./evaluator";
 import { ElementBox, ICuiPositionCalculator, ICuiPositionEvaluator } from "./interfaces";
 
 export class CuiBasePositionCalculator implements ICuiPositionCalculator {
-    #static: string;
-    #preferred: string;
-    #evaluator: ICuiPositionEvaluator;
-    #log: ICuiDevelopmentTool;
+    private _static: string;
+    private _preferred: string;
+    private _evaluator: ICuiPositionEvaluator;
+    private _log: ICuiDevelopmentTool;
     constructor(evaluator?: ICuiPositionEvaluator) {
-        this.#preferred = "top-center";
-        this.#static = "";
-        this.#evaluator = evaluator ?? new CuiBasePositionEvaluator();
-        this.#log = CuiDevtoolFactory.get("CuiBasePositionCalculator");
+        this._preferred = "top-center";
+        this._static = "";
+        this._evaluator = evaluator ?? new CuiBasePositionEvaluator();
+        this._log = CuiDevtoolFactory.get("CuiBasePositionCalculator");
     }
 
     setMargin(value: number): void {
-        this.#evaluator.setMargin(value);
+        this._evaluator.setMargin(value);
     }
 
     setPreferred(position: string): void {
-        this.#preferred = position
+        this._preferred = position
     }
 
     setStatic(position: string): void {
-        this.#static = position;
+        this._static = position;
     }
 
     //targetWidth: number, targetHeight: number
     calculate(elementBox: ElementBox, targetBox: ElementBox): [number, number, string] {
-        this.#evaluator.setElementBox(elementBox)
-        this.#evaluator.setTarget(targetBox);
+        this._evaluator.setElementBox(elementBox)
+        this._evaluator.setTarget(targetBox);
 
-        if (is(this.#static)) {
-            this.#log.debug("Evaluating static position")
-            const [vertical, horizontal] = this.parse(this.#static);
-            return [this.#evaluator.getHorizontalPosition(horizontal), this.#evaluator.getVerticalPosition(vertical), this.#static];
+        if (is(this._static)) {
+            this._log.debug("Evaluating static position")
+            const [vertical, horizontal] = this.parse(this._static);
+            return [this._evaluator.getHorizontalPosition(horizontal), this._evaluator.getVerticalPosition(vertical), this._static];
         }
 
         let [vertical, horizontal]: string[] = ["", ""];
-        if (is(this.#preferred)) {
-            this.#log.debug("Evaluating auto position");
-            [vertical, horizontal] = this.parse(this.#preferred);
+        if (is(this._preferred)) {
+            this._log.debug("Evaluating auto position");
+            [vertical, horizontal] = this.parse(this._preferred);
         }
         vertical = vertical ?? "top";
         horizontal = horizontal ?? "center";
-        this.#log.debug("Calculating position: " + vertical + "-" + horizontal)
-        const [outVNum, outVPos] = this.#evaluator.getAutoVerticalPosition(vertical);
-        const [outHNum, outHPos] = this.#evaluator.getAutoHorizontalPosition(horizontal);
-        this.#log.debug("Calculated position: " + outVPos + "-" + outHPos)
+        this._log.debug("Calculating position: " + vertical + "-" + horizontal)
+        const [outVNum, outVPos] = this._evaluator.getAutoVerticalPosition(vertical);
+        const [outHNum, outHPos] = this._evaluator.getAutoHorizontalPosition(horizontal);
+        this._log.debug("Calculated position: " + outVPos + "-" + outHPos)
         return [outHNum, outVNum, outVPos + "-" + outHPos];
     }
 

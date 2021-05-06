@@ -1,6 +1,10 @@
 import { IUIInteractionProvider } from "../../core/models/interfaces";
 export declare class CollectionManagerHelper {
-    #private;
+    private _elements;
+    private _log;
+    private _isLocked;
+    private _toggleClass;
+    private _interactions;
     constructor(interactions: IUIInteractionProvider);
     setElements(elements: Element[]): void;
     setToggle(className: string): void;

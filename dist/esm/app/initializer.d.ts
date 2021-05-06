@@ -13,7 +13,7 @@ export interface CuiInitResult {
     message?: string;
 }
 export declare class CuiInitializer {
-    #private;
+    private _window;
     constructor();
     init(setup: CuiInitData): Promise<CuiInitResult>;
 }

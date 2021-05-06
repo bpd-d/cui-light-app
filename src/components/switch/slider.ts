@@ -1,13 +1,26 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable, ICuiSwitchable } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
-import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
+import { ICuiComponent, ICuiParsable, ICuiSwitchable } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { ICuiTask, CuiTaskRunner } from "../../core/utils/task";
-import { ICuiMoveData } from "../../core/listeners/move";
-import { CuiSwipeAnimationEngine } from "../../core/animation/engine";
+import { CuiTimeAnimationEngine, CuiSwipeAnimationEngine } from "../../core/animation/engine";
 import { AnimationDefinition, SWIPE_ANIMATIONS_DEFINITIONS } from "../../core/animation/definitions";
-import { calculateNextIndex, is, getChildrenHeight, isInRange, joinWithScopeSelector } from "../../core/utils/functions";
+import { calculateNextIndex, is, getChildrenHeight, isInRange, joinWithScopeSelector, getRangeValueOrDefault, all } from "../../core/utils/functions";
 import { EVENTS, CLASSES } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { getEventBusFacade, CuiStyleHelper, getCuiHandlerInteractions, ICuiEventBusFacade, ICuiInteractionsFacade, ICuiStyleHelper } from "../../core/handlers/extensions/facades";
+import { ICuiSlideEngine } from "../../core/animation/interfaces";
+import { getEaseTimingFunction } from "../..//core/animation/calculators";
+import { eventExtension } from "../extensions/event/event";
+import { getDefaultSwitchKeyCombo } from "../extensions/helpers/helpers";
+import { ICuiMoveExtensionPerformer } from "../extensions/move/performer";
+import { CuiKeysHandlerExtension } from "../extensions/keys/keys";
+import { CuiSwitchExtension } from "../extensions/switch/switch";
+import { getCuiKeyActionPerformer, ICuiKeyActionPerformer } from "../extensions/keys/performer";
+import { CuiComponentBaseHook } from "../base";
+import { ICuiSliderProgress, sliderPerformer } from "../extensions/performers";
+import { getCuiMutationPerformer, ICuiMutationPerformer } from "../extensions/mutations/performer";
+import { CuiComponentMutationExtension } from "../extensions/mutations/mutations";
+
 
 /**
  * 
@@ -29,11 +42,14 @@ export class CuiSliderArgs extends CuiAutoParseArgs implements ICuiParsable {
     height: 'auto' | string;
     animation: string;
     loop: boolean;
+    swipeRatio: number;
+    keyChange: boolean;
 
     constructor(prefix: string, timeout?: number) {
         super({
             props: {
-                "targets": { corrector: joinWithScopeSelector }
+                "targets": { corrector: joinWithScopeSelector },
+                'swipeRatio': { corrector: (value) => getRangeValueOrDefault(value, 0.1, 0.9, 0.4) }
             }
         });
 
@@ -44,178 +60,184 @@ export class CuiSliderArgs extends CuiAutoParseArgs implements ICuiParsable {
         this.animation = "slide";
         this.loop = false;
         this.timeout = timeout ?? 300;
-    }
-
-
-}
-
-export class CuiSliderComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string) {
-        this.attribute = `${prefix ?? 'cui'}-slider`;
-    }
-
-    getStyle(): string | null {
-        return null;
-    }
-
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler {
-        return new CuiSliderHandler(element, utils, this.attribute);
+        this.swipeRatio = 0.3;
+        this.keyChange = false;
     }
 }
 
-export class CuiSliderHandler extends CuiMutableHandler<CuiSliderArgs> implements ICuiSwitchable {
-    #targets: Element[];
-    #currentIdx: number;
-    #links: Element[];
-    #task: ICuiTask;
-    #switchEventId: string | null;
-    //  #moveListener: CuiMoveEventListener;
-    #isTracking: boolean;
-    #startX: number;
-    #swipeRatio: number;
-    #nextIdx: number;
-    #nextElement: HTMLElement | null;
-    #ratioThreshold: number;
-    #currSlider: CuiSwipeAnimationEngine;
-    #nextSlider: CuiSwipeAnimationEngine;
-    #animationDef: AnimationDefinition;
-    #targetsCount: number;
-    #moveEventId: string | null;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
+export function CuiSliderComponent(prefix?: string): ICuiComponent {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "slider",
+        create: (element: HTMLElement, utils: CuiCore, prefix: string, attribute: string) => {
+            return new CuiSliderHandler(element, utils, attribute)
+        }
+    })
+}
+
+export class CuiSliderHandler extends CuiHandlerBase<CuiSliderArgs> implements ICuiSwitchable {
+
+    private _targets: Element[];
+    private _currentIdx: number;
+    private _links: Element[];
+    private _task: ICuiTask;
+
+    private _current: HTMLElement | undefined;
+    private _nextIdx: number;
+    private _nextElement: HTMLElement | null;
+    private _currSlider: ICuiSlideEngine;
+    private _nextSlider: ICuiSlideEngine;
+    private _animationDef: AnimationDefinition;
+    private _targetsCount: number;
+
+    private _keysPerformer: ICuiKeyActionPerformer;
+    private _movePerformer: ICuiMoveExtensionPerformer;
+    private _busFacade: ICuiEventBusFacade;
+    private _interactions: ICuiInteractionsFacade;
+    private _styles: ICuiStyleHelper;
+    private _mutationPerformer: ICuiMutationPerformer;
+
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string) {
         super("CuiSliderHandler", element, attribute, new CuiSliderArgs(utils.setup.prefix, utils.setup.animationTime), utils);
-        this.#targets = [];
-        this.#currentIdx = -1;
-        this.#nextIdx = -1;
-        this.#links = [];
-        this.#switchEventId = null;
-        this.#moveEventId = null;
-        this.#isTracking = false;
-        this.#startX = -1;
-        this.#swipeRatio = 0;
-        this.#nextElement = null;
-        this.#ratioThreshold = 0.4;
-        this.#currSlider = new CuiSwipeAnimationEngine();
-        this.#nextSlider = new CuiSwipeAnimationEngine();
-        this.#currSlider.setOnFinish(this.onAnimationFinish.bind(this));
-        this.#targetsCount = 0;
-        this.#task = new CuiTaskRunner(this.args.autoTimeout, true, this.switch.bind(this, 'next'));
-        this.#animationDef = SWIPE_ANIMATIONS_DEFINITIONS[this.args.animation];
+        this._targets = [];
+        this._currentIdx = -1;
+        this._nextIdx = -1;
+        this._links = [];
+        this._current = undefined;
+        this._nextElement = null;
+        this._currSlider = new CuiSwipeAnimationEngine(new CuiTimeAnimationEngine(getEaseTimingFunction()));
+        this._nextSlider = new CuiSwipeAnimationEngine(new CuiTimeAnimationEngine(getEaseTimingFunction()));
+        this._targetsCount = 0;
+        this._task = new CuiTaskRunner(this.args.autoTimeout, true, this.switch.bind(this, 'next'));
+        this._animationDef = SWIPE_ANIMATIONS_DEFINITIONS[this.args.animation];
+        this._keysPerformer = getCuiKeyActionPerformer(this.switch.bind(this));
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, this.element);
+        this._interactions = getCuiHandlerInteractions(utils.interactions);
+        this._task = new CuiTaskRunner(this.args.autoTimeout, true, this.switch.bind(this, 'next'));
+        this._styles = new CuiStyleHelper();
+        this._mutationPerformer = getCuiMutationPerformer(this.onMutation.bind(this));
+        this._movePerformer = sliderPerformer(this.asyncClasses, {
+            element: element,
+            prevent: true,
+            start: this.onDown.bind(this),
+            progress: this.onMove.bind(this),
+            end: this.onUp.bind(this),
+            adjustRatio: this.adjustMoveRatio.bind(this)
+        })
+        this.extend(new CuiSwitchExtension(this._busFacade, this.switch.bind(this)));
+        this.extend(new CuiKeysHandlerExtension(this.element, this._busFacade, this._keysPerformer));
+        this.extend(eventExtension(this._busFacade, {
+            type: "global-move",
+            eventName: EVENTS.GLOBAL_MOVE,
+            performer: this._movePerformer
+        }))
+        this.extend(new CuiComponentMutationExtension(
+            element,
+            this._mutationPerformer
+        ))
     }
 
-    onInit(): void {
-        this.#switchEventId = this.onEvent(EVENTS.SWITCH, this.onPushSwitch.bind(this))
-        this.#moveEventId = this.onEvent(EVENTS.GLOBAL_MOVE, this.onMove.bind(this))
+    async onHandle(): Promise<boolean> {
         this.getTargets();
         this.getLinks();
         this.getActiveIndex();
-        this.setLinkActive(-1, this.#currentIdx);
+        this.setLinkActive(-1, this._currentIdx);
 
-        this.mutate(() => {
-            this.helper.setStyle(this.element, 'height', this.getElementHeight(this.#targets[this.#currentIdx]))
-        })
-        this.#task = new CuiTaskRunner(this.args.autoTimeout, true, this.switch.bind(this, 'next'));
-        this.#animationDef = SWIPE_ANIMATIONS_DEFINITIONS[this.args.animation];
+        this.setElementHeight()
+        this.handleUpdate();
+        return true;
+    }
+    async onRefresh(): Promise<boolean> {
+        this.setElementHeight();
+        this.handleUpdate();
+        return true;
+    }
+    async onRemove(): Promise<boolean> {
+        this._task.stop();
+        this._busFacade.detachEmittedEvents();
+        return true;
+    }
+
+    onMutation(record: MutationRecord[]): void {
+        this.getTargets();
+        this.getLinks();
+    }
+
+    private handleUpdate() {
+        this._animationDef = SWIPE_ANIMATIONS_DEFINITIONS[this.args.animation];
+        this._mutationPerformer.setSelector(this.args.targets)
+        this.setKeyCombo(this.args.keyChange);
         this.startTask();
     }
 
-    onUpdate(): void {
-        this.mutate(() => {
-            this.helper.setStyle(this.element, 'height', this.getElementHeight(this.#targets[this.#currentIdx]))
+    private setElementHeight() {
+        this._interactions.mutate(() => {
+            this._styles.setStyle('height', this.getElementHeight(this._targets[this._currentIdx]), this.element);
         })
-        this.#animationDef = SWIPE_ANIMATIONS_DEFINITIONS[this.args.animation];
-
-        this.startTask();
     }
 
-    onDestroy(): void {
-        this.#task.stop();
-        this.detachEvent(EVENTS.SWITCH, this.#switchEventId)
-        this.detachEvent(EVENTS.GLOBAL_MOVE, this.#moveEventId)
+    private onDown() {
+        if (!this.lock()) {
+            return false;
+        }
+
+        this._current = this._targets[this._currentIdx] as HTMLElement;
+        this._currSlider.setElement(this._current);
+
+        return true;
     }
 
-    onMutation(record: CuiChildMutation): void {
-
-    }
-    /**
-     * Move listener callback
-     * @param data move listener data
-     */
-    onMove(data: ICuiMoveData) {
-        if (this.isLocked || !this.#animationDef) {
+    private onMove(data: ICuiSliderProgress) {
+        if (!this._current) {
             return;
         }
-        let current = this.#targets[this.#currentIdx] as HTMLElement;
-        switch (data.type) {
-            case "down":
-                if (this.#isTracking || !current.contains((data.target as Node))) {
-                    return;
-                }
-                this.#isTracking = true;
-                this.#startX = data.x;
-                this.#currSlider.setElement(current);
-                this.helper.setClassesAs(document.body, CLASSES.swipingOn);
-                if (data.event.cancelable)
-                    data.event.preventDefault();
-                break;
-            case "up":
-                if (!this.#isTracking) {
-                    break;
-                }
-                // Lock component until animation is finished
-                this.isLocked = true;
-                let absRatio = Math.abs(this.#swipeRatio);
-                let timeout = absRatio * this.args.timeout;
-                let back = absRatio <= this.#ratioThreshold;
-                this.#currSlider.finish(absRatio, timeout, back);
-                this.#nextSlider.finish(absRatio, timeout, back);
-                this.helper.removeClassesAs(document.body, CLASSES.swipingOn);
-                this.#isTracking = false;
-                break;
-            case "move":
-                if (!this.#isTracking) {
-                    break;
-                }
-                let newRatio = (data.x - this.#startX) / current.offsetWidth;
-                if (Math.abs(newRatio - this.#swipeRatio) < 0.02) {
-                    break;
-                }
-                let nextIdx = calculateNextIndex(this.#swipeRatio > 0 ? "next" : "prev", this.#currentIdx, this.#targetsCount);
-                this.#swipeRatio = this.adjustMoveRatio(newRatio);
+        const direction = data.ratio > 0 ? "right" : "left";
+        const absRatio = Math.abs(data.ratio);
+        let nextIdx = calculateNextIndex(direction === 'left' ? "next" : "prev", this._currentIdx, this._targetsCount);
+        if (nextIdx !== this._nextIdx) {
+            this._nextElement && this.classes.removeClass(CLASSES.animProgress, this._nextElement);
+            this._nextElement = this._targets[nextIdx] as HTMLElement;
+            this._nextIdx = nextIdx;
 
-                if (nextIdx !== this.#nextIdx) {
-                    this.#nextElement && this.helper.removeClass(CLASSES.animProgress, this.#nextElement);
-                    this.#nextElement = this.#targets[nextIdx] as HTMLElement;
-                    this.#nextIdx = nextIdx;
-
-                    this.#nextSlider.setElement(this.#nextElement)
-                    this.#nextSlider.setProps(this.#swipeRatio > 0 ? this.#animationDef.previous.right : this.#animationDef.previous.left);
-                    this.#currSlider.setProps(this.#swipeRatio > 0 ? this.#animationDef.current.right : this.#animationDef.current.left);
-                    this.mutate(() => {
-                        this.#nextElement && this.helper.setClass(CLASSES.animProgress, this.#nextElement);
-                    })
-                }
-                this.mutate(() => {
-                    this.#currSlider.update(Math.abs(this.#swipeRatio));
-                    this.#nextSlider.update(Math.abs(this.#swipeRatio));
-                })
-                if (data.event.cancelable)
-                    data.event.preventDefault();
-                break;
-            default:
-                break;
+            this._nextSlider.setElement(this._nextElement)
+            this._nextSlider.setProps(this._animationDef.previous[direction]);
+            this._currSlider.setProps(this._animationDef.current[direction]);
+            this._interactions.mutate(() => {
+                this._nextElement && this.classes.setClass(CLASSES.animProgress, this._nextElement);
+            })
         }
+        this._interactions.mutate(() => {
+            this._currSlider.move(Math.abs(absRatio));
+            this._nextSlider.move(Math.abs(absRatio));
+        })
+    }
 
+    private onUp(data: ICuiSliderProgress) {
+        let absRatio = Math.abs(data.ratio);
+        const minVelo = 1 / this.args.timeout;
+        const v = data.velocity > minVelo ? data.velocity : minVelo;
+        let back = absRatio <= this.args.swipeRatio;
+        //  const timeout = absRatio * this.args.timeout;
+        Promise.all([
+            this._currSlider.finish({ progress: absRatio, acceleration: data.acceleration, velocity: v, timeout: this.args.timeout, revert: back }),
+            this._nextSlider.finish({ progress: absRatio, acceleration: data.acceleration, velocity: v, timeout: this.args.timeout, revert: back })
+        ]).then((status) => {
+            if (status)
+                this.onAnimationFinish(this._current, back, false);
+        }).catch((e) => {
+            this.logError("An error", "onUp", e)
+            this.onAnimationFinish(this._current, back, true);
+        })
     }
 
     adjustMoveRatio(ratio: number): number {
         if (this.args.loop) {
             return ratio;
         }
-        if (this.#currentIdx === this.#targetsCount - 1 && ratio > 0) {
+        if (this._currentIdx === 0 && ratio > 0) {
             return 0;
         }
-        if (this.#currentIdx === 0 && ratio < 0) {
+        if (this._currentIdx === this._targetsCount - 1 && ratio < 0) {
             return 0;
         }
         return ratio;
@@ -226,8 +248,7 @@ export class CuiSliderHandler extends CuiMutableHandler<CuiSliderArgs> implement
      * @param index - index to switch to
      */
     async switch(index: any): Promise<boolean> {
-        if (this.isLocked) {
-            console.log("Locked")
+        if (!this.lock()) {
             return false;
         }
         this.onPushSwitch(index);
@@ -241,78 +262,74 @@ export class CuiSliderHandler extends CuiMutableHandler<CuiSliderArgs> implement
      * @param errorOccured - tells whether animation was finished with error
      */
     onAnimationFinish(element: Element | undefined, reverted: boolean, errorOccured: boolean) {
-        this.isLocked = false;
-        // If not go back or from push then switch, else was go back
-        let next = this.#targets[this.#nextIdx];
-        let current = this.#targets[this.#currentIdx];
-        if (!reverted) {
-            if (this.#nextIdx > -1) {
-                this.mutate(() => {
-                    this.helper.removeClass(CLASSES.animProgress, next);
-                    this.helper.setClass(this.activeClassName, next);
-                    this.helper.removeClass(this.activeClassName, current);
-                    this.helper.removeAttribute("style", current);
-                    this.helper.removeAttribute("style", next);
-                    this.setLinkActive(this.#currentIdx, this.#nextIdx);
-                    this.emitEvent(EVENTS.SWITCHED, {
-                        timestamp: Date.now(),
-                        index: this.#nextIdx
-                    })
-                    this.#currentIdx = this.#nextIdx;
-                    this.#nextIdx = -1;
-                    this.#nextElement = null;
-                    this.#startX = -1;
-                    this.#swipeRatio = 0;
-                })
-            }
-        } else {
-            if (is(this.#nextElement)) {
-                //@ts-ignore
-                this.helper.removeClass(CLASSES.animProgress, this.#nextElement);
-                //@ts-ignore
-                this.helper.removeAttribute("style", this.#nextElement);
-            }
 
-            this.helper.removeAttribute("style", current);
-            this.#nextIdx = -1;
-            this.#nextElement = null;
-            this.#startX = -1;
-            this.#swipeRatio = 0;
-        }
+        // If not go back or from push then switch, else was go back
+        let next = this._targets[this._nextIdx];
+        let current = this._targets[this._currentIdx];
+
+        this._interactions.mutate(() => {
+            this.classes.removeClass(CLASSES.animProgress, next);
+            this._styles.clean(current as HTMLElement);
+            this._styles.clean(next as HTMLElement);
+            if (!reverted) {
+                this.classes.setClass(this.activeClassName, next);
+                this.classes.removeClass(this.activeClassName, current);
+                this.setLinkActive(this._currentIdx, this._nextIdx);
+                this._busFacade.emit(EVENTS.SWITCHED, {
+                    timestamp: Date.now(),
+                    index: this._nextIdx
+                })
+                this._currentIdx = this._nextIdx;
+            }
+            this.clearSlideData();
+            this.unlock();
+        })
         this.startTask();
     }
 
     onPushSwitch(index: string) {
         if (!is(index) ||
-            this.isLocked ||
-            !this.#animationDef ||
-            (!this.args.loop && this.#currentIdx === 0 && index === 'prev') ||
-            (!this.args.loop && this.#currentIdx === this.#targetsCount - 1 && index === 'next')) {
+            !this._animationDef ||
+            (!this.args.loop && this._currentIdx === 0 && index === 'prev') ||
+            (!this.args.loop && this._currentIdx === this._targetsCount - 1 && index === 'next')) {
+            this.unlock();
             return;
         }
-        this.isLocked = true;
-        let nextIdx = calculateNextIndex(index, this.#currentIdx, this.#targetsCount);
-        if (nextIdx == this.#currentIdx || nextIdx < 0 || nextIdx >= this.#targets.length) {
-            this._log.warning(`Index ${index} is not within the suitable range`);
+        let nextIdx = calculateNextIndex(index, this._currentIdx, this._targetsCount);
+        if (nextIdx == this._currentIdx || nextIdx < 0 || nextIdx >= this._targets.length) {
+            this.log.warning(`Index ${index} is not within the suitable range`);
             return false;
         }
-        this.#nextIdx = nextIdx;
-        let current = this.#targets[this.#currentIdx];
-        let next = this.#targets[this.#nextIdx];
-        this.#currSlider.setElement(current);
-        this.#nextSlider.setElement(next);
-        this.#currSlider.setProps(index === 'prev' ? this.#animationDef.current.left : this.#animationDef.current.right);
-        this.#nextSlider.setProps(index === 'prev' ? this.#animationDef.previous.left : this.#animationDef.previous.right);
-        this.mutate(() => {
-            this.#currSlider.finish(0, this.args.timeout, false);
-            this.#nextSlider.finish(0, this.args.timeout, false);
-            this.helper.setClass(CLASSES.animProgress, next);
+        this._nextIdx = nextIdx;
+        let current = this._targets[this._currentIdx];
+        let next = this._targets[this._nextIdx];
+        this._currSlider.setElement(current);
+        this._nextSlider.setElement(next);
+        this._currSlider.setProps(index === 'prev' ? this._animationDef.current.left : this._animationDef.current.right);
+        this._nextSlider.setProps(index === 'prev' ? this._animationDef.previous.left : this._animationDef.previous.right);
+        this._interactions.mutate(() => {
+            this.classes.setClass(CLASSES.animProgress, next);
         })
-
+        Promise.all([
+            this._currSlider.finish({ progress: 0, acceleration: 1, velocity: 0, timeout: this.args.timeout, revert: false }),
+            this._nextSlider.finish({ progress: 0, acceleration: 1, velocity: 0, timeout: this.args.timeout, revert: false })
+        ]).then((statuses) => {
+            let status = all(statuses, (status: boolean) => status === true);
+            if (status)
+                this.onAnimationFinish(current, false, false)
+        }).catch((e) => {
+            this.logError("An error", "onUp", e)
+            this.onAnimationFinish(current, false, true)
+        });
     }
 
     getActiveIndex(): void {
-        this.#currentIdx = is(this.#targets) ? this.#targets.findIndex(target => this.helper.hasClass(this.activeClassName, target)) : -1;
+        this._currentIdx = is(this._targets) ? this._targets.findIndex(target => this.classes.hasClass(this.activeClassName, target)) : -1;
+    }
+
+    clearSlideData() {
+        this._nextIdx = -1;
+        this._nextElement = null;
     }
 
     getElementHeight(current: Element): string {
@@ -323,20 +340,33 @@ export class CuiSliderHandler extends CuiMutableHandler<CuiSliderArgs> implement
         }
     }
 
+    setKeyCombo(flag: boolean) {
+        if (!flag) {
+            this._keysPerformer.setKeyCombos([]);
+            return
+        }
+        this._keysPerformer.setKeyCombos([{
+            key: 'next',
+            value: getDefaultSwitchKeyCombo("ArrowRight")
+        }, {
+            key: "prev",
+            value: getDefaultSwitchKeyCombo("ArrowLeft")
+        }]);
+    }
+
     /**
      * Queries targets
      */
     getTargets() {
-        let t = this.element.querySelectorAll(this.args.targets);
-        this.#targets = t.length > 0 ? [...t] : [];
-        this.#targetsCount = this.#targets.length;
+        this._targets = [...this.element.querySelectorAll(this.args.targets)];
+        this._targetsCount = this._targets.length;
     }
 
     /**
      * Get linked switcher elements
      */
     getLinks() {
-        this.#links = is(this.args.links) ? [...document.querySelectorAll(this.args.links)] : []
+        this._links = is(this.args.links) ? [...document.querySelectorAll(this.args.links)] : []
     }
 
     /**
@@ -345,15 +375,15 @@ export class CuiSliderHandler extends CuiMutableHandler<CuiSliderArgs> implement
      * @param next - next index (to set action on)
      */
     setLinkActive(current: number, next: number) {
-        if (!is(this.#links)) {
+        if (!is(this._links)) {
             return
         }
-        this.mutate(() => {
-            if (isInRange(current, 0, this.#links.length - 1)) {
-                this.helper.removeClass(this.activeClassName, this.#links[current])
+        this._interactions.mutate(() => {
+            if (isInRange(current, 0, this._links.length - 1)) {
+                this.classes.removeClass(this.activeClassName, this._links[current])
             }
-            if (isInRange(next, 0, this.#links.length - 1)) {
-                this.helper.setClass(this.activeClassName, this.#links[next])
+            if (isInRange(next, 0, this._links.length - 1)) {
+                this.classes.setClass(this.activeClassName, this._links[next])
             }
         })
 
@@ -363,9 +393,9 @@ export class CuiSliderHandler extends CuiMutableHandler<CuiSliderArgs> implement
      * Runs task if arguments setup allows for it - auto flag must be set to true 
      */
     startTask() {
-        this.#task.stop();
+        this._task.stop();
         if (this.args.autoTimeout) {
-            this.#task.start();
+            this._task.start();
         }
     }
 }

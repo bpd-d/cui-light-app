@@ -1,8 +1,13 @@
 import { CuiCachable } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { CuiCore } from "../../core/models/core";
 export declare class ElementManager implements CuiCachable {
-    #private;
-    constructor(elements: Element[], utils: CuiUtils);
+    private _elements;
+    private _isLocked;
+    private _logger;
+    private _cDt;
+    private _core;
+    private _actionsHelper;
+    constructor(elements: Element[], utils: CuiCore);
     toggleClass(className: string): Promise<boolean>;
     toggleClassAs(className: string): Promise<boolean>;
     setClass(className: string): Promise<boolean>;

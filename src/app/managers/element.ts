@@ -1,26 +1,25 @@
 import { is, are } from "../../core/utils/functions";
 import { CuiCachable, CuiElement } from "../../core/models/interfaces";
-import { CLASSES } from "../../core/utils/statics";
-import { CuiUtils } from "../../core/models/utils";
+import { CuiCore } from "../../core/models/core";
 import { CuiActionsHelper } from "../../core/helpers/helpers";
-import { CuiActionsFatory, CuiClassAction } from "../../core/utils/actions";
+import { CuiActionsFactory, CuiClassAction } from "../../core/utils/actions";
 import { ICuiDevelopmentTool } from "../../core/development/interfaces";
 import { CuiDevtoolFactory } from "../../core/development/factory";
 
 export class ElementManager implements CuiCachable {
-    #elements: Element[];
-    #isLocked: boolean;
-    #logger: ICuiDevelopmentTool;
-    #cDt: number;
-    #utils: CuiUtils;
-    #actionsHelper: CuiActionsHelper;
-    constructor(elements: Element[], utils: CuiUtils) {
-        this.#elements = elements;
-        this.#isLocked = false;
-        this.#logger = CuiDevtoolFactory.get("ElementManager");
-        this.#utils = utils;
-        this.#cDt = Date.now();
-        this.#actionsHelper = new CuiActionsHelper(utils.interactions);
+    private _elements: Element[];
+    private _isLocked: boolean;
+    private _logger: ICuiDevelopmentTool;
+    private _cDt: number;
+    private _core: CuiCore;
+    private _actionsHelper: CuiActionsHelper;
+    constructor(elements: Element[], utils: CuiCore) {
+        this._elements = elements;
+        this._isLocked = false;
+        this._logger = CuiDevtoolFactory.get("ElementManager");
+        this._core = utils;
+        this._cDt = Date.now();
+        this._actionsHelper = new CuiActionsHelper(utils.interactions);
     }
 
     async toggleClass(className: string): Promise<boolean> {
@@ -42,11 +41,11 @@ export class ElementManager implements CuiCachable {
         }
         return this.call((element) => {
             let classes = element.classList;
-            this.#utils.interactions.fetch(() => {
+            this._core.interactions.fetch(() => {
                 if (!classes.contains(className)) {
-                    this.#utils.interactions.mutate(classes.add, classes, className);
+                    this._core.interactions.mutate(classes.add, classes, className);
                 } else {
-                    this.#utils.interactions.mutate(classes.remove, classes, className);
+                    this._core.interactions.mutate(classes.remove, classes, className);
                 }
             }, this)
 
@@ -71,9 +70,9 @@ export class ElementManager implements CuiCachable {
 
         return this.call((element) => {
             let classes = element.classList;
-            this.#utils.interactions.fetch(() => {
+            this._core.interactions.fetch(() => {
                 if (!classes.contains(className)) {
-                    this.#utils.interactions.mutate(classes.add, classes, className);
+                    this._core.interactions.mutate(classes.add, classes, className);
                 }
             }, this)
 
@@ -97,9 +96,9 @@ export class ElementManager implements CuiCachable {
         }
         return this.call((element) => {
             let classes = element.classList;
-            this.#utils.interactions.fetch(() => {
+            this._core.interactions.fetch(() => {
                 if (classes.contains(className)) {
-                    this.#utils.interactions.mutate(classes.remove, classes, className);
+                    this._core.interactions.mutate(classes.remove, classes, className);
                 }
             }, this)
         }, 'removeClass');
@@ -109,7 +108,7 @@ export class ElementManager implements CuiCachable {
         if (!is(attributeName)) {
             return [];
         }
-        return this.#elements.reduce<string[]>((val: string[], current: Element) => {
+        return this._elements.reduce<string[]>((val: string[], current: Element) => {
             let attr = current.getAttribute(attributeName);
             if (attr != null) {
                 val.push(attr)
@@ -132,7 +131,7 @@ export class ElementManager implements CuiCachable {
             return false;
         }
         return this.call((element) => {
-            this.#utils.interactions.mutate(element.setAttribute, element, attributeName, attributeValue ?? "")
+            this._core.interactions.mutate(element.setAttribute, element, attributeName, attributeValue ?? "")
         }, 'setAttributeAs');
     }
 
@@ -150,7 +149,7 @@ export class ElementManager implements CuiCachable {
             return false;
         }
         return this.call((element) => {
-            this.#utils.interactions.mutate(element.removeAttribute, element, attributeName);
+            this._core.interactions.mutate(element.removeAttribute, element, attributeName);
         }, 'removeAttributeAs');
     }
 
@@ -172,11 +171,11 @@ export class ElementManager implements CuiCachable {
             return false;
         }
         return this.call((element) => {
-            this.#utils.interactions.fetch(() => {
+            this._core.interactions.fetch(() => {
                 if (element.hasAttribute(attributeName)) {
-                    this.#utils.interactions.mutate(element.removeAttribute, element, attributeName);
+                    this._core.interactions.mutate(element.removeAttribute, element, attributeName);
                 } else {
-                    this.#utils.interactions.mutate(element.setAttribute, element, attributeName, attributeValue ?? "")
+                    this._core.interactions.mutate(element.setAttribute, element, attributeName, attributeValue ?? "")
                 }
             }, this)
 
@@ -203,11 +202,11 @@ export class ElementManager implements CuiCachable {
     }
 
     async call(callback: (element: Element, index: Number) => void, functionName?: string): Promise<boolean> {
-        if (this.#isLocked) {
-            this.#logger.error("Element is locked", functionName)
+        if (this._isLocked) {
+            this._logger.error("Element is locked", functionName)
         }
         this.lock();
-        this.#elements.forEach((element, index) => {
+        this._elements.forEach((element, index) => {
             callback(element, index)
         })
         this.unlock();
@@ -218,7 +217,7 @@ export class ElementManager implements CuiCachable {
         if (!is(actionStr)) {
             return false
         }
-        let act = CuiActionsFatory.get(actionStr);
+        let act = CuiActionsFactory.get(actionStr);
         return this.animate(animationClass, timeout, (element: Element) => {
             act.add(element);
         })
@@ -228,7 +227,7 @@ export class ElementManager implements CuiCachable {
         if (!is(actionStr)) {
             return false
         }
-        let act = CuiActionsFatory.get(actionStr);
+        let act = CuiActionsFactory.get(actionStr);
         return this.animate(animationClass, timeout, (element: Element) => {
             act.remove(element);
         })
@@ -243,10 +242,10 @@ export class ElementManager implements CuiCachable {
         if (!is(animationClass)) {
             return false
         }
-        const delay = timeout ?? this.#utils.setup.animationTime ?? 0;
+        const delay = timeout ?? this._core.setup.animationTime ?? 0;
         const action = new CuiClassAction(animationClass);
         return this.call((element) => {
-            return this.#actionsHelper.performAction(element, action, delay, () => {
+            return this._actionsHelper.performAction(element, action, delay, () => {
                 if (callback)
                     callback(element);
             });
@@ -255,14 +254,14 @@ export class ElementManager implements CuiCachable {
 
     emit(event: string, ...args: any[]): void {
         if (!is(event)) {
-            this.#logger.warning("Not enough data to emit event", "emit")
+            this._logger.warning("Not enough data to emit event", "emit")
             return;
         }
         this.call((element: Element) => {
             let cuid = (<CuiElement>(element as any)).$cuid;
             if (is(cuid)) {
-                this.#logger.debug(`Emitting event ${event} to ${cuid}`)
-                this.#utils.bus.emit(event, cuid, ...args);
+                this._logger.debug(`Emitting event ${event} to ${cuid}`)
+                this._core.bus.emit(event, cuid, ...args);
             }
         }, "emit")
     }
@@ -270,14 +269,14 @@ export class ElementManager implements CuiCachable {
     on(event: string, callback: any): string[] {
         let ids: string[] = []
         if (!are(event, callback)) {
-            this.#logger.error("Incorrect arguments", "on")
+            this._logger.error("Incorrect arguments", "on")
             return ids;
         }
 
         this.call((element: Element) => {
             let cuiElement = (<CuiElement>(element as any));
             if (is(cuiElement)) {
-                let disposeId = this.#utils.bus.on(event, callback, cuiElement);
+                let disposeId = this._core.bus.on(event, callback, cuiElement);
                 if (disposeId != null)
                     ids.push(disposeId);
             }
@@ -287,45 +286,45 @@ export class ElementManager implements CuiCachable {
 
     detach(event: string, id: string): void {
         if (!are(event, id)) {
-            this.#logger.error("Incorrect arguments", "detach")
+            this._logger.error("Incorrect arguments", "detach")
         }
         this.call((element: Element) => {
             let cuiElement = (<CuiElement>(element as any));
             if (is(cuiElement)) {
-                this.#utils.bus.detach(event, id, cuiElement);
+                this._core.bus.detach(event, id, cuiElement);
             }
         }, "detach")
     }
 
     read(callback: any, ...args: any[]): void {
-        this.#utils.interactions.fetch(callback, this, ...args)
+        this._core.interactions.fetch(callback, this, ...args)
     }
 
     change(callback: any, ...args: any[]): void {
-        this.#utils.interactions.mutate(callback, this, ...args)
+        this._core.interactions.mutate(callback, this, ...args)
     }
 
     elements(): Element[] {
-        return this.#elements;
+        return this._elements;
     }
 
     count() {
-        return this.#elements.length;
+        return this._elements.length;
     }
 
     lock() {
-        this.#isLocked = true;
+        this._isLocked = true;
     }
 
     unlock() {
-        this.#isLocked = false;
+        this._isLocked = false;
     }
 
     isLocked(): boolean {
-        return this.#isLocked;
+        return this._isLocked;
     }
 
     refresh(): boolean {
-        return (Date.now() - this.#cDt) < 360000;
+        return (Date.now() - this._cDt) < 360000;
     }
 }

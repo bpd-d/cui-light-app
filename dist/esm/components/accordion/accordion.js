@@ -7,25 +7,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _prefix, _items, _switchEventId, _targetSelector;
 import { CuiHandlerBase } from "../../core/handlers/base";
-import { getIntOrDefault, replacePrefix, joinWithScopeSelector, is, getChildSelectorFromScoped } from "../../core/utils/functions";
+import { replacePrefix, joinWithScopeSelector, getChildSelectorFromScoped, calculateNextIndex, queryAll } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-import { CuiClickModule } from "../modules/click/click";
+import { clickExtension } from "../extensions/click/click";
+import { getCuiHandlerInteractions, getEventBusFacade } from "../../core/handlers/extensions/facades";
+import { CuiComponentBaseHook } from "../base";
+import { callbackPerformer } from "../extensions/performers";
+import { eventExtension } from "../extensions/event/event";
 const ACCORDION_TITLE_CLS = '> * > .{prefix}-accordion-title';
 const ACCORDION_ITEMS_CLS = '> *';
 export class CuiAccordionArgs extends CuiAutoParseArgs {
@@ -45,116 +35,137 @@ export class CuiAccordionArgs extends CuiAutoParseArgs {
         this.stopPropagation = false;
     }
 }
-export class CuiAccordionComponent {
-    constructor(prefix) {
-        _prefix.set(this, void 0);
-        __classPrivateFieldSet(this, _prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${__classPrivateFieldGet(this, _prefix)}-accordion`;
-    }
-    getStyle() {
-        return null;
-    }
-    get(element, utils) {
-        return new CuiAccordionHandler(element, utils, this.attribute, __classPrivateFieldGet(this, _prefix));
-    }
+export function CuiAccordionComponent(prefix) {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "accordion",
+        create: (element, utils, prefix, attribute) => {
+            return new CuiAccordionHandler(element, utils, attribute, prefix);
+        }
+    });
 }
-_prefix = new WeakMap();
 export class CuiAccordionHandler extends CuiHandlerBase {
     constructor(element, utils, attribute, prefix) {
         super("CuiAccordionHandler", element, attribute, new CuiAccordionArgs(prefix, utils.setup.animationTime), utils);
-        _items.set(this, void 0);
-        _switchEventId.set(this, void 0);
-        _targetSelector.set(this, void 0);
-        __classPrivateFieldSet(this, _switchEventId, null);
-        __classPrivateFieldSet(this, _items, []);
-        __classPrivateFieldSet(this, _switchEventId, null);
-        __classPrivateFieldSet(this, _targetSelector, "");
-        this.addModule(new CuiClickModule(element, this.args, this.onElementClick.bind(this)));
+        //   this._items = [];
+        this._currentIndex = -1;
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, this.element);
+        this._interactions = getCuiHandlerInteractions(utils.interactions, this);
+        this.extend(clickExtension({
+            element: element,
+            performer: callbackPerformer(this.onElementClick.bind(this))
+        }));
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.SWITCH,
+            performer: callbackPerformer(this.switch.bind(this), { ignoreEmpty: true })
+        }));
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
-            __classPrivateFieldSet(this, _switchEventId, this.onEvent(EVENTS.SWITCH, this.onSwitch.bind(this)));
-            __classPrivateFieldSet(this, _targetSelector, getChildSelectorFromScoped(this.args.selector));
+            this._currentIndex = this.getOpenedIndex(this.queryItems());
             return true;
         });
     }
     onRefresh() {
         return __awaiter(this, void 0, void 0, function* () {
-            __classPrivateFieldSet(this, _targetSelector, getChildSelectorFromScoped(this.args.selector));
             return true;
         });
     }
     onRemove() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.detachEvent(EVENTS.SWITCH, __classPrivateFieldGet(this, _switchEventId));
+            this._busFacade.detachEmittedEvents();
             return true;
         });
     }
     switch(index) {
         return __awaiter(this, void 0, void 0, function* () {
-            this._log.debug("Switch to: " + index);
-            if (index < 0 || this.isLocked || !this.isInitialized) {
+            if (!this.lock()) {
                 return false;
             }
-            __classPrivateFieldSet(this, _items, this.queryItems());
-            if (__classPrivateFieldGet(this, _items).length <= index) {
+            this.log.debug("Switch to: " + index);
+            const items = this.queryItems();
+            const nextIdx = calculateNextIndex(index, this._currentIndex, items.length);
+            if (nextIdx < 0) {
                 return false;
             }
-            this.isLocked = true;
-            const current = __classPrivateFieldGet(this, _items)[index];
-            this.openCloseTarget(index, current);
-            this.emitEvent(EVENTS.SWITCHED, {
+            const current = items[nextIdx];
+            this._interactions.mutate(this.updateTargets, nextIdx, current, items);
+            this._currentIndex = nextIdx;
+            this._busFacade.emit(EVENTS.SWITCHED, {
                 index: index,
                 currentTarget: current,
                 previousTarget: null,
                 previous: -1
             });
-            this.isLocked = false;
+            this.unlock();
             return true;
         });
     }
-    openCloseTarget(index, target) {
-        if (this.helper.hasClass(this.activeClassName, target)) {
-            this.helper.removeClassesAs(target, this.activeClassName);
-        }
-        else {
-            this.mutate(() => {
-                if (this.args.single) {
-                    this.closeAllExcept(index);
-                }
-                this.helper.setClass(this.activeClassName, target);
-            });
+    /**
+     * Toggles target and closes not needed is setup allows for that
+     * @param index - current index to remain opened
+     * @param target - target to toggle
+     * @param targets - all targets
+     */
+    updateTargets(index, target, targets) {
+        if (this.toggleTarget(target) && this.args.single) {
+            this.closeAllExcept(index, targets);
         }
     }
-    onSwitch(index) {
-        this.switch(getIntOrDefault(index, -1)).then(() => {
-            this._log.debug("Switch from event to " + index);
-        });
+    /**
+     * Sets or remove active class on target
+     * @param target target to toggle
+     * @returns Whethet target was opened or not
+     */
+    toggleTarget(target) {
+        if (this.classes.hasClass(this.activeClassName, target)) {
+            this.classes.removeClass(this.activeClassName, target);
+            return false;
+        }
+        this.classes.setClass(this.activeClassName, target);
+        return true;
     }
-    closeAllExcept(current) {
-        __classPrivateFieldGet(this, _items).forEach((item, index) => {
-            if (current !== index && this.helper.hasClass(this.activeClassName, item)) {
+    /**
+     * Closes all targets except the one that should remain opened
+     * @param currentIndex index of current target - to remain opened
+     * @param targets - list of targets to operate on
+     */
+    closeAllExcept(currentIndex, targets) {
+        targets.forEach((item, index) => {
+            if (currentIndex !== index && this.classes.hasClass(this.activeClassName, item)) {
                 item.classList.remove(this.activeClassName);
             }
         });
     }
+    /**
+     * Handles element click
+     * @param ev
+     */
     onElementClick(ev) {
-        let target = ev.target;
-        if (target.matches(__classPrivateFieldGet(this, _targetSelector))) {
-            this.fetch(() => {
-                let triggers = [...this.element.querySelectorAll(this.args.selector)];
-                if (!is(triggers)) {
-                    return;
-                }
-                let foundIndex = triggers.findIndex(trigger => trigger === target);
-                if (foundIndex >= 0) {
-                    this.switch(foundIndex);
+        const target = ev.target;
+        const selector = getChildSelectorFromScoped(this.args.selector);
+        if (target.matches(selector)) {
+            this._interactions.fetch(() => {
+                const foundIdx = this.findMatchingTrigger(target);
+                if (foundIdx > -1) {
+                    this.switch(foundIdx);
                 }
             });
         }
     }
+    /**
+     * Finds match
+     * @param target
+     * @returns index of matching element or -1
+     */
+    findMatchingTrigger(target) {
+        let triggers = queryAll(this.element, this.args.selector);
+        return triggers.findIndex(trigger => trigger === target);
+    }
     queryItems() {
-        return [...this.element.querySelectorAll(this.args.items)];
+        return queryAll(this.element, this.args.items);
+    }
+    getOpenedIndex(items) {
+        return items.findIndex(item => { this.classes.hasClass(this.activeClassName, item); });
     }
 }
-_items = new WeakMap(), _switchEventId = new WeakMap(), _targetSelector = new WeakMap();

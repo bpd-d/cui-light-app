@@ -1,32 +1,15 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _keys, _values, _lock;
 import { ItemNotFoundError, ArgumentError } from "../models/errors";
 import { is } from "./functions";
 export class CuiDictionary {
     constructor(init) {
-        _keys.set(this, void 0);
-        _values.set(this, void 0);
-        _lock.set(this, void 0);
-        __classPrivateFieldSet(this, _keys, []);
-        __classPrivateFieldSet(this, _values, []);
-        __classPrivateFieldSet(this, _lock, false);
+        this._keys = [];
+        this._values = [];
+        this._lock = false;
         if (init) {
             init.forEach(x => {
                 if (!is(x.key)) {
-                    __classPrivateFieldSet(this, _keys, []);
-                    __classPrivateFieldSet(this, _values, []);
+                    this._keys = [];
+                    this._values = [];
                     throw new ArgumentError("Key is empty");
                 }
                 this.add(x.key, x.value);
@@ -38,19 +21,19 @@ export class CuiDictionary {
         this.lock(() => {
             if (this.containsKey(key))
                 throw new Error("Key already exists");
-            __classPrivateFieldGet(this, _keys).push(key);
-            __classPrivateFieldGet(this, _values).push(value);
+            this._keys.push(key);
+            this._values.push(value);
         });
     }
     remove(key) {
         this.throwOnEmptyKey(key);
         this.lock(() => {
-            let index = __classPrivateFieldGet(this, _keys).indexOf(key);
+            let index = this._keys.indexOf(key);
             if (index < 0) {
                 return;
             }
-            __classPrivateFieldGet(this, _keys).splice(index, 1);
-            __classPrivateFieldGet(this, _values).splice(index, 1);
+            this._keys.splice(index, 1);
+            this._values.splice(index, 1);
         });
     }
     get(key) {
@@ -59,7 +42,7 @@ export class CuiDictionary {
         this.lock(() => {
             let index = this.indexOf(key);
             if (index >= 0) {
-                value = __classPrivateFieldGet(this, _values)[index];
+                value = this._values[index];
             }
         });
         return value;
@@ -68,13 +51,13 @@ export class CuiDictionary {
         return is(key) && this.indexOf(key) >= 0;
     }
     keys() {
-        return [...__classPrivateFieldGet(this, _keys)];
+        return [...this._keys];
     }
     values() {
-        return [...__classPrivateFieldGet(this, _values)];
+        return [...this._values];
     }
     indexOf(key) {
-        return is(key) ? __classPrivateFieldGet(this, _keys).indexOf(key) : -1;
+        return is(key) ? this._keys.indexOf(key) : -1;
     }
     update(key, value) {
         this.throwOnEmptyKey(key);
@@ -83,31 +66,31 @@ export class CuiDictionary {
             if (index < 0) {
                 throw new ItemNotFoundError(`Item with key [${key}] not found`);
             }
-            __classPrivateFieldGet(this, _values)[index] = value;
+            this._values[index] = value;
         });
     }
     clear() {
         this.lock(() => {
-            __classPrivateFieldSet(this, _values, []);
-            __classPrivateFieldSet(this, _keys, []);
+            this._values = [];
+            this._keys = [];
         });
     }
     forEach(callback) {
         this.lock(() => {
-            let len = __classPrivateFieldGet(this, _keys).length;
+            let len = this._keys.length;
             for (let index = 0; index < len; index++) {
-                callback(__classPrivateFieldGet(this, _keys)[index], __classPrivateFieldGet(this, _values)[index]);
+                callback(this._keys[index], this._values[index]);
             }
         });
     }
     checkLock() {
-        if (__classPrivateFieldGet(this, _lock)) {
+        if (this._lock) {
             throw new Error("You cannot alter dictionary when is locked!");
         }
     }
     lock(callback) {
         this.checkLock();
-        __classPrivateFieldSet(this, _lock, true);
+        this._lock = true;
         try {
             callback();
         }
@@ -115,7 +98,7 @@ export class CuiDictionary {
             throw e;
         }
         finally {
-            __classPrivateFieldSet(this, _lock, false);
+            this._lock = false;
         }
     }
     throwOnEmptyKey(key) {
@@ -124,4 +107,3 @@ export class CuiDictionary {
         }
     }
 }
-_keys = new WeakMap(), _values = new WeakMap(), _lock = new WeakMap();

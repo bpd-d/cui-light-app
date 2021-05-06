@@ -1,6 +1,6 @@
 import { RegisterElementError } from "../models/errors";
 import { ICuiComponent, CuiHTMLElement } from "../models/interfaces";
-import { CuiUtils } from "../models/utils";
+import { CuiCore } from "../models/core";
 import { generateCUID, are, enumerateObject, parseAttribute } from "../utils/functions";
 import { CUID_ATTRIBUTE } from "../utils/statics";
 
@@ -10,8 +10,8 @@ export function getMatchingComponents(node: any, components: ICuiComponent[]): I
     })
 }
 
-export async function createCuiElement(node: any, components: ICuiComponent[], utils: CuiUtils): Promise<boolean> {
-    if (!are(node, components, utils)) {
+export async function createCuiElement(node: any, components: ICuiComponent[], core: CuiCore): Promise<boolean> {
+    if (!are(node, components, core)) {
         return false;
     }
     let element = node as CuiHTMLElement;
@@ -20,7 +20,7 @@ export async function createCuiElement(node: any, components: ICuiComponent[], u
         node.setAttribute(CUID_ATTRIBUTE, element.$cuid);
     }
     for (let component of components) {
-        await createComponent(element, component, utils, parseAttribute(element, component.attribute))
+        await createComponent(element, component, core, parseAttribute(element, component.attribute))
     }
     return true;
 }
@@ -53,7 +53,7 @@ export function addCuiArgument<T extends object>(element: HTMLElement, cuiArg: s
 
 }
 
-export async function createComponent(node: CuiHTMLElement, component: ICuiComponent, utils: CuiUtils, args?: any): Promise<boolean> {
+export async function createComponent(node: CuiHTMLElement, component: ICuiComponent, core: CuiCore, args?: any): Promise<boolean> {
     if (!node.$handlers) {
         node.$handlers = {};
     }
@@ -62,7 +62,7 @@ export async function createComponent(node: CuiHTMLElement, component: ICuiCompo
         return false;
     }
     try {
-        let handler = component.get(node, utils);
+        let handler = component.get(node, core);
         node.$handlers[component.attribute] = handler;
         await node.$handlers[component.attribute].handle(args);
     } catch (e) {

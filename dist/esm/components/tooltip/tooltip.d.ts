@@ -1,6 +1,6 @@
 import { CuiHandlerBase } from "../../core/handlers/base";
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 export declare class CuiTooltipArgs extends CuiAutoParseArgs {
     content: string;
@@ -11,16 +11,14 @@ export declare class CuiTooltipArgs extends CuiAutoParseArgs {
     timeout: number;
     constructor(prefix: string);
 }
-export declare class CuiTooltipComponent implements ICuiComponent {
-    #private;
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, sutils: CuiUtils): ICuiComponentHandler;
-}
+export declare function CuiTooltipComponent(prefix?: string): ICuiComponent;
 export declare class CuiTooltipHandler extends CuiHandlerBase<CuiTooltipArgs> {
-    #private;
-    constructor(element: HTMLElement, attribute: string, utils: CuiUtils, prefix: string);
+    private _tooltip;
+    private _positionCalculator;
+    private _tooltipDataCls;
+    private _task;
+    private _interactions;
+    constructor(element: HTMLElement, attribute: string, utils: CuiCore, prefix: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;

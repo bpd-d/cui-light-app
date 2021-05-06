@@ -1,7 +1,10 @@
 import { CuiElement } from "../models/interfaces";
 import { CuiBusCallback, CuiBusExtStatistics, ICuiEventBus, ICuiEventBusQueueSetup, ICuiEventEmitHandler } from "./interfaces";
 export declare class CuiEventBus implements ICuiEventBus {
-    #private;
+    private _events;
+    private _log;
+    private _eventHandler;
+    private _name;
     constructor(emitHandler: ICuiEventEmitHandler, name?: string);
     /**
      * Attaches event to event bus
@@ -52,7 +55,10 @@ export declare class CuiEventBus implements ICuiEventBus {
     private getCuid;
 }
 export declare class CuiEventExtBus implements ICuiEventBus {
-    #private;
+    private _events;
+    private _log;
+    private _buses;
+    private _last;
     constructor(setup: ICuiEventBusQueueSetup[]);
     /**
      * Attaches event to event bus

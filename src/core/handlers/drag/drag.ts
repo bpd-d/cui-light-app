@@ -1,93 +1,93 @@
 import { CuiMoveEventListener, ICuiMoveData } from "../../listeners/move";
 
 export class CuiDragHandler {
-    #root: Element;
-    #moveHandler: CuiMoveEventListener;
-    #onDragStart: ((data: ICuiMoveData) => boolean) | undefined;
-    #onDragOver: ((data: ICuiMoveData) => void) | undefined;
-    #onDragEnd: ((data: ICuiMoveData) => void) | undefined;
-    #timeout: number;
-    #isTracking: boolean;
-    #timeoutId: any;
+    private _root: Element;
+    private _moveHandler: CuiMoveEventListener;
+    private _onDragStart: ((data: ICuiMoveData) => boolean) | undefined;
+    private _onDragOver: ((data: ICuiMoveData) => void) | undefined;
+    private _onDragEnd: ((data: ICuiMoveData) => void) | undefined;
+    private _timeout: number;
+    private _isTracking: boolean;
+    private _timeoutId: any;
     constructor(root: HTMLElement) {
-        this.#root = root;
-        this.#moveHandler = new CuiMoveEventListener();
-        this.#timeout = 150;
-        this.#isTracking = false;
-        this.#timeoutId = undefined;
-        this.#moveHandler.setTarget(this.#root);
-        this.#moveHandler.preventDefault(false);
-        this.#moveHandler.setCallback(this.onMove.bind(this));
+        this._root = root;
+        this._moveHandler = new CuiMoveEventListener();
+        this._timeout = 150;
+        this._isTracking = false;
+        this._timeoutId = undefined;
+        this._moveHandler.setTarget(this._root);
+        this._moveHandler.preventDefault(false);
+        this._moveHandler.setCallback(this.onMove.bind(this));
 
-        this.#onDragStart = undefined;
-        this.#onDragOver = undefined;
-        this.#onDragEnd = undefined;
+        this._onDragStart = undefined;
+        this._onDragOver = undefined;
+        this._onDragEnd = undefined;
     }
 
     setLongPressTimeout(timeout: number) {
-        this.#timeout = timeout;
+        this._timeout = timeout;
     }
 
     onDragStart(callback: (data: ICuiMoveData) => boolean) {
-        this.#onDragStart = callback;
+        this._onDragStart = callback;
     }
 
     onDragOver(callback: (data: ICuiMoveData) => void) {
-        this.#onDragOver = callback;
+        this._onDragOver = callback;
     }
 
     onDragEnd(callback: (data: ICuiMoveData) => void) {
-        this.#onDragEnd = callback;
+        this._onDragEnd = callback;
     }
 
     attach() {
-        this.#moveHandler.attach();
+        this._moveHandler.attach();
     }
 
     detach() {
-        this.#moveHandler.detach();
+        this._moveHandler.detach();
     }
 
     private onMove(data: ICuiMoveData) {
         switch (data.type) {
             case "down":
-                if (this.#isTracking) {
+                if (this._isTracking) {
                     return;
                 }
 
-                this.#timeoutId = setTimeout(() => {
-                    if (this.#onDragStart && this.#onDragStart(data)) {
-                        this.#isTracking = true;
+                this._timeoutId = setTimeout(() => {
+                    if (this._onDragStart && this._onDragStart(data)) {
+                        this._isTracking = true;
                     }
-                }, this.#timeout);
+                }, this._timeout);
 
                 break;
             case "move":
                 this.cancelTimeout();
-                if (!this.#isTracking) {
+                if (!this._isTracking) {
                     return;
                 }
-                if (this.#onDragOver) {
-                    this.#onDragOver(data);
+                if (this._onDragOver) {
+                    this._onDragOver(data);
                 }
                 break;
             case "up":
                 this.cancelTimeout();
-                if (!this.#isTracking) {
+                if (!this._isTracking) {
                     return;
                 }
-                if (this.#onDragEnd) {
-                    this.#onDragEnd(data);
+                if (this._onDragEnd) {
+                    this._onDragEnd(data);
                 }
-                this.#isTracking = false;
+                this._isTracking = false;
                 break;
         }
     }
 
     private cancelTimeout() {
-        if (this.#timeoutId) {
-            clearTimeout(this.#timeoutId);
-            this.#timeoutId = undefined;
+        if (this._timeoutId) {
+            clearTimeout(this._timeoutId);
+            this._timeoutId = undefined;
         }
     }
 }

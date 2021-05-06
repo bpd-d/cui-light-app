@@ -11,24 +11,24 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _class, _name, _attributeName, _attributeValue, _attributeName_1, _attributeValue_1;
+var _class;
 import { is, are, splitColon } from "./functions";
 export class CuiClassAction {
     constructor(className) {
         _class.set(this, void 0);
         __classPrivateFieldSet(this, _class, className);
     }
-    add(element, utils) {
+    add(element, core) {
         if (are(element, __classPrivateFieldGet(this, _class)) && !element.classList.contains(__classPrivateFieldGet(this, _class))) {
             element.classList.add(__classPrivateFieldGet(this, _class));
         }
     }
-    remove(element, utils) {
+    remove(element, core) {
         if (are(element, __classPrivateFieldGet(this, _class)) && element.classList.contains(__classPrivateFieldGet(this, _class))) {
             element.classList.remove(__classPrivateFieldGet(this, _class));
         }
     }
-    toggle(element, utils) {
+    toggle(element, core) {
         if (are(element, __classPrivateFieldGet(this, _class))) {
             if (element.classList.contains(__classPrivateFieldGet(this, _class))) {
                 element.classList.remove(__classPrivateFieldGet(this, _class));
@@ -42,134 +42,124 @@ export class CuiClassAction {
 _class = new WeakMap();
 export class CuiInboundAction {
     constructor(name) {
-        _name.set(this, void 0);
-        __classPrivateFieldSet(this, _name, name);
+        this._name = name;
     }
-    add(element, utils) {
-        if (!utils) {
+    add(element, core) {
+        if (!core) {
             return;
         }
-        switch (__classPrivateFieldGet(this, _name)) {
+        switch (this._name) {
             case 'dark-mode':
-                utils.setLightMode('dark');
+                core.setLightMode('dark');
                 break;
             case 'light-mode':
-                utils.setLightMode('light');
+                core.setLightMode('light');
                 break;
         }
     }
-    remove(element, utils) {
-        if (!utils) {
+    remove(element, core) {
+        if (!core) {
             return;
         }
-        switch (__classPrivateFieldGet(this, _name)) {
+        switch (this._name) {
             case 'dark-mode':
-                utils.setLightMode('light');
+                core.setLightMode('light');
                 break;
             case 'light-mode':
-                utils.setLightMode('dark');
+                core.setLightMode('dark');
                 break;
         }
     }
-    toggle(element, utils) {
-        if (!utils) {
+    toggle(element, core) {
+        if (!core) {
             return;
         }
-        switch (__classPrivateFieldGet(this, _name)) {
+        switch (this._name) {
             case 'dark-mode':
-                this.setDarkMode(utils);
+                this.setDarkMode(core);
                 break;
             case 'light-mode':
-                this.setDarkMode(utils);
+                this.setDarkMode(core);
                 break;
         }
     }
-    setDarkMode(utils) {
-        if (utils.getLightMode() === 'dark') {
-            utils.setLightMode('light');
+    setDarkMode(core) {
+        if (core.getLightMode() === 'dark') {
+            core.setLightMode('light');
         }
         else {
-            utils.setLightMode('dark');
+            core.setLightMode('dark');
         }
     }
 }
-_name = new WeakMap();
 export class AttributeAction {
     constructor(attribute) {
-        var _a, _b;
-        _attributeName.set(this, void 0);
-        _attributeValue.set(this, void 0);
-        _a = this, _b = this, [({ set value(_c) { __classPrivateFieldSet(_a, _attributeName, _c); } }).value, ({ set value(_c) { __classPrivateFieldSet(_b, _attributeValue, _c); } }).value] = splitColon(attribute); // attribute.split(',')
+        [this._attributeName, this._attributeValue] = splitColon(attribute); // attribute.split(',')
     }
-    add(element, utils) {
-        if (!are(element, __classPrivateFieldGet(this, _attributeName), __classPrivateFieldGet(this, _attributeValue))) {
+    add(element, core) {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
-        element.setAttribute(__classPrivateFieldGet(this, _attributeName), __classPrivateFieldGet(this, _attributeValue));
+        element.setAttribute(this._attributeName, this._attributeValue);
     }
-    remove(element, utils) {
-        if (!are(element, __classPrivateFieldGet(this, _attributeName), __classPrivateFieldGet(this, _attributeValue))) {
+    remove(element, core) {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
-        if (element.hasAttribute(__classPrivateFieldGet(this, _attributeName))) {
-            element.removeAttribute(__classPrivateFieldGet(this, _attributeName));
+        if (element.hasAttribute(this._attributeName)) {
+            element.removeAttribute(this._attributeName);
         }
     }
-    toggle(element, utils) {
-        if (!are(element, __classPrivateFieldGet(this, _attributeName), __classPrivateFieldGet(this, _attributeValue))) {
+    toggle(element, core) {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
-        if (element.hasAttribute(__classPrivateFieldGet(this, _attributeName))) {
-            element.removeAttribute(__classPrivateFieldGet(this, _attributeName));
+        if (element.hasAttribute(this._attributeName)) {
+            element.removeAttribute(this._attributeName);
         }
         else {
-            element.setAttribute(__classPrivateFieldGet(this, _attributeName), __classPrivateFieldGet(this, _attributeValue));
+            element.setAttribute(this._attributeName, this._attributeValue);
         }
     }
 }
-_attributeName = new WeakMap(), _attributeValue = new WeakMap();
 export class StyleAction {
     constructor(attribute) {
-        var _a, _b;
-        _attributeName_1.set(this, void 0);
-        _attributeValue_1.set(this, void 0);
-        _a = this, _b = this, [({ set value(_c) { __classPrivateFieldSet(_a, _attributeName_1, _c); } }).value, ({ set value(_c) { __classPrivateFieldSet(_b, _attributeValue_1, _c); } }).value] = splitColon(attribute);
+        [this._attributeName, this._attributeValue] = splitColon(attribute);
     }
-    add(element, utils) {
-        if (!are(element, __classPrivateFieldGet(this, _attributeName_1), __classPrivateFieldGet(this, _attributeValue_1))) {
+    add(element, core) {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
         let el = element;
-        if (el.style && !el.style[__classPrivateFieldGet(this, _attributeName_1)]) {
-            el.style[__classPrivateFieldGet(this, _attributeName_1)] = __classPrivateFieldGet(this, _attributeValue_1);
+        if (el.style && !el.style[this._attributeName]) {
+            el.style[this._attributeName] = this._attributeValue;
         }
     }
-    remove(element, utils) {
-        if (!are(element, __classPrivateFieldGet(this, _attributeName_1), __classPrivateFieldGet(this, _attributeValue_1))) {
+    remove(element, core) {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
         let el = element;
-        if (el.style && el.style[__classPrivateFieldGet(this, _attributeName_1)]) {
-            el.style[__classPrivateFieldGet(this, _attributeName_1)] = "";
+        if (el.style && el.style[this._attributeName]) {
+            el.style[this._attributeName] = "";
         }
     }
-    toggle(element, utils) {
-        if (!are(element, __classPrivateFieldGet(this, _attributeName_1), __classPrivateFieldGet(this, _attributeValue_1))) {
+    toggle(element, core) {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
         let el = element;
         if (!el.style) {
             return;
         }
-        if (!el.style[__classPrivateFieldGet(this, _attributeName_1)]) {
-            el.style[__classPrivateFieldGet(this, _attributeName_1)] = __classPrivateFieldGet(this, _attributeValue_1);
+        if (!el.style[this._attributeName]) {
+            el.style[this._attributeName] = this._attributeValue;
         }
         else {
-            delete el.style[__classPrivateFieldGet(this, _attributeName_1)];
+            delete el.style[this._attributeName];
         }
     }
 }
-_attributeName_1 = new WeakMap(), _attributeValue_1 = new WeakMap();
 export class DummyAction {
     constructor() {
     }
@@ -180,7 +170,7 @@ export class DummyAction {
     toggle(element, utils) {
     }
 }
-export class CuiActionsFatory {
+export class CuiActionsFactory {
     static get(value) {
         if (!is(value)) {
             return new DummyAction();
@@ -207,7 +197,7 @@ export class CuiActionsListFactory {
         }
         const split = value.split(',');
         return split.map(single => {
-            return CuiActionsFatory.get(single.trim());
+            return CuiActionsFactory.get(single.trim());
         });
     }
 }

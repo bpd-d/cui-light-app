@@ -20,7 +20,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     }
     return privateMap.get(receiver);
 };
-var _events, _log, _eventHandler, _name, _events_1, _log_1, _buses, _last, _isOn, _statistics;
+var _isOn, _statistics;
 import { is, are, generateRandomString, enumerateObject } from "../utils/functions";
 import { ArgumentError } from "../models/errors";
 import { CuiEventEmitHandlerFactory } from "./handlers";
@@ -28,14 +28,10 @@ import { CuiCallbackExecutor } from "./executors";
 import { CuiDevtoolFactory } from "../development/factory";
 export class CuiEventBus {
     constructor(emitHandler, name) {
-        _events.set(this, void 0);
-        _log.set(this, void 0);
-        _eventHandler.set(this, void 0);
-        _name.set(this, void 0);
-        __classPrivateFieldSet(this, _events, {});
-        __classPrivateFieldSet(this, _eventHandler, emitHandler);
-        __classPrivateFieldSet(this, _name, name !== null && name !== void 0 ? name : "CuiEventBus");
-        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get(__classPrivateFieldGet(this, _name)));
+        this._events = {};
+        this._eventHandler = emitHandler;
+        this._name = name !== null && name !== void 0 ? name : "CuiEventBus";
+        this._log = CuiDevtoolFactory.get(this._name);
     }
     /**
      * Attaches event to event bus
@@ -50,15 +46,15 @@ export class CuiEventBus {
             throw new ArgumentError("Missing argument");
         }
         // When context is not provided (e.g. anonymous function) then generate random
-        let id = __classPrivateFieldGet(this, _name) + "-" + generateRandomString();
-        if (!__classPrivateFieldGet(this, _events)[name]) {
-            __classPrivateFieldGet(this, _events)[name] = {};
+        let id = this._name + "-" + generateRandomString();
+        if (!this._events[name]) {
+            this._events[name] = {};
         }
-        if (this.isAttached(__classPrivateFieldGet(this, _events)[name], id, cui)) {
+        if (this.isAttached(this._events[name], id, cui)) {
             return null;
         }
-        __classPrivateFieldGet(this, _log).debug(`Attaching new event: [${name}] for: [${id}]`);
-        __classPrivateFieldGet(this, _events)[name][id] = { callback: callback, $cuid: this.getCuid(cui) };
+        this._log.debug(`Attaching new event: [${name}] for: [${id}]`);
+        this._events[name][id] = { callback: callback, $cuid: this.getCuid(cui) };
         return id;
     }
     /**
@@ -72,8 +68,8 @@ export class CuiEventBus {
         if (!are(name, id)) {
             throw new ArgumentError("Missing argument");
         }
-        let ev = __classPrivateFieldGet(this, _events)[name];
-        __classPrivateFieldGet(this, _log).debug(`Detaching item: [${id}] from [${name}]`);
+        let ev = this._events[name];
+        this._log.debug(`Detaching item: [${id}] from [${name}]`);
         if (this.isAttached(ev, id)) {
             delete ev[id];
         }
@@ -84,11 +80,11 @@ export class CuiEventBus {
     * @param {string} name - Event name
     */
     detachAll(name) {
-        if (is(name) && __classPrivateFieldGet(this, _events)[name]) {
-            delete __classPrivateFieldGet(this, _events)[name];
+        if (is(name) && this._events[name]) {
+            delete this._events[name];
         }
         else {
-            __classPrivateFieldGet(this, _log).error(`Event name is missing or incorrect`, "detachAll");
+            this._log.error(`Event name is missing or incorrect`, "detachAll");
         }
     }
     /**
@@ -103,10 +99,10 @@ export class CuiEventBus {
             if (!is(event)) {
                 throw new ArgumentError("Event name is incorrect");
             }
-            let callbacks = __classPrivateFieldGet(this, _events)[event];
+            let callbacks = this._events[event];
             if (is(callbacks)) {
-                __classPrivateFieldGet(this, _log).debug(`Emit: [${event}]`);
-                yield __classPrivateFieldGet(this, _eventHandler).handle(callbacks, cuid, args);
+                this._log.debug(`Emit: [${event}]`);
+                yield this._eventHandler.handle(callbacks, cuid, args);
             }
             return true;
         });
@@ -119,7 +115,7 @@ export class CuiEventBus {
     * @param {CuiElement} cui - optional - cui element which event shall be attached to
     */
     isSubscribing(name, id, cui) {
-        let ev = __classPrivateFieldGet(this, _events)[name];
+        let ev = this._events[name];
         return this.isAttached(ev, id, cui);
     }
     /**
@@ -131,7 +127,7 @@ export class CuiEventBus {
         if (!are(event, cuid)) {
             return;
         }
-        let ev = __classPrivateFieldGet(this, _events)[event];
+        let ev = this._events[event];
         if (!is(ev)) {
             return;
         }
@@ -153,30 +149,25 @@ export class CuiEventBus {
         return is(cui) ? cui.$cuid : null;
     }
 }
-_events = new WeakMap(), _log = new WeakMap(), _eventHandler = new WeakMap(), _name = new WeakMap();
 export class CuiEventExtBus {
     constructor(setup) {
-        _events_1.set(this, void 0);
-        _log_1.set(this, void 0);
-        _buses.set(this, void 0);
-        _last.set(this, void 0);
-        __classPrivateFieldSet(this, _log_1, CuiDevtoolFactory.get("CuiEventBus"));
-        __classPrivateFieldSet(this, _buses, []);
-        __classPrivateFieldSet(this, _events_1, {});
-        __classPrivateFieldSet(this, _last, 0);
+        this._log = CuiDevtoolFactory.get("CuiEventBus");
+        this._buses = [];
+        this._events = {};
+        this._last = 0;
         if (is(setup)) {
-            __classPrivateFieldGet(this, _log_1).debug("Initiating buses");
+            this._log.debug("Initiating buses");
             let sorted = setup.length === 1 ? setup : setup.sort((first, second) => {
                 return first.priority - second.priority;
             });
             sorted.forEach((item, index) => {
-                __classPrivateFieldGet(this, _buses).push(this.initBusInstance(item.name, item.handler));
-                __classPrivateFieldSet(this, _events_1, Object.assign(Object.assign({}, __classPrivateFieldGet(this, _events_1)), this.mapEvents(item.eventsDef, index)));
-                __classPrivateFieldGet(this, _log_1).debug(`Bus ${item.name} has been initialized with number: ${index}`);
+                this._buses.push(this.initBusInstance(item.name, item.handler));
+                this._events = Object.assign(Object.assign({}, this._events), this.mapEvents(item.eventsDef, index));
+                this._log.debug(`Bus ${item.name} has been initialized with number: ${index}`);
             });
-            __classPrivateFieldGet(this, _buses).push(this.initBusInstance("DefaultEventBus", 'tasked'));
-            __classPrivateFieldSet(this, _last, __classPrivateFieldGet(this, _buses).length - 1);
-            __classPrivateFieldGet(this, _log_1).debug(`Bus initialization finished`);
+            this._buses.push(this.initBusInstance("DefaultEventBus", 'tasked'));
+            this._last = this._buses.length - 1;
+            this._log.debug(`Bus initialization finished`);
         }
     }
     /**
@@ -281,11 +272,10 @@ export class CuiEventExtBus {
      * @param event
      */
     get(event) {
-        let idx = __classPrivateFieldGet(this, _events_1)[event];
-        return __classPrivateFieldGet(this, _buses)[idx !== null && idx !== void 0 ? idx : __classPrivateFieldGet(this, _last)];
+        let idx = this._events[event];
+        return this._buses[idx !== null && idx !== void 0 ? idx : this._last];
     }
 }
-_events_1 = new WeakMap(), _log_1 = new WeakMap(), _buses = new WeakMap(), _last = new WeakMap();
 export class CuiEventBusFactory {
     static get(setup) {
         //@ts-ignore - setup is underfined check is perfromed

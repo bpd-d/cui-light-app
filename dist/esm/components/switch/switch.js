@@ -7,26 +7,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _targets, _currentIdx, _links, _switches, _task, _switchEventId, _actionsIn, _actionsOut;
-import { CuiMutableHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiTaskRunner } from "../../core/utils/task";
 import { CuiActionsListFactory } from "../../core/utils/actions";
-import { is, replacePrefix, calculateNextIndex, getChildrenHeight, isInRange, joinWithScopeSelector } from "../../core/utils/functions";
+import { is, replacePrefix, calculateNextIndex, getChildrenHeight, isInRange, joinWithScopeSelector, getCuiElementsBySelector } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiKeysHandlerExtension } from "../extensions/keys/keys";
+import { getCuiKeyActionPerformer } from "../extensions/keys/performer";
+import { CuiSwitchExtension } from "../extensions/switch/switch";
+import { CuiStyleAsyncHelper, CuiStyleHelper, getEventBusFacade } from "../../core/handlers/extensions/facades";
+import { CuiActionsHelper } from "../../core/helpers/helpers";
+import { CuiComponentBaseHook } from "../base";
+import { getCuiMutationPerformer } from "../extensions/mutations/performer";
+import { CuiComponentMutationExtension } from "../extensions/mutations/mutations";
 const SWITCH_DEFAULT_ACTION_IN = ".{prefix}-switch-animation-default-in";
 const SWITCH_DEFAULT_ACTION_OUT = ".{prefix}-switch-animation-default-out";
 const SWITCH_DEFAULT_TARGETS = " > *";
@@ -46,116 +40,106 @@ export class CuiSwitchArgs extends CuiAutoParseArgs {
         this.autoTimeout = -1;
         this.height = "auto";
         this.loop = false;
+        this.keyChange = false;
     }
 }
-export class CuiSwitchComponent {
-    constructor(prefix) {
-        this.attribute = `${prefix !== null && prefix !== void 0 ? prefix : 'cui'}-switch`;
-    }
-    getStyle() {
-        return null;
-    }
-    get(element, utils) {
-        return new CuiSwitchHandler(element, utils, this.attribute);
-    }
+export function CuiSwitchComponent(prefix) {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "switch",
+        create: (element, utils, prefix, attribute) => {
+            return new CuiSwitchHandler(element, utils, attribute);
+        }
+    });
 }
-export class CuiSwitchHandler extends CuiMutableHandler {
+export class CuiSwitchHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiSwitchHandler", element, attribute, new CuiSwitchArgs(utils.setup.prefix, utils.setup.animationTime), utils);
-        _targets.set(this, void 0);
-        _currentIdx.set(this, void 0);
-        _links.set(this, void 0);
-        _switches.set(this, void 0);
-        _task.set(this, void 0);
-        _switchEventId.set(this, void 0);
-        _actionsIn.set(this, void 0);
-        _actionsOut.set(this, void 0);
-        __classPrivateFieldSet(this, _targets, []);
-        __classPrivateFieldSet(this, _currentIdx, -1);
-        __classPrivateFieldSet(this, _links, []);
-        __classPrivateFieldSet(this, _switches, []);
-        __classPrivateFieldSet(this, _switchEventId, null);
-        __classPrivateFieldSet(this, _actionsIn, __classPrivateFieldSet(this, _actionsOut, []));
-        __classPrivateFieldSet(this, _task, new CuiTaskRunner(this.args.autoTimeout, true, this.switch.bind(this, 'next')));
+        this._targets = [];
+        this._actionsHelper = new CuiActionsHelper(utils.interactions);
+        this._asyncStyles = new CuiStyleAsyncHelper(utils.interactions, new CuiStyleHelper());
+        this._task = new CuiTaskRunner(this.args.autoTimeout, true, this.switch.bind(this, 'next'));
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, this.element);
+        this._switchPerformer = getCuiKeyActionPerformer(this.switch.bind(this));
+        this._mutationPerformer = getCuiMutationPerformer(this.onMutation.bind(this));
+        this.extend(new CuiKeysHandlerExtension(this.element, this._busFacade, this._switchPerformer));
+        this.extend(new CuiSwitchExtension(this._busFacade, this.switch.bind(this)));
+        this.extend(new CuiComponentMutationExtension(element, this._mutationPerformer));
     }
-    onInit() {
-        __classPrivateFieldSet(this, _switchEventId, this.onEvent(EVENTS.SWITCH, this.onPushSwitch.bind(this)));
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.handleUpdate();
+            return true;
+        });
+    }
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.handleUpdate();
+            return true;
+        });
+    }
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this._task.stop();
+            this._busFacade.detachEmittedEvents();
+            return true;
+        });
+    }
+    handleUpdate() {
         this.parseArguments();
         this.getTargets();
-        this.getActiveIndex();
-        this.getSwitches();
-        this.setSwitchesActive(__classPrivateFieldGet(this, _currentIdx));
-        this.setLinkActive(-1, __classPrivateFieldGet(this, _currentIdx));
-        this.mutate(() => {
-            this.helper.setStyle(this.element, 'height', this.getElementHeight(__classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _currentIdx)]));
-        });
-        __classPrivateFieldSet(this, _task, new CuiTaskRunner(this.args.autoTimeout, true, this.switch.bind(this, 'next')));
+        const currentIndex = this.getActiveIndex();
+        this.setSwitchesActive(currentIndex);
+        this.setLinkActive(-1, currentIndex);
+        this.setTargetHeight(currentIndex);
         this.startTask();
-    }
-    onUpdate() {
-        this.parseArguments();
-        this.getTargets();
-        this.getSwitches();
-        this.setSwitchesActive(__classPrivateFieldGet(this, _currentIdx));
-        this.mutate(() => {
-            this.helper.setStyle(this.element, 'height', this.getElementHeight(__classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _currentIdx)]));
-        });
-        this.startTask();
-    }
-    onDestroy() {
-        __classPrivateFieldGet(this, _task).stop();
-        this.detachEvent(EVENTS.SWITCH, __classPrivateFieldGet(this, _switchEventId));
     }
     onMutation(record) {
         this.getTargets();
-        this.mutate(() => {
-            this.helper.setStyle(this.element, 'height', this.getElementHeight(__classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _currentIdx)]));
-        });
+        const currentIndex = this.getActiveIndex();
+        this.setTargetHeight(currentIndex);
     }
     switch(index) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.isLocked) {
+            if (!this.lock()) {
                 return false;
             }
-            this.getSwitches();
-            this.getActiveIndex();
-            let nextIdx = calculateNextIndex(index, __classPrivateFieldGet(this, _currentIdx), __classPrivateFieldGet(this, _targets).length);
-            if (!this.args.loop && ((index === "next" && nextIdx === 0) || (index === 'prev' && __classPrivateFieldGet(this, _currentIdx) === 0))) {
-                this.logInfo("Switch blocked by loop settings", "switch");
-                return false;
-            }
-            if (nextIdx == __classPrivateFieldGet(this, _currentIdx) || nextIdx < 0 || nextIdx >= __classPrivateFieldGet(this, _targets).length) {
+            const actionsIn = CuiActionsListFactory.get(this.args.in);
+            const actionsOut = CuiActionsListFactory.get(this.args.out);
+            const activeIndex = this.getActiveIndex();
+            const nextIdx = calculateNextIndex(index, activeIndex, this._targets.length);
+            if (nextIdx < 0) {
                 this.logWarning(`Index ${index} is not within the suitable range`, "switch");
                 return false;
             }
-            this.isLocked = true;
+            if (!this.args.loop && ((index === "next" && nextIdx === 0) || (index === 'prev' && activeIndex === 0))) {
+                this.logInfo("Switch blocked by loop settings", "switch");
+                return false;
+            }
             this.setSwitchesActive(nextIdx);
-            let nextItem = __classPrivateFieldGet(this, _targets)[nextIdx];
-            yield this.actionsHelper.performSwitchAction(nextItem, __classPrivateFieldGet(this, _currentIdx) > -1 ? __classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _currentIdx)] : null, __classPrivateFieldGet(this, _actionsIn), __classPrivateFieldGet(this, _actionsOut), () => {
+            let nextItem = this._targets[nextIdx];
+            yield this._actionsHelper.performSwitchAction(nextItem, activeIndex > -1 ? this._targets[activeIndex] : null, actionsIn, actionsOut, () => {
                 // Set next element active
                 nextItem.classList.add(this.activeClassName);
                 // Remove active from current element (if current exists)
-                if (__classPrivateFieldGet(this, _currentIdx) > -1)
-                    __classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _currentIdx)].classList.remove(this.activeClassName);
+                if (activeIndex > -1)
+                    this._targets[activeIndex].classList.remove(this.activeClassName);
                 // Update linked items
-                this.setLinkActive(__classPrivateFieldGet(this, _currentIdx), nextIdx);
+                this.setLinkActive(activeIndex, nextIdx);
                 // Update element height - it must be done a parent get height based on current child
-                this.helper.setStyle(this.element, 'height', this.getElementHeight(nextItem));
+                this.setTargetHeight(activeIndex);
                 this.startTask();
-                this.isLocked = false;
+                this.unlock();
             }, this.args.timeout);
-            this.emitEvent(EVENTS.SWITCHED, {
+            this._busFacade.emit(EVENTS.SWITCHED, {
                 timestamp: Date.now(),
                 index: nextIdx
             });
             return true;
         });
     }
-    onPushSwitch(index) {
-        this.switch(index);
-    }
     getActiveIndex() {
-        __classPrivateFieldSet(this, _currentIdx, is(__classPrivateFieldGet(this, _targets)) ? __classPrivateFieldGet(this, _targets).findIndex(target => this.helper.hasClass(this.activeClassName, target)) : -1);
+        return is(this._targets) ? this._targets.findIndex(target => this.classes.hasClass(this.activeClassName, target)) : -1;
     }
     getElementHeight(current) {
         if (!is(this.args.height) || this.args.height === 'auto') {
@@ -169,35 +153,39 @@ export class CuiSwitchHandler extends CuiMutableHandler {
      * Gets attributes value and prepares properties
      */
     parseArguments() {
-        __classPrivateFieldSet(this, _actionsIn, CuiActionsListFactory.get(this.args.in));
-        __classPrivateFieldSet(this, _actionsOut, CuiActionsListFactory.get(this.args.out));
-        __classPrivateFieldSet(this, _links, is(this.args.links) ? [...document.querySelectorAll(this.args.links)] : []);
+        this._task.setTimeout(this.args.autoTimeout);
+        if (this.args.keyChange) {
+            this._switchPerformer.setKeyCombos([{
+                    key: 'next',
+                    value: { isCtrl: true, isAlt: true, isShift: false, key: "ArrowRight" }
+                }, {
+                    key: 'prev',
+                    value: { isCtrl: true, isAlt: true, isShift: false, key: "ArrowLeft" }
+                }]);
+        }
+        else {
+            this._switchPerformer.setKeyCombos([]);
+        }
     }
     /**
      * Query target elements
      */
     getTargets() {
-        let t = this.element.querySelectorAll(this.args.targets);
-        __classPrivateFieldSet(this, _targets, t.length > 0 ? [...t] : []);
-    }
-    getSwitches() {
-        let switches = is(this.args.switch) ? document.querySelectorAll(this.args.switch) : null;
-        __classPrivateFieldSet(this, _switches, []);
-        if (switches) {
-            switches.forEach(sw => {
-                __classPrivateFieldGet(this, _switches).push(sw);
-            });
-        }
+        this._targets = is(this.args.targets) ? [...this.element.querySelectorAll(this.args.targets)] : [];
     }
     setLinkActive(current, next) {
-        if (!is(__classPrivateFieldGet(this, _links))) {
+        const links = is(this.args.links) ? [...document.querySelectorAll(this.args.links)] : null;
+        if (!links) {
             return;
         }
-        if (isInRange(current, 0, __classPrivateFieldGet(this, _links).length - 1)) {
-            this.helper.removeClass(this.activeClassName, __classPrivateFieldGet(this, _links)[current]);
+        const linksLen = links.length - 1;
+        if (isInRange(current, 0, linksLen)) {
+            //@ts-ignore already checked above
+            this.classes.removeClass(this.activeClassName, links[current]);
         }
-        if (isInRange(next, 0, __classPrivateFieldGet(this, _links).length - 1)) {
-            this.helper.setClass(this.activeClassName, __classPrivateFieldGet(this, _links)[next]);
+        if (isInRange(next, 0, linksLen)) {
+            //@ts-ignore already checked above
+            this.classes.setClass(this.activeClassName, links[next]);
         }
     }
     /**
@@ -205,7 +193,8 @@ export class CuiSwitchHandler extends CuiMutableHandler {
      * @param index
      */
     setSwitchesActive(index) {
-        __classPrivateFieldGet(this, _switches).forEach(sw => {
+        const switches = getCuiElementsBySelector(this.args.switch);
+        switches.forEach(sw => {
             this.emitLinkSwitch(sw.$cuid, index);
         });
     }
@@ -216,16 +205,18 @@ export class CuiSwitchHandler extends CuiMutableHandler {
      */
     emitLinkSwitch(id, index) {
         if (is(id))
-            this.utils.bus.emit(EVENTS.SWITCH, id, index);
+            this.core.bus.emit(EVENTS.SWITCH, id, index);
     }
     /**
      * Runs task if arguments setup allows for it - auto flag must be set to true
      */
     startTask() {
-        __classPrivateFieldGet(this, _task).stop();
+        this._task.stop();
         if (this.args.autoTimeout) {
-            __classPrivateFieldGet(this, _task).start();
+            this._task.start();
         }
     }
+    setTargetHeight(targetIndex) {
+        this._asyncStyles.setStyle('height', this.getElementHeight(this._targets[targetIndex]), this.element);
+    }
 }
-_targets = new WeakMap(), _currentIdx = new WeakMap(), _links = new WeakMap(), _switches = new WeakMap(), _task = new WeakMap(), _switchEventId = new WeakMap(), _actionsIn = new WeakMap(), _actionsOut = new WeakMap();

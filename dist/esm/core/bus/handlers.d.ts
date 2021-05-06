@@ -13,14 +13,14 @@ export declare class EmitHandler implements ICuiEventEmitHandler {
     handle(events: CuiEventReceiver, cuid: string, args?: any): Promise<boolean>;
 }
 export declare class SimpleEventEmitHandlerAdapter implements ICuiQueueAdapter<EmitHandlerData> {
-    #private;
     type?: CuiQueueAdapterType;
+    private _executor;
     constructor(executor: ICuiCallbackExecutor);
     onFlush(items: EmitHandlerData[]): Promise<boolean>;
 }
 export declare class TaskedEventEmitHandlerAdapter implements ICuiQueueAdapter<EmitHandlerData> {
-    #private;
     type?: CuiQueueAdapterType;
+    private _executor;
     constructor(executor: ICuiCallbackExecutor);
     onFlush(items: EmitHandlerData[]): Promise<boolean>;
 }

@@ -1,104 +1,177 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _interactions, _inputType, _onMouseListener, _onTouchListener, _onKeyDownListener, _currentCls;
+import { CuiPlugin } from "../base";
 const DEFAULT_FOCUS_VISIBLE = "focus-visible";
 const DEFAULT_FOCUS_PRECISE = "focus-precise";
-export class CuiLightFocusPlugin {
-    constructor(setup) {
-        _interactions.set(this, void 0);
-        _inputType.set(this, void 0);
-        _onMouseListener.set(this, void 0);
-        _onTouchListener.set(this, void 0);
-        _onKeyDownListener.set(this, void 0);
-        _currentCls.set(this, void 0);
-        this.setup = Object.assign({ keybordClass: DEFAULT_FOCUS_VISIBLE, mouseClass: DEFAULT_FOCUS_PRECISE, touchClass: DEFAULT_FOCUS_PRECISE }, setup);
-        this.description = "CuiLightFocusPlugin";
-        this.name = "focus-plugin";
-        __classPrivateFieldSet(this, _interactions, undefined);
-        __classPrivateFieldSet(this, _onKeyDownListener, this.onKeyDownEvent.bind(this));
-        __classPrivateFieldSet(this, _onMouseListener, this.onMouseEvent.bind(this));
-        __classPrivateFieldSet(this, _onTouchListener, this.onTouchEvent.bind(this));
-        __classPrivateFieldSet(this, _inputType, 'none');
-        __classPrivateFieldSet(this, _currentCls, undefined);
-    }
-    init(utils) {
-        __classPrivateFieldSet(this, _interactions, utils.interactions);
-        document.body.addEventListener('touchstart', __classPrivateFieldGet(this, _onTouchListener));
-        document.body.addEventListener('mousedown', __classPrivateFieldGet(this, _onMouseListener));
-        window.addEventListener('keydown', __classPrivateFieldGet(this, _onKeyDownListener));
-    }
-    onMouseEvent(ev) {
-        if (__classPrivateFieldGet(this, _inputType) === 'mouse') {
-            return;
-        }
-        this.update('mouse');
-    }
-    onKeyDownEvent(ev) {
-        if (__classPrivateFieldGet(this, _inputType) === 'keyboard') {
-            return;
-        }
-        this.update('keyboard');
-    }
-    onTouchEvent(ev) {
-        if (__classPrivateFieldGet(this, _inputType) === 'touch') {
-            return;
-        }
-        this.update('touch');
-    }
-    update(type) {
-        let cls = this.getClass(type);
-        this.setClasses(cls, __classPrivateFieldGet(this, _currentCls), () => {
-            __classPrivateFieldSet(this, _currentCls, cls);
-            __classPrivateFieldSet(this, _inputType, type);
-        });
-    }
-    getClass(type) {
-        switch (type) {
-            case "keyboard":
-                return this.setup.keybordClass;
-            case "mouse":
-                return this.setup.mouseClass;
-            case "touch":
-                return this.setup.touchClass;
-            default:
-                return undefined;
-        }
-    }
-    setClasses(cls, prevCls, callback) {
-        if (!__classPrivateFieldGet(this, _interactions) || cls === prevCls) {
-            return;
-        }
-        __classPrivateFieldGet(this, _interactions).fetch(() => {
-            let hasCls = cls && document.body.classList.contains(cls);
-            let hasPrevCls = prevCls && document.body.classList.contains(prevCls);
-            // @ts-ignore interactions is set
-            __classPrivateFieldGet(this, _interactions).mutate(() => {
-                if (!hasCls)
-                    // @ts-ignore cls is set
-                    document.body.classList.add(cls);
-                if (hasPrevCls) {
-                    // @ts-ignore prevCls is set
-                    document.body.classList.remove(prevCls);
+export function CuiLightFocusPluginFn(setup) {
+    return new CuiPlugin({
+        name: "focus-plugin",
+        description: "CuiLightFocusPlugin",
+        setup: Object.assign({ keybordClass: DEFAULT_FOCUS_VISIBLE, mouseClass: DEFAULT_FOCUS_PRECISE, touchClass: DEFAULT_FOCUS_PRECISE }, setup),
+        callback: (utils, setup) => {
+            let _currentCls = undefined;
+            let _inputType = 'none';
+            function update(type) {
+                let cls = getClass(type, setup);
+                setClasses(cls, _currentCls, () => {
+                    _currentCls = cls;
+                    _inputType = type;
+                });
+            }
+            function onMouseEvent(ev) {
+                if (_inputType === 'mouse') {
+                    return;
                 }
-                callback();
-            }, null);
-        }, null);
-    }
-    destroy() {
-        document.body.removeEventListener('touchstart', __classPrivateFieldGet(this, _onTouchListener));
-        document.body.removeEventListener('mousedown', __classPrivateFieldGet(this, _onMouseListener));
-        window.removeEventListener('keydown', __classPrivateFieldGet(this, _onKeyDownListener));
+                update('mouse');
+            }
+            function onKeyDownEvent(ev) {
+                if (_inputType === 'keyboard') {
+                    return;
+                }
+                update('keyboard');
+            }
+            function onTouchEvent(ev) {
+                if (_inputType === 'touch') {
+                    return;
+                }
+                update('touch');
+            }
+            function setClasses(cls, prevCls, callback) {
+                if (!utils.interactions || cls === prevCls) {
+                    return;
+                }
+                utils.interactions.fetch(() => {
+                    let hasCls = cls && document.body.classList.contains(cls);
+                    let hasPrevCls = prevCls && document.body.classList.contains(prevCls);
+                    // @ts-ignore interactions is set
+                    utils.interactions.mutate(() => {
+                        if (!hasCls)
+                            // @ts-ignore cls is set
+                            document.body.classList.add(cls);
+                        if (hasPrevCls) {
+                            // @ts-ignore prevCls is set
+                            document.body.classList.remove(prevCls);
+                        }
+                        callback();
+                    }, null);
+                }, null);
+            }
+            document.body.addEventListener('touchstart', onTouchEvent);
+            document.body.addEventListener('mousedown', onMouseEvent);
+            window.addEventListener('keydown', onKeyDownEvent);
+            return [
+                [],
+                () => {
+                    document.body.removeEventListener('touchstart', onTouchEvent);
+                    document.body.removeEventListener('mousedown', onMouseEvent);
+                    window.removeEventListener('keydown', onKeyDownEvent);
+                }
+            ];
+        }
+    });
+}
+function getClass(type, setup) {
+    switch (type) {
+        case "keyboard":
+            return setup.keybordClass;
+        case "mouse":
+            return setup.mouseClass;
+        case "touch":
+            return setup.touchClass;
+        default:
+            return undefined;
     }
 }
-_interactions = new WeakMap(), _inputType = new WeakMap(), _onMouseListener = new WeakMap(), _onTouchListener = new WeakMap(), _onKeyDownListener = new WeakMap(), _currentCls = new WeakMap();
+// export class CuiLightFocusPlugin implements ICuiPlugin {
+//     description: string;
+//     name: string;
+//     setup: ICuiLightFocusPluginSetup;
+//     #interactions: IUIInteractionProvider | undefined;
+//     #inputType: FocusInputType;
+//     #onMouseListener: any;
+//     #onTouchListener: any;
+//     #onKeyDownListener: any;
+//     #currentCls: string | undefined;
+//     constructor(setup: ICuiLightFocusPluginSetup) {
+//         this.setup = {
+//             keybordClass: DEFAULT_FOCUS_VISIBLE,
+//             mouseClass: DEFAULT_FOCUS_PRECISE,
+//             touchClass: DEFAULT_FOCUS_PRECISE,
+//             ...setup
+//         }
+//         this.description = "CuiLightFocusPlugin";
+//         this.name = "focus-plugin";
+//         this.#interactions = undefined;
+//         this.#onKeyDownListener = this.onKeyDownEvent.bind(this);
+//         this.#onMouseListener = this.onMouseEvent.bind(this);
+//         this.#onTouchListener = this.onTouchEvent.bind(this);
+//         this.#inputType = 'none';
+//         this.#currentCls = undefined;
+//     }
+//     init(utils: CuiUtils): void {
+//         this.#interactions = utils.interactions;
+//         document.body.addEventListener('touchstart', this.#onTouchListener);
+//         document.body.addEventListener('mousedown', this.#onMouseListener);
+//         window.addEventListener('keydown', this.#onKeyDownListener);
+//     }
+//     private onMouseEvent(ev: MouseEvent) {
+//         if (this.#inputType === 'mouse') {
+//             return;
+//         }
+//         this.update('mouse');
+//     }
+//     private onKeyDownEvent(ev: KeyboardEvent) {
+//         if (this.#inputType === 'keyboard') {
+//             return;
+//         }
+//         this.update('keyboard');
+//     }
+//     private onTouchEvent(ev: TouchEvent) {
+//         if (this.#inputType === 'touch') {
+//             return;
+//         }
+//         this.update('touch');
+//     }
+//     private update(type: FocusInputType) {
+//         let cls = this.getClass(type);
+//         this.setClasses(cls, this.#currentCls, () => {
+//             this.#currentCls = cls
+//             this.#inputType = type;
+//         })
+//     }
+//     private getClass(type: FocusInputType): string | undefined {
+//         switch (type) {
+//             case "keyboard":
+//                 return this.setup.keybordClass;
+//             case "mouse":
+//                 return this.setup.mouseClass;
+//             case "touch":
+//                 return this.setup.touchClass;
+//             default:
+//                 return undefined;
+//         }
+//     }
+//     private setClasses(cls: string | undefined, prevCls: string | undefined, callback: () => void) {
+//         if (!this.#interactions || cls === prevCls) {
+//             return;
+//         }
+//         this.#interactions.fetch(() => {
+//             let hasCls = cls && document.body.classList.contains(cls);
+//             let hasPrevCls = prevCls && document.body.classList.contains(prevCls);
+//             // @ts-ignore interactions is set
+//             this.#interactions.mutate(() => {
+//                 if (!hasCls)
+//                     // @ts-ignore cls is set
+//                     document.body.classList.add(cls);
+//                 if (hasPrevCls) {
+//                     // @ts-ignore prevCls is set
+//                     document.body.classList.remove(prevCls);
+//                 }
+//                 callback();
+//             }, null)
+//         }, null)
+//     }
+//     destroy(): void {
+//         document.body.removeEventListener('touchstart', this.#onTouchListener);
+//         document.body.removeEventListener('mousedown', this.#onMouseListener);
+//         window.removeEventListener('keydown', this.#onKeyDownListener);
+//     }
+// }

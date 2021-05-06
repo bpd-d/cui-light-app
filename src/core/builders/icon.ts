@@ -1,26 +1,26 @@
 import { createElementFromString, getIntOrDefault, is } from "../utils/functions";
 
 export class IconBuilder {
-    #element: string;
-    #scale: number;
-    #appender: IconScaleAppender;
+    _element: string;
+    _scale: number;
+    _appender: IconScaleAppender;
 
     constructor(svgString: string) {
-        this.#element = svgString;
-        this.#scale = 1;
-        this.#appender = new IconScaleAppender();
+        this._element = svgString;
+        this._scale = 1;
+        this._appender = new IconScaleAppender();
     }
 
     setScale(scale: number): IconBuilder {
-        this.#scale = scale
+        this._scale = scale
         return this
     }
 
     build(): Element | null {
-        let created = createElementFromString(this.#element)
-        if (is(created) && this.#scale) {
+        let created = createElementFromString(this._element)
+        if (is(created) && this._scale) {
             // @ts-ignore created is checked already
-            this.#appender.append(created, this.#scale)
+            this._appender.append(created, this._scale)
         }
         return created
     }

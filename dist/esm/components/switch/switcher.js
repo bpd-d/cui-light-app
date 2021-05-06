@@ -11,7 +11,9 @@ import { CuiHandlerBase } from "../../core/handlers/base";
 import { getChildSelectorFromScoped, is } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-import { CuiClickModule } from "../modules/click/click";
+import { clickExtension } from "../extensions/click/click";
+import { clickPerformer } from "../extensions/click/performer";
+import { CuiComponentBaseHook } from "../base";
 const SWITCHER_LIST_ITEM_SELECTOR = "li > a";
 export class CuiSwitcherArgs extends CuiAutoParseArgs {
     constructor() {
@@ -24,30 +26,33 @@ export class CuiSwitcherArgs extends CuiAutoParseArgs {
         this.isList = false;
     }
 }
-export class CuiSwitcherComponent {
-    constructor(prefix) {
-        this.attribute = `${prefix !== null && prefix !== void 0 ? prefix : 'cui'}-switcher`;
-    }
-    getStyle() {
-        return null;
-    }
-    get(element, utils) {
-        return new CuiSwitcherHandler(element, utils, this.attribute);
-    }
+export function CuiSwitcherComponent(prefix) {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "switcher",
+        create: (element, utils, prefix, attribute) => {
+            return new CuiSwitcherHandler(element, utils, attribute);
+        }
+    });
 }
 export class CuiSwitcherHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiSwitcherHandler", element, attribute, new CuiSwitcherArgs(), utils);
-        this.onClickEvent = this.onClickEvent.bind(this);
-        this.addModule(new CuiClickModule(this.element, this.args, this.onClickEvent.bind(this)));
+        this._perfromer = clickPerformer(this.onClickEvent.bind(this));
+        this.extend(clickExtension({
+            element: element,
+            performer: this._perfromer
+        }));
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.handleArguments();
             return true;
         });
     }
     onRefresh() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.handleArguments();
             return true;
         });
     }
@@ -55,6 +60,10 @@ export class CuiSwitcherHandler extends CuiHandlerBase {
         return __awaiter(this, void 0, void 0, function* () {
             return true;
         });
+    }
+    handleArguments() {
+        this._perfromer.preventDefault(this.args.prevent);
+        this._perfromer.stopPropagation(this.args.stopPropagation);
     }
     /**
      * Sets current switcher target value
@@ -84,10 +93,10 @@ export class CuiSwitcherHandler extends CuiHandlerBase {
     }
     handleItemClick(ev, targetCuid) {
         if (!this.args.index) {
-            this._log.warning("Switch cannot be performed since component doesn't specify index");
+            this.log.warning("Switch cannot be performed since component doesn't specify index");
             return;
         }
-        this.utils.bus.emit(EVENTS.SWITCH, targetCuid, this.args.index);
+        this.core.bus.emit(EVENTS.SWITCH, targetCuid, this.args.index);
     }
     handleListClick(ev, targetCuid) {
         const currentSelector = getChildSelectorFromScoped(this.args.targets);
@@ -100,6 +109,6 @@ export class CuiSwitcherHandler extends CuiHandlerBase {
         if (targetIndex < 0) {
             return;
         }
-        this.utils.bus.emit(EVENTS.SWITCH, targetCuid, targetIndex);
+        this.core.bus.emit(EVENTS.SWITCH, targetCuid, targetIndex);
     }
 }

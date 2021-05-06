@@ -1,10 +1,10 @@
 import { is, are, splitColon } from "./functions";
-import { CuiUtils } from "../models/utils";
+import { CuiCore } from "../models/core";
 
 export interface ICuiComponentAction {
-    add(element: Element, utils?: CuiUtils): void;
-    remove(element: Element, utils?: CuiUtils): void;
-    toggle(element: Element, utils?: CuiUtils): void;
+    add(element: Element, core?: CuiCore): void;
+    remove(element: Element, core?: CuiCore): void;
+    toggle(element: Element, core?: CuiCore): void;
 }
 
 export class CuiClassAction implements ICuiComponentAction {
@@ -14,19 +14,19 @@ export class CuiClassAction implements ICuiComponentAction {
         this.#class = className;
     }
 
-    add(element: Element, utils?: CuiUtils): void {
+    add(element: Element, core?: CuiCore): void {
         if (are(element, this.#class) && !element.classList.contains(this.#class)) {
             element.classList.add(this.#class);
         }
     }
 
-    remove(element: Element, utils?: CuiUtils): void {
+    remove(element: Element, core?: CuiCore): void {
         if (are(element, this.#class) && element.classList.contains(this.#class)) {
             element.classList.remove(this.#class);
         }
     }
 
-    toggle(element: Element, utils?: CuiUtils): void {
+    toggle(element: Element, core?: CuiCore): void {
         if (are(element, this.#class)) {
             if (element.classList.contains(this.#class)) {
                 element.classList.remove(this.#class);
@@ -38,140 +38,140 @@ export class CuiClassAction implements ICuiComponentAction {
 }
 
 export class CuiInboundAction implements ICuiComponentAction {
-    #name: string;
+    _name: string;
 
     constructor(name: string) {
-        this.#name = name;
+        this._name = name;
     }
-    add(element: Element, utils?: CuiUtils): void {
-        if (!utils) {
+    add(element: Element, core?: CuiCore): void {
+        if (!core) {
             return;
         }
-        switch (this.#name) {
+        switch (this._name) {
             case 'dark-mode':
-                utils.setLightMode('dark')
+                core.setLightMode('dark')
                 break;
             case 'light-mode':
-                utils.setLightMode('light')
+                core.setLightMode('light')
                 break;
         }
     }
 
-    remove(element: Element, utils?: CuiUtils): void {
-        if (!utils) {
+    remove(element: Element, core?: CuiCore): void {
+        if (!core) {
             return;
         }
-        switch (this.#name) {
+        switch (this._name) {
             case 'dark-mode':
-                utils.setLightMode('light')
+                core.setLightMode('light')
                 break;
             case 'light-mode':
-                utils.setLightMode('dark')
+                core.setLightMode('dark')
                 break;
         }
     }
 
-    toggle(element: Element, utils?: CuiUtils): void {
-        if (!utils) {
+    toggle(element: Element, core?: CuiCore): void {
+        if (!core) {
             return;
         }
-        switch (this.#name) {
+        switch (this._name) {
             case 'dark-mode':
-                this.setDarkMode(utils)
+                this.setDarkMode(core)
                 break;
             case 'light-mode':
-                this.setDarkMode(utils)
+                this.setDarkMode(core)
                 break;
         }
     }
 
-    private setDarkMode(utils: CuiUtils) {
-        if (utils.getLightMode() === 'dark') {
-            utils.setLightMode('light')
+    private setDarkMode(core: CuiCore) {
+        if (core.getLightMode() === 'dark') {
+            core.setLightMode('light')
         } else {
-            utils.setLightMode('dark')
+            core.setLightMode('dark')
         }
     }
 }
 
 export class AttributeAction implements ICuiComponentAction {
-    #attributeName: string;
-    #attributeValue: string;
+    private _attributeName: string;
+    private _attributeValue: string;
     constructor(attribute: string) {
-        [this.#attributeName, this.#attributeValue] = splitColon(attribute);// attribute.split(',')
+        [this._attributeName, this._attributeValue] = splitColon(attribute);// attribute.split(',')
     }
 
-    add(element: Element, utils?: CuiUtils): void {
-        if (!are(element, this.#attributeName, this.#attributeValue)) {
+    add(element: Element, core?: CuiCore): void {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
-        element.setAttribute(this.#attributeName, this.#attributeValue)
+        element.setAttribute(this._attributeName, this._attributeValue)
     }
 
-    remove(element: Element, utils?: CuiUtils): void {
-        if (!are(element, this.#attributeName, this.#attributeValue)) {
+    remove(element: Element, core?: CuiCore): void {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
-        if (element.hasAttribute(this.#attributeName)) {
-            element.removeAttribute(this.#attributeName)
+        if (element.hasAttribute(this._attributeName)) {
+            element.removeAttribute(this._attributeName)
         }
 
     }
 
-    toggle(element: Element, utils?: CuiUtils): void {
-        if (!are(element, this.#attributeName, this.#attributeValue)) {
+    toggle(element: Element, core?: CuiCore): void {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
-        if (element.hasAttribute(this.#attributeName)) {
-            element.removeAttribute(this.#attributeName)
+        if (element.hasAttribute(this._attributeName)) {
+            element.removeAttribute(this._attributeName)
         } else {
-            element.setAttribute(this.#attributeName, this.#attributeValue)
+            element.setAttribute(this._attributeName, this._attributeValue)
         }
     }
 }
 
 
 export class StyleAction implements ICuiComponentAction {
-    #attributeName: string;
-    #attributeValue: string;
+    private _attributeName: string;
+    private _attributeValue: string;
     constructor(attribute: string) {
-        [this.#attributeName, this.#attributeValue] = splitColon(attribute);
+        [this._attributeName, this._attributeValue] = splitColon(attribute);
     }
 
-    add(element: Element, utils?: CuiUtils): void {
-        if (!are(element, this.#attributeName, this.#attributeValue)) {
+    add(element: Element, core?: CuiCore): void {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
         let el = element as any;
-        if (el.style && !el.style[this.#attributeName]) {
-            el.style[this.#attributeName] = this.#attributeValue;
+        if (el.style && !el.style[this._attributeName]) {
+            el.style[this._attributeName] = this._attributeValue;
         }
 
     }
 
-    remove(element: Element, utils?: CuiUtils): void {
-        if (!are(element, this.#attributeName, this.#attributeValue)) {
+    remove(element: Element, core?: CuiCore): void {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
         let el = element as any;
-        if (el.style && el.style[this.#attributeName]) {
-            el.style[this.#attributeName] = "";
+        if (el.style && el.style[this._attributeName]) {
+            el.style[this._attributeName] = "";
         }
 
     }
 
-    toggle(element: Element, utils?: CuiUtils): void {
-        if (!are(element, this.#attributeName, this.#attributeValue)) {
+    toggle(element: Element, core?: CuiCore): void {
+        if (!are(element, this._attributeName, this._attributeValue)) {
             return;
         }
         let el = element as any;
         if (!el.style) {
             return;
         }
-        if (!el.style[this.#attributeName]) {
-            el.style[this.#attributeName] = this.#attributeValue;
+        if (!el.style[this._attributeName]) {
+            el.style[this._attributeName] = this._attributeValue;
         } else {
-            delete el.style[this.#attributeName];
+            delete el.style[this._attributeName];
         }
     }
 }
@@ -180,18 +180,18 @@ export class DummyAction implements ICuiComponentAction {
     constructor() {
     }
 
-    add(element: Element, utils?: CuiUtils): void {
+    add(element: Element, utils?: CuiCore): void {
 
     }
 
-    remove(element: Element, utils?: CuiUtils): void {
+    remove(element: Element, utils?: CuiCore): void {
     }
 
-    toggle(element: Element, utils?: CuiUtils): void {
+    toggle(element: Element, utils?: CuiCore): void {
     }
 }
 
-export class CuiActionsFatory {
+export class CuiActionsFactory {
     public static get(value: string): ICuiComponentAction {
         if (!is(value)) {
             return new DummyAction();
@@ -219,7 +219,7 @@ export class CuiActionsListFactory {
         }
         const split = value.split(',');
         return split.map(single => {
-            return CuiActionsFatory.get(single.trim());
+            return CuiActionsFactory.get(single.trim());
         })
     }
 }

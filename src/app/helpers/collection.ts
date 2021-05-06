@@ -5,25 +5,25 @@ import { ICuiDevelopmentTool } from "../../core/development/interfaces";
 import { CuiDevtoolFactory } from "../../core/development/factory";
 
 export class CollectionManagerHelper {
-    #elements: Element[];
-    #log: ICuiDevelopmentTool;
-    #isLocked: boolean;
-    #toggleClass: string;
-    #interactions: IUIInteractionProvider;
+    private _elements: Element[];
+    private _log: ICuiDevelopmentTool;
+    private _isLocked: boolean;
+    private _toggleClass: string;
+    private _interactions: IUIInteractionProvider;
     constructor(interactions: IUIInteractionProvider) {
-        this.#interactions = interactions;
-        this.#log = CuiDevtoolFactory.get('CollectionManager');
-        this.#elements = [];
-        this.#isLocked = false;
-        this.#toggleClass = "";
+        this._interactions = interactions;
+        this._log = CuiDevtoolFactory.get('CollectionManager');
+        this._elements = [];
+        this._isLocked = false;
+        this._toggleClass = "";
     }
 
     setElements(elements: Element[]) {
-        this.#elements = elements;
+        this._elements = elements;
     }
 
     setToggle(className: string) {
-        this.#toggleClass = className;
+        this._toggleClass = className;
     }
 
     addAnimationClass(currentElement: Element, nextElement: Element, animIn: string, animOut: string,): void {
@@ -36,8 +36,8 @@ export class CollectionManagerHelper {
         nextElement.classList.remove(CLASSES.animProgress);
         currentElement.classList.remove(animOut);
         nextElement.classList.remove(animIn);
-        currentElement.classList.remove(this.#toggleClass);
-        nextElement.classList.add(this.#toggleClass);
+        currentElement.classList.remove(this._toggleClass);
+        nextElement.classList.add(this._toggleClass);
     }
 
     verifyIndex(index: number, current: number, count: number): boolean {
@@ -46,35 +46,35 @@ export class CollectionManagerHelper {
 
     async setCurrent(newIndex: number, current: number): Promise<boolean> {
         this.lock();
-        this.#log.debug(`Switching index from: ${current} to ${newIndex}`)
+        this._log.debug(`Switching index from: ${current} to ${newIndex}`)
         if (current > -1)
-            this.#elements[current].classList.remove(this.#toggleClass);
-        this.#elements[newIndex].classList.add(this.#toggleClass);
+            this._elements[current].classList.remove(this._toggleClass);
+        this._elements[newIndex].classList.add(this._toggleClass);
         this.unlock();
         return true;
     }
 
     async setCurrentWithAnimation(newIndex: number, animClassIn: string, animClassOut: string, duration: number, current: number): Promise<boolean> {
         this.lock()
-        this.#log.debug(`Switching index from: ${current} to ${newIndex}`)
+        this._log.debug(`Switching index from: ${current} to ${newIndex}`)
 
-        const currentElement = this.#elements[current];
-        const nextElement = this.#elements[newIndex];
-        this.#interactions.mutate(this.addAnimationClass, this, currentElement, nextElement, animClassIn, animClassOut);
+        const currentElement = this._elements[current];
+        const nextElement = this._elements[newIndex];
+        this._interactions.mutate(this.addAnimationClass, this, currentElement, nextElement, animClassIn, animClassOut);
         setTimeout(() => {
-            this.#interactions.mutate(this.setFinalClasses, this, currentElement, nextElement, animClassIn, animClassOut)
+            this._interactions.mutate(this.setFinalClasses, this, currentElement, nextElement, animClassIn, animClassOut)
             this.unlock();
         }, duration)
         return true;
     }
 
     getCurrentIndex(): number {
-        if (!is(this.#toggleClass)) {
+        if (!is(this._toggleClass)) {
             return -1;
         }
         let len = this.count();
         for (let i = 0; i < len; i++) {
-            if (this.#elements[i].classList.contains(this.#toggleClass)) {
+            if (this._elements[i].classList.contains(this._toggleClass)) {
                 return i;
             }
         }
@@ -82,33 +82,33 @@ export class CollectionManagerHelper {
     }
 
     elements(): Element[] {
-        return this.#elements;
+        return this._elements;
     }
 
     check(): boolean {
-        if (this.#isLocked) {
-            this.#log.warning("Object locked. Operation in progress", "Check");
+        if (this._isLocked) {
+            this._log.warning("Object locked. Operation in progress", "Check");
             return false;
-        } else if (!is(this.#toggleClass)) {
-            this.#log.warning("Toggle is not set. Call setToggleClass", "Check");
+        } else if (!is(this._toggleClass)) {
+            this._log.warning("Toggle is not set. Call setToggleClass", "Check");
             return false;
         } else if (this.count() <= 0) {
-            this.#log.warning("Elements list is empty", "Check");
+            this._log.warning("Elements list is empty", "Check");
             return false;
         }
         return true;
     }
 
     count(): number {
-        return this.#elements ? this.#elements.length : -1;
+        return this._elements ? this._elements.length : -1;
     }
 
     lock() {
-        this.#isLocked = true;
+        this._isLocked = true;
     }
 
     unlock() {
-        this.#isLocked = false
+        this._isLocked = false
     }
 
 

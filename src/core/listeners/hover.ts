@@ -7,86 +7,86 @@ export interface CuiHoverEvent {
     timestamp: number;
 }
 export class CuiHoverListener implements ICuiEventListener<CuiHoverEvent> {
-    #target: Element;
-    #callback: ((t: CuiHoverEvent) => void) | undefined;
-    #inProgress: boolean;
-    #isHovering: boolean;
-    #isAttached: boolean;
-    #onOverBound: (ev: MouseEvent) => void;
-    #onMoveBound: (ev: MouseEvent) => void;
-    #onOutBound: (ev: MouseEvent) => void;
+    private _target: Element;
+    private _callback: ((t: CuiHoverEvent) => void) | undefined;
+    private _inProgress: boolean;
+    private _isHovering: boolean;
+    private _isAttached: boolean;
+    private _onOverBound: (ev: MouseEvent) => void;
+    private _onMoveBound: (ev: MouseEvent) => void;
+    private _onOutBound: (ev: MouseEvent) => void;
 
     constructor(target: Element) {
-        this.#target = target;
-        this.#inProgress = false;
-        this.#isHovering = false;
-        this.#isAttached = false;
-        this.#callback = undefined;
+        this._target = target;
+        this._inProgress = false;
+        this._isHovering = false;
+        this._isAttached = false;
+        this._callback = undefined;
 
-        this.#onMoveBound = this.onMouseMove.bind(this);
-        this.#onOutBound = this.onMouseOut.bind(this);
-        this.#onOverBound = this.onMouseOver.bind(this);
+        this._onMoveBound = this.onMouseMove.bind(this);
+        this._onOutBound = this.onMouseOut.bind(this);
+        this._onOverBound = this.onMouseOver.bind(this);
 
     }
 
     setCallback(callback: (t: CuiHoverEvent) => void): void {
-        this.#callback = callback;
+        this._callback = callback;
     }
 
     isInProgress(): boolean {
-        return this.#inProgress;
+        return this._inProgress;
     }
     attach(): void {
         // @ts-ignore
-        this.#target.addEventListener("mouseover", this.#onOverBound);
+        this._target.addEventListener("mouseover", this._onOverBound);
         // @ts-ignore
-        this.#target.addEventListener("mousemove", this.#onMoveBound);
+        this._target.addEventListener("mousemove", this._onMoveBound);
         // @ts-ignore
-        this.#target.addEventListener("mouseout", this.#onOutBound);
-        this.#isAttached = true;
+        this._target.addEventListener("mouseout", this._onOutBound);
+        this._isAttached = true;
     }
 
     detach(): void {
         // @ts-ignore
-        this.#target.removeEventListener("mouseover", this.#onOverBound);
+        this._target.removeEventListener("mouseover", this._onOverBound);
         // @ts-ignore
-        this.#target.removeEventListener("mousemove", this.#onMoveBound);
+        this._target.removeEventListener("mousemove", this._onMoveBound);
         // @ts-ignore
-        this.#target.removeEventListener("mouseout", this.#onOutBound);
-        this.#isAttached = false;
+        this._target.removeEventListener("mouseout", this._onOutBound);
+        this._isAttached = false;
     }
 
     private emit(mouseEvent: MouseEvent, force: boolean) {
-        if (!are(this.#callback)) {
+        if (!are(this._callback)) {
             return;
         }
-        if (!force && this.#inProgress) {
+        if (!force && this._inProgress) {
             return;
         }
-        this.#inProgress = true;
+        this._inProgress = true;
         window.requestAnimationFrame(this.invoke.bind(this, {
-            isHovering: this.#isHovering,
+            isHovering: this._isHovering,
             event: mouseEvent,
             timestamp: Date.now()
         }))
     }
 
     isAttached() {
-        return this.#isAttached;
+        return this._isAttached;
     }
     private invoke(ev: CuiHoverEvent) {
-        if (this.#callback)
-            this.#callback(ev);
-        this.#inProgress = false;
+        if (this._callback)
+            this._callback(ev);
+        this._inProgress = false;
     }
 
     private onMouseOver(ev: MouseEvent) {
-        this.#isHovering = true;
+        this._isHovering = true;
         this.emit(ev, true);
     }
 
     private onMouseOut(ev: MouseEvent) {
-        this.#isHovering = false;
+        this._isHovering = false;
         this.emit(ev, true);
     }
 

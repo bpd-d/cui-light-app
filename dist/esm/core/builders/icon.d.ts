@@ -1,5 +1,7 @@
 export declare class IconBuilder {
-    #private;
+    _element: string;
+    _scale: number;
+    _appender: IconScaleAppender;
     constructor(svgString: string);
     setScale(scale: number): IconBuilder;
     build(): Element | null;

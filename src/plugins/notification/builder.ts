@@ -1,6 +1,6 @@
 import { IconBuilder } from "../../core/builders/icon";
 import { ElementBuilder } from "../../core/builders/element";
-import { CuiUtils } from "../../core/models/utils";
+import { CuiCore } from "../../core/models/core";
 import { are, is } from "../../core/utils/functions";
 import { CuiNotificationType, ICuiNotification, ICuiNotificationAction } from "./interfaces";
 import { CuiDevtoolFactory } from "../../core/development/factory";
@@ -10,7 +10,7 @@ import { CuiDevtoolFactory } from "../../core/development/factory";
 const closeIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 20 20\" width=\"20\" height=\"20\"><path d=\"M 3,3 17,17\"></path><path d=\"M 17,3 3,17\"></path></svg>";
 
 
-export default async function getNotification(data: ICuiNotification, utils: CuiUtils, cache: any, onClose: () => void): Promise<HTMLElement | undefined> {
+export default async function getNotification(data: ICuiNotification, utils: CuiCore, cache: any, onClose: () => void): Promise<HTMLElement | undefined> {
     let prefix = utils.setup.prefix;
 
     if (!are(data.title, data.id)) {

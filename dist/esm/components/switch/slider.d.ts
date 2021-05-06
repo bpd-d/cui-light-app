@@ -1,7 +1,6 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable, ICuiSwitchable } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
-import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
-import { ICuiMoveData } from "../../core/listeners/move";
+import { ICuiComponent, ICuiParsable, ICuiSwitchable } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 export declare class CuiSliderArgs extends CuiAutoParseArgs implements ICuiParsable {
     targets: string;
@@ -11,26 +10,39 @@ export declare class CuiSliderArgs extends CuiAutoParseArgs implements ICuiParsa
     height: 'auto' | string;
     animation: string;
     loop: boolean;
+    swipeRatio: number;
+    keyChange: boolean;
     constructor(prefix: string, timeout?: number);
 }
-export declare class CuiSliderComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
-}
-export declare class CuiSliderHandler extends CuiMutableHandler<CuiSliderArgs> implements ICuiSwitchable {
-    #private;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
-    onMutation(record: CuiChildMutation): void;
-    /**
-     * Move listener callback
-     * @param data move listener data
-     */
-    onMove(data: ICuiMoveData): void;
+export declare function CuiSliderComponent(prefix?: string): ICuiComponent;
+export declare class CuiSliderHandler extends CuiHandlerBase<CuiSliderArgs> implements ICuiSwitchable {
+    private _targets;
+    private _currentIdx;
+    private _links;
+    private _task;
+    private _current;
+    private _nextIdx;
+    private _nextElement;
+    private _currSlider;
+    private _nextSlider;
+    private _animationDef;
+    private _targetsCount;
+    private _keysPerformer;
+    private _movePerformer;
+    private _busFacade;
+    private _interactions;
+    private _styles;
+    private _mutationPerformer;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string);
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
+    onMutation(record: MutationRecord[]): void;
+    private handleUpdate;
+    private setElementHeight;
+    private onDown;
+    private onMove;
+    private onUp;
     adjustMoveRatio(ratio: number): number;
     /**
      * Api method to switch childrens
@@ -46,7 +58,9 @@ export declare class CuiSliderHandler extends CuiMutableHandler<CuiSliderArgs> i
     onAnimationFinish(element: Element | undefined, reverted: boolean, errorOccured: boolean): void;
     onPushSwitch(index: string): false | undefined;
     getActiveIndex(): void;
+    clearSlideData(): void;
     getElementHeight(current: Element): string;
+    setKeyCombo(flag: boolean): void;
     /**
      * Queries targets
      */

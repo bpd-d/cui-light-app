@@ -1,7 +1,7 @@
 import { ElementManager } from "../../app/managers/element";
 import { ElementBuilder } from "../../core/builders/element";
 import { CuiContext } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { CuiCore } from "../../core/models/core";
 import { is } from "../../core/utils/functions";
 import { DialogBuilder } from "./builder";
 import { CuiAlertOptions, CuiAlertType } from "./models";
@@ -16,7 +16,7 @@ interface AlertCallbacks {
 
 abstract class CuiAlertHandlerBase implements ICuiAlertHandler, CuiContext {
     #callbacks: AlertCallbacks;
-    #utils: CuiUtils;
+    #utils: CuiCore;
     #id: string;
     #manager: ElementManager | undefined;
     closeStr: string;
@@ -26,7 +26,7 @@ abstract class CuiAlertHandlerBase implements ICuiAlertHandler, CuiContext {
     prefix: string;
     reverse: boolean;
     #attid: string | null;
-    constructor(setup: CuiUtils, id: string, data: CuiAlertOptions) {
+    constructor(setup: CuiCore, id: string, data: CuiAlertOptions) {
         this.#callbacks = {
             "yes": data.onYes,
             "no": data.onNo,
@@ -118,7 +118,7 @@ abstract class CuiAlertHandlerBase implements ICuiAlertHandler, CuiContext {
 
 export class CuiAlertHandler extends CuiAlertHandlerBase {
     #id: string;
-    constructor(setup: CuiUtils, id: string, data: CuiAlertOptions) {
+    constructor(setup: CuiCore, id: string, data: CuiAlertOptions) {
         super(setup, id, data);
         this.#id = id;
         this.reverse = data.reverse ?? false;
@@ -146,7 +146,7 @@ export class CuiAlertHandler extends CuiAlertHandlerBase {
 
 export class CuiInfoAlertUpHandler extends CuiAlertHandlerBase {
     #id: string;
-    constructor(setup: CuiUtils, id: string, data: CuiAlertOptions) {
+    constructor(setup: CuiCore, id: string, data: CuiAlertOptions) {
         super(setup, id, data);
         this.#id = id;
         this.content = data.message;;
@@ -172,7 +172,7 @@ export class CuiInfoAlertUpHandler extends CuiAlertHandlerBase {
 
 export class CuiYesNoPopUpHandler extends CuiAlertHandlerBase {
     #id: string;
-    constructor(setup: CuiUtils, id: string, data: CuiAlertOptions) {
+    constructor(setup: CuiCore, id: string, data: CuiAlertOptions) {
         super(setup, id, data);
         this.#id = id;
         this.content = data.message;
@@ -202,7 +202,7 @@ export class CuiYesNoPopUpHandler extends CuiAlertHandlerBase {
 }
 
 export class CuiAlertFactory {
-    static get(id: string, type: CuiAlertType, data: CuiAlertOptions, utils: CuiUtils): ICuiAlertHandler | undefined {
+    static get(id: string, type: CuiAlertType, data: CuiAlertOptions, utils: CuiCore): ICuiAlertHandler | undefined {
         if (type === "Info") {
             return new CuiInfoAlertUpHandler(utils, id, data);
         } else if (type === 'YesNoCancel') {

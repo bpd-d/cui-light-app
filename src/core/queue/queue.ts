@@ -1,55 +1,55 @@
 import { CuiQueueCompareCallback, CuiQueueErrorCallback, ICuiQueue, ICuiQueueAdapter } from "./interfaces";
 
 export class CuiQueue<T> implements ICuiQueue<T> {
-    #items: T[];
-    #lock: boolean;
-    #adapter: ICuiQueueAdapter<T>;
-    #onError?: CuiQueueErrorCallback<T>;
-    #comparer?: CuiQueueCompareCallback<T>;
+    private _items: T[];
+    private _lock: boolean;
+    private _adapter: ICuiQueueAdapter<T>;
+    private _onError?: CuiQueueErrorCallback<T>;
+    private _comparer?: CuiQueueCompareCallback<T>;
 
     constructor(adapter: ICuiQueueAdapter<T>) {
-        this.#lock = false;
-        this.#items = [];
-        this.#adapter = adapter;
-        this.#comparer = undefined;
-        this.#onError = undefined;
+        this._lock = false;
+        this._items = [];
+        this._adapter = adapter;
+        this._comparer = undefined;
+        this._onError = undefined;
     }
 
     add(item: T): void {
-        this.#items.push(item);
-        if (this.#lock) {
+        this._items.push(item);
+        if (this._lock) {
             return;
         }
 
-        this.#lock = true;
+        this._lock = true;
         this.flush().then(() => {
-            this.#lock = false;
+            this._lock = false;
         })
     }
 
     delete(item: T): T | undefined {
-        const index = this.#items.findIndex(_item => this.compare(_item, item));
+        const index = this._items.findIndex(_item => this.compare(_item, item));
         if (index < 0) {
             return undefined;
         }
-        return this.#items.splice(index, 1)[0];
+        return this._items.splice(index, 1)[0];
     }
 
     isLocked(): boolean {
-        return this.#lock;
+        return this._lock;
     }
 
     setCompareCallback(callback: CuiQueueCompareCallback<T>) {
-        this.#comparer = callback;
+        this._comparer = callback;
     }
 
     onError(callback: CuiQueueErrorCallback<T>) {
-        this.#onError = callback;
+        this._onError = callback;
     }
 
     private compare(item1: T, item2: T): boolean {
-        if (this.#comparer) {
-            return this.#comparer(item1, item2)
+        if (this._comparer) {
+            return this._comparer(item1, item2)
         }
         return Object.is(item1, item2);
     }
@@ -60,7 +60,7 @@ export class CuiQueue<T> implements ICuiQueue<T> {
             return true;
         }
         try {
-            await this.#adapter.onFlush(items);
+            await this._adapter.onFlush(items);
         } catch (e) {
             this.callError(e, items);
         }
@@ -69,12 +69,12 @@ export class CuiQueue<T> implements ICuiQueue<T> {
     }
 
     private getItemsForFlush(): T[] {
-        if (this.#adapter.type === 'batch') {
-            let result = [...this.#items];
-            this.#items = []
+        if (this._adapter.type === 'batch') {
+            let result = [...this._items];
+            this._items = []
             return result;
         }
-        const item = this.#items.shift();
+        const item = this._items.shift();
         if (item) {
             return [item];
         }
@@ -82,8 +82,8 @@ export class CuiQueue<T> implements ICuiQueue<T> {
     }
 
     private callError(error: unknown, items?: T[]) {
-        if (this.#onError) {
-            this.#onError(error, items)
+        if (this._onError) {
+            this._onError(error, items)
         }
     }
 }

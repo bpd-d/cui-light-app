@@ -5,7 +5,14 @@ export interface CuiHoverEvent {
     timestamp: number;
 }
 export declare class CuiHoverListener implements ICuiEventListener<CuiHoverEvent> {
-    #private;
+    private _target;
+    private _callback;
+    private _inProgress;
+    private _isHovering;
+    private _isAttached;
+    private _onOverBound;
+    private _onMoveBound;
+    private _onOutBound;
     constructor(target: Element);
     setCallback(callback: (t: CuiHoverEvent) => void): void;
     isInProgress(): boolean;

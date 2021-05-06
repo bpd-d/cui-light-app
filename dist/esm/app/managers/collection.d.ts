@@ -1,6 +1,8 @@
 import { IUIInteractionProvider, CuiCachable } from "../../core/models/interfaces";
 export declare class CollectionManager implements CuiCachable {
-    #private;
+    private _log;
+    private _cDt;
+    private _helper;
     constructor(elements: Element[], interactions: IUIInteractionProvider);
     setToggle(className: string): void;
     setElements(elements: Element[]): void;

@@ -10,7 +10,7 @@ export interface EventBase {
 export interface ICuiMoveEvent extends EventBase, ICuiMoveData {
 }
 export interface ICuiKeyDownEvent extends EventBase {
-    ev: KeyboardEvent;
+    event: KeyboardEvent;
 }
 export interface ICuiGestureEvent extends EventBase {
     changeX: number;
@@ -66,7 +66,9 @@ export interface IntersectionHandlerEvent extends EventBase {
     entry: IntersectionObserverEntry;
     offset: number;
 }
-export interface InteractionEvent extends EventBase {
-    event: MouseEvent;
-    state: string;
+export interface InteractiveEvent<T> extends EventBase {
+    state: T;
+}
+export interface InteractionEvent<T> extends EventBase, InteractiveEvent<T> {
+    event: MouseEvent | null;
 }

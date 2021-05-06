@@ -1,14 +1,5 @@
-import { ICuiPlugin } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiPlugin } from "src/core/models/interfaces";
 export interface CuiResizeObserverPluginSetup {
     resizeThreshold?: number;
 }
-export declare class CuiResizeObserverPlugin implements ICuiPlugin {
-    #private;
-    description: string;
-    name: string;
-    setup: any;
-    constructor(setup: CuiResizeObserverPluginSetup);
-    init(utils: CuiUtils): void;
-    destroy(): void;
-}
+export declare function CuiResizeObserverPluginFn(setup: CuiResizeObserverPluginSetup): ICuiPlugin;

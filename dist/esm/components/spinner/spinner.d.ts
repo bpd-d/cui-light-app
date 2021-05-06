@@ -1,5 +1,5 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent, ICuiParsable } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 export declare class CuiSpinnerArgs extends CuiAutoParseArgs implements ICuiParsable {
@@ -7,16 +7,12 @@ export declare class CuiSpinnerArgs extends CuiAutoParseArgs implements ICuiPars
     scale: number;
     constructor();
 }
-export declare class CuiSpinnerComponent implements ICuiComponent {
-    #private;
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
-}
+export declare function CuiSpinnerComponent(prefix?: string): ICuiComponent;
 export declare class CuiSpinnerHandler extends CuiHandlerBase<CuiSpinnerArgs> {
-    #private;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string);
+    private _animationPauseClass;
+    private _busFacade;
+    private _interactionFacade;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string, prefix: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;

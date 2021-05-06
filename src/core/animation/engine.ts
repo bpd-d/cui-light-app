@@ -1,269 +1,111 @@
-import { is } from "../utils/functions";
-import { OpacityAnimator, TransformAnimator, PropertyAnimator, ColorAnimator, FilterAnimator } from "./animators";
-import { ICuiPropertyAnimator, AnimationProperty, AnimatorPropertyValue, ComplexAnimatorProperty, OnAnimationFinishCallback, ColorAnimatorProperty } from "./interfaces";
+import { getRangeValue, is } from "../utils/functions";
+import { CuiRAF } from "../utils/statics";
+import { AnimatorFactory } from "./factory";
+import { ICuiPropertyAnimator, AnimationProperty, AnimatorPropertyValue, ComplexAnimatorProperty, ICuiAnimationEngine, ICuiAnimationSetup, ICuiTimingFunction, ICuiSlideEngine } from "./interfaces";
 
 export type PropsTypes = AnimatorPropertyValue | ComplexAnimatorProperty;
 
-export class CuiAnimation {
-    #engine: CuiAnimationEngine;
-    #timeout: number;
-    #onError: ((e: Error) => void) | undefined;
-    constructor(element?: Element) {
-        this.#engine = new CuiAnimationEngine(true);
-        this.#onError = undefined;
-        this.#timeout = 0;
-        if (element) {
-            this.#engine.setElement(element);
-        }
+export class CuiTimeAnimationEngine implements ICuiAnimationEngine {
+    private _lock: boolean = false;
+    private _animationStart: number | null = null;
+    private _currentTimestamp: number | null = null;
+    private _timingFunction: ICuiTimingFunction;
+    constructor(calculator: ICuiTimingFunction) {
+        this._timingFunction = calculator;
     }
 
-    setElement(element: Element) {
-        this.#engine.setElement(element);
-    }
-
-    setTimeout(timeout: number) {
-        this.#timeout = timeout;
-    }
-
-    onError(callback: (e: Error) => void) {
-        this.#onError = callback;
-        this.#engine.setOnError(callback)
-    }
-    onFinish(callback: OnAnimationFinishCallback) {
-        this.#engine.onFinish(callback);
-    }
-
-    perform(props: AnimationProperty<PropsTypes>, timeout?: number, factor?: number) {
-        if (!is(props)) {
-            this.reportError(new Error("Animation property cannot be empty"))
-            return;
-        }
-        let animators = [];
-        try {
-            for (let prop in props) {
-                let animator = AnimatorFactory.get(prop);
-                if (!animator) return;
-                animator.setProperty(props[prop]);
-                animators.push(animator);
-                this.#engine.setAnimators(animators);
-                this.#engine.animate(timeout ?? this.#timeout)
+    animate(element: HTMLElement, animators: ICuiPropertyAnimator<PropsTypes>[], setup: ICuiAnimationSetup): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            if (this._lock) {
+                resolve(false);
+                return;
             }
-        } catch (e) {
-            this.reportError(e);
+            this._lock = true;
+            this._animationStart = setup.progress * setup.timeout + 0.0001;
+            //@ts-ignore
+            CuiRAF(this.performAsync.bind(this, element, animators, setup, resolve, reject))
+        })
+    }
+
+    update(progress: number, element: HTMLElement, animators: ICuiPropertyAnimator<PropsTypes>[]) {
+        const progressValue = this._timingFunction.calculateProgress(progress);
+        this.setValues(progressValue, element, animators)
+    }
+
+    private finish(element: HTMLElement, resolve: any) {
+        this._animationStart = null;
+        this._currentTimestamp = null;
+        this._lock = false;
+        resolve(true);
+    }
+
+    private setValues(progress: number, element: HTMLElement, animators: ICuiPropertyAnimator<PropsTypes>[]) {
+        animators.forEach(animator => animator.perform(element, progress, 1));
+    }
+
+    private performAsync(element: HTMLElement, animators: ICuiPropertyAnimator<PropsTypes>[], setup: ICuiAnimationSetup, resolve: any, reject: any, timestamp: number) {
+        if (this._animationStart === null) {
+            this.finish(element, resolve);
             return;
         }
-    }
-
-    private reportError(e: Error) {
-        if (this.#onError) {
-            this.#onError(e)
-        } else {
-            console.error(e);
+        if (!this._currentTimestamp) {
+            this._currentTimestamp = timestamp;
         }
+        const diff = timestamp - this._currentTimestamp;
+        this._animationStart = setup.revert ? this._animationStart - diff : this._animationStart + diff;
+        const timingprogress = this._animationStart / setup.timeout;
+        const progressValue = this._timingFunction.calculateProgress(timingprogress);
+        // Adjust progress value in case if calculator did not do it
+        const progress = getRangeValue(progressValue, 0, 1);
+        try {
+            this.setValues(progress, element, animators);
+        } catch (e) {
+            reject(e);
+        }
+        if (timingprogress > 0 && timingprogress < 1) {
+            this._currentTimestamp = timestamp;
+            //@ts-ignore
+            CuiRAF(this.performAsync.bind(this, element, animators, setup, resolve, reject))
+            return;
+        }
+        this.finish(element, resolve);
     }
 }
 
+export class CuiSwipeAnimationEngine implements ICuiSlideEngine {
 
-export class AnimatorFactory {
-    static get(id: string): ICuiPropertyAnimator<AnimatorPropertyValue | ComplexAnimatorProperty | ColorAnimatorProperty> | undefined {
-        if (!is(id)) {
-            return undefined;
-        }
-        if (id.includes('color')) {
-            return new ColorAnimator(id);
-        }
-        switch (id) {
-            case "opacity":
-                return new OpacityAnimator();
-            case "transform":
-                return new TransformAnimator();
-            case "filter":
-                return new FilterAnimator();
-            default:
-                return new PropertyAnimator(id);
-        }
+    private _element: HTMLElement | undefined;
+    private _animators: ICuiPropertyAnimator<PropsTypes>[];
+    private _animationEngine: ICuiAnimationEngine;
+
+    constructor(animationEngine: ICuiAnimationEngine, shouldCleanOnFinish?: boolean) {
+        this._element = undefined;
+        this._animators = [];
+        this._animationEngine = animationEngine;
     }
 
-}
-
-export class CuiAnimationEngine {
-    #onFinishCallback: OnAnimationFinishCallback | undefined;
-    #animators: ICuiPropertyAnimator<PropsTypes>[];
-    #lock: boolean;
-    // Needed in animation perform - set on first animation exec, cleaned on end
-    #animStartStamp: number | undefined;
-    #element: Element | undefined;
-    #cleanOnFinish: boolean;
-    #errorOccured: boolean;
-    #onError: ((e: Error) => void) | undefined;
-    constructor(cleanOnFinish?: boolean) {
-        this.#animators = [];
-        this.#element = undefined;
-        this.#animStartStamp = undefined;
-        this.#cleanOnFinish = cleanOnFinish ?? false;
-        this.#lock = false;
-        this.#onFinishCallback = undefined;
-        this.#errorOccured = false;
-        this.#onError = undefined;
+    move(progress: number): void {
+        if (!this._element || this._animators.length === 0) {
+            return;
+        }
+        this._animationEngine.update(progress, this._element as HTMLElement, this._animators);
     }
 
-    onFinish(callback: OnAnimationFinishCallback) {
-        this.#onFinishCallback = callback;
-    }
-
-    setAnimators(animators: ICuiPropertyAnimator<PropsTypes>[]) {
-        this.#animators = animators;
+    setElement(element: HTMLElement) {
+        this._element = element;
     }
 
     setProps(props: AnimationProperty<PropsTypes>) {
         if (!is(props)) {
             return;
         }
-        this.#animators = [];
-        try {
-            for (let prop in props) {
-                let animator = AnimatorFactory.get(prop);
-                if (!animator) return;
-                animator.setProperty(props[prop]);
-                this.#animators.push(animator);
-            }
-        } catch (e) {
-            this.reportError(e);
+        this._animators = [];
+        for (let prop in props) {
+            let animator = AnimatorFactory.get(prop);
+            if (!animator) return;
+            animator.setProperty(props[prop]);
+            this._animators.push(animator);
         }
-    }
-
-    setElement(element: Element) {
-        this.#element = element;
-    }
-
-    setOnError(callback: (e: Error) => void) {
-        this.#onError = callback;
-    }
-
-    animate(timeout: number, progress?: number, revert?: boolean): void {
-        if (this.#lock) {
-            return;
-        }
-        if (!this.#element || this.#animators.length === 0) {
-            this.reportError(new Error("Animation cannot be performed: element or animators are not set"));
-            return;
-        }
-        let animationProgress = progress ?? 0;
-        let shouldCalcRevert = revert ? revert : false;
-        this.#lock = true;
-        requestAnimationFrame(this.animateAsync.bind(this, timeout, animationProgress, shouldCalcRevert))
-    }
-
-    isLocked(): boolean {
-        return this.#lock;
-    }
-
-    private animateAsync(timeout: number, initialProgress: number, revert: boolean, timestamp: number) {
-        if (!this.#animStartStamp) {
-            this.#animStartStamp = timestamp;
-        }
-
-        let pr = timestamp - this.#animStartStamp;
-        let animationProgress = pr / timeout;
-        let currProgress = 0;
-        if (initialProgress === 0) {
-            currProgress = animationProgress;
-        } else {
-            currProgress = revert ? initialProgress - (animationProgress * initialProgress) : initialProgress + (animationProgress * initialProgress)
-        }
-        this.callUpdate(revert ? Math.max(currProgress, 0) : Math.min(currProgress, 1), 1);
-        if (pr < timeout && !this.#errorOccured) {
-            requestAnimationFrame(this.animateAsync.bind(this, timeout, initialProgress, revert))
-        } else {
-            this.endAnimation(revert);
-        }
-    }
-
-    private endAnimation(reverted: boolean) {
-        if (this.#cleanOnFinish && this.#element) {
-            this.#element.removeAttribute("style");
-        }
-        if (this.#onFinishCallback) {
-            this.#onFinishCallback(this.#element, reverted, this.#errorOccured);
-        }
-        this.#errorOccured = false;
-        this.#animStartStamp = undefined;
-        this.#lock = false;
-    }
-
-    private callUpdate(progress: number, factor: number) {
-        try {
-            this.#animators.forEach(animator => animator.perform(this.#element, progress, factor));
-        } catch (e) {
-            this.reportError(e);
-            this.#errorOccured = true;
-        }
-
-    }
-
-    private reportError(e: Error) {
-        if (this.#onError) {
-            this.#onError(e);
-        } else {
-            console.error("An error occured in CuiAnimtionEngine");
-            console.error(e);
-        }
-    }
-}
-
-
-
-export class CuiSwipeAnimationEngine {
-    #element: Element | undefined;
-    #animators: ICuiPropertyAnimator<PropsTypes>[];
-    #animationEngine: CuiAnimationEngine;
-    #onError: ((e: Error) => void) | undefined;
-    constructor(shouldCleanOnFinish?: boolean) {
-        this.#element = undefined;
-        this.#animators = [];
-        this.#animationEngine = new CuiAnimationEngine(shouldCleanOnFinish);
-        this.#onError = undefined;
-    }
-
-    setElement(element: Element) {
-        this.#element = element;
-    }
-
-    setOnFinish(callback: OnAnimationFinishCallback) {
-        this.#animationEngine.onFinish(callback);
-    }
-
-    setOnError(callback: (e: Error) => void) {
-        this.#onError = callback;
-        this.#animationEngine.setOnError(callback);
-    }
-
-    setProps(props: AnimationProperty<PropsTypes>) {
-        if (!is(props)) {
-            return;
-        }
-        this.#animators = [];
-        try {
-            for (let prop in props) {
-                let animator = AnimatorFactory.get(prop);
-                if (!animator) return;
-                animator.setProperty(props[prop]);
-                this.#animators.push(animator);
-            }
-        } catch (e) {
-            this.reportError(e);
-        }
-    }
-
-    /**
-     * Perform single update on animators
-     * @param progress - progress value to be set to animators 0..1
-     */
-    update(progress: number) {
-        if (!this.#element || this.#animators.length === 0) {
-            return;
-        }
-        this.#animators.forEach(animator => animator.perform(this.#element, Math.min(progress, 1), 1))
     }
 
     /**
@@ -271,7 +113,7 @@ export class CuiSwipeAnimationEngine {
      * @param progress - progress value to be set to animators 0..1
      */
     updateAsync(progress: number) {
-        requestAnimationFrame(this.update.bind(this, progress));
+        CuiRAF(this.move.bind(this, progress));
     }
 
     /**
@@ -280,19 +122,10 @@ export class CuiSwipeAnimationEngine {
      * @param timeout - time for animation to perform
      * @param revert - whether animation should return back to 0 or progress to the end
      */
-    finish(progress: number, timeout: number, revert: boolean) {
-        if (this.#element)
-            this.#animationEngine.setElement(this.#element);
-        this.#animationEngine.setAnimators(this.#animators);
-        this.#animationEngine.animate(timeout, progress, revert);
-    }
-
-    private reportError(e: Error) {
-        if (this.#onError) {
-            this.#onError(e);
-        } else {
-            console.log(e)
+    async finish(setup: ICuiAnimationSetup): Promise<boolean> {
+        if (!this._element || this._animators.length === 0) {
+            return false;
         }
+        return this._animationEngine.animate(this._element, this._animators, setup);
     }
-
 }

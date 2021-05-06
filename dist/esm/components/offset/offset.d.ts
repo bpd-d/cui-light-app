@@ -1,5 +1,5 @@
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 /**
@@ -33,29 +33,28 @@ export declare class CuiOffsetArgs extends CuiAutoParseArgs {
     action: string;
     offsetY: number;
     offsetX: number;
-    root: boolean;
     mode: "static" | "dynamic";
     constructor();
 }
-export declare class CuiOffsetComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
-}
+export declare function CuiOffsetComponent(prefix?: string): ICuiComponent;
 export declare class CuiOffsetHandler extends CuiHandlerBase<CuiOffsetArgs> {
-    #private;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
+    private _targets;
+    private _matched;
+    private _actions;
+    private _root;
+    private _modeHandler;
+    private _busFacade;
+    private _interactions;
+    private _performer;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
-    private onScroll;
     private parseAttribute;
     private checkAndPerformActions;
     private act;
+    private actForTargets;
     private callEvent;
-    private getRoot;
-    private exceededThreshold;
     private calcaRatio;
-    private getTarget;
+    private getTargets;
 }

@@ -3,29 +3,29 @@ import { is } from "../utils/functions";
 import { ElementBox, ICuiPositionEvaluator } from "./interfaces";
 
 export class CuiBasePositionEvaluator implements ICuiPositionEvaluator {
-    #box: ElementBox | undefined;
-    #targetWidth: number;
-    #targetHeight: number;
-    #margin: number;
+    private _box: ElementBox | undefined;
+    private _targetWidth: number;
+    private _targetHeight: number;
+    private _margin: number;
     constructor() {
-        this.#targetHeight = -1;
-        this.#targetWidth = -1;
-        this.#box = undefined;
-        this.#margin = 0;
+        this._targetHeight = -1;
+        this._targetWidth = -1;
+        this._box = undefined;
+        this._margin = 0;
     }
 
 
     setElementBox(box: ElementBox): void {
-        this.#box = box;
+        this._box = box;
     }
 
     setTarget(targetBox: ElementBox): void {
-        this.#targetWidth = targetBox.width;
-        this.#targetHeight = targetBox.height;
+        this._targetWidth = targetBox.width;
+        this._targetHeight = targetBox.height;
     }
 
     setMargin(value: number) {
-        this.#margin = value;
+        this._margin = value;
     }
 
     getVerticalPosition(value: string): number {
@@ -60,7 +60,7 @@ export class CuiBasePositionEvaluator implements ICuiPositionEvaluator {
 
         if ((initial === 'top' || initial === "middle") && number < 0) {
             return [this.getVerticalPosition("bottom"), "bottom"]
-        } else if ((initial === "bottom" || initial === "middle") && number + this.#targetHeight > innerHeight) {
+        } else if ((initial === "bottom" || initial === "middle") && number + this._targetHeight > innerHeight) {
             return [this.getVerticalPosition("top"), "top"]
         }
         return [number, initial];
@@ -72,7 +72,7 @@ export class CuiBasePositionEvaluator implements ICuiPositionEvaluator {
 
         if ((initial === 'right' || initial === "center") && number < 0) {
             return [this.getHorizontalPosition("left"), "left"]
-        } else if ((initial === 'left' || initial === "center") && number + this.#targetWidth > innerWidth) {
+        } else if ((initial === 'left' || initial === "center") && number + this._targetWidth > innerWidth) {
             return [this.getHorizontalPosition("right"), "right"]
         }
         return [number, initial];
@@ -81,48 +81,48 @@ export class CuiBasePositionEvaluator implements ICuiPositionEvaluator {
     private getTopPosition(): number {
         this.throwIfNotValid("getTopPosition");
         // @ts-ignore - already checked in validate
-        return this.#box.top - this.#margin - this.#targetHeight;
+        return this._box.top - this._margin - this._targetHeight;
     }
 
     private getBottomPosition(): number {
         this.throwIfNotValid("getBottomPosition");
         // @ts-ignore - already checked in validate
-        return this.#box.top + this.#box.height + this.#margin;
+        return this._box.top + this._box.height + this._margin;
     }
 
     private getMiddlePosition(): number {
         this.throwIfNotValid("getMiddlePosition");
         // @ts-ignore - already checked in validate
-        return (this.#box.top + this.#box.height / 2) - this.#targetHeight / 2;
+        return (this._box.top + this._box.height / 2) - this._targetHeight / 2;
     }
 
     private getLeftPosition(): number {
         this.throwIfNotValid("getLeftPosition");
         // @ts-ignore - already checked in validate
-        return this.#box.left;
+        return this._box.left;
     }
 
     private getRightPosition(): number {
         this.throwIfNotValid("getRightPosition");
         // @ts-ignore - already checked in validate
-        return this.#box.left + this.#box.width - this.#targetWidth;
+        return this._box.left + this._box.width - this._targetWidth;
     }
 
     private getCenterPosition(): number {
         this.throwIfNotValid("getCenterPosition");
         // @ts-ignore - already checked in validate
-        return (this.#box.left + this.#box.width / 2) - this.#targetWidth / 2;
+        return (this._box.left + this._box.width / 2) - this._targetWidth / 2;
     }
 
     private validate(): boolean {
-        return is(this.#box) && this.#targetHeight > 0 && this.#targetWidth > 0;
+        return is(this._box) && this._targetHeight > 0 && this._targetWidth > 0;
     }
 
 
 
     private throwIfNotValid(method: string): void {
         if (!this.validate()) {
-            throw new CuiPositionError(`[${method}] Position cannot be calculated: missing data [width: ${this.#targetWidth}][height: ${this.#targetHeight}]`)
+            throw new CuiPositionError(`[${method}] Position cannot be calculated: missing data [width: ${this._targetWidth}][height: ${this._targetHeight}]`)
         }
     }
 }

@@ -7,62 +7,43 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _items, _lock, _adapter, _onError, _comparer;
 export class CuiQueue {
     constructor(adapter) {
-        _items.set(this, void 0);
-        _lock.set(this, void 0);
-        _adapter.set(this, void 0);
-        _onError.set(this, void 0);
-        _comparer.set(this, void 0);
-        __classPrivateFieldSet(this, _lock, false);
-        __classPrivateFieldSet(this, _items, []);
-        __classPrivateFieldSet(this, _adapter, adapter);
-        __classPrivateFieldSet(this, _comparer, undefined);
-        __classPrivateFieldSet(this, _onError, undefined);
+        this._lock = false;
+        this._items = [];
+        this._adapter = adapter;
+        this._comparer = undefined;
+        this._onError = undefined;
     }
     add(item) {
-        __classPrivateFieldGet(this, _items).push(item);
-        if (__classPrivateFieldGet(this, _lock)) {
+        this._items.push(item);
+        if (this._lock) {
             return;
         }
-        __classPrivateFieldSet(this, _lock, true);
+        this._lock = true;
         this.flush().then(() => {
-            __classPrivateFieldSet(this, _lock, false);
+            this._lock = false;
         });
     }
     delete(item) {
-        const index = __classPrivateFieldGet(this, _items).findIndex(_item => this.compare(_item, item));
+        const index = this._items.findIndex(_item => this.compare(_item, item));
         if (index < 0) {
             return undefined;
         }
-        return __classPrivateFieldGet(this, _items).splice(index, 1)[0];
+        return this._items.splice(index, 1)[0];
     }
     isLocked() {
-        return __classPrivateFieldGet(this, _lock);
+        return this._lock;
     }
     setCompareCallback(callback) {
-        __classPrivateFieldSet(this, _comparer, callback);
+        this._comparer = callback;
     }
     onError(callback) {
-        __classPrivateFieldSet(this, _onError, callback);
+        this._onError = callback;
     }
     compare(item1, item2) {
-        if (__classPrivateFieldGet(this, _comparer)) {
-            return __classPrivateFieldGet(this, _comparer).call(this, item1, item2);
+        if (this._comparer) {
+            return this._comparer(item1, item2);
         }
         return Object.is(item1, item2);
     }
@@ -73,7 +54,7 @@ export class CuiQueue {
                 return true;
             }
             try {
-                yield __classPrivateFieldGet(this, _adapter).onFlush(items);
+                yield this._adapter.onFlush(items);
             }
             catch (e) {
                 this.callError(e, items);
@@ -82,21 +63,20 @@ export class CuiQueue {
         });
     }
     getItemsForFlush() {
-        if (__classPrivateFieldGet(this, _adapter).type === 'batch') {
-            let result = [...__classPrivateFieldGet(this, _items)];
-            __classPrivateFieldSet(this, _items, []);
+        if (this._adapter.type === 'batch') {
+            let result = [...this._items];
+            this._items = [];
             return result;
         }
-        const item = __classPrivateFieldGet(this, _items).shift();
+        const item = this._items.shift();
         if (item) {
             return [item];
         }
         return [];
     }
     callError(error, items) {
-        if (__classPrivateFieldGet(this, _onError)) {
-            __classPrivateFieldGet(this, _onError).call(this, error, items);
+        if (this._onError) {
+            this._onError(error, items);
         }
     }
 }
-_items = new WeakMap(), _lock = new WeakMap(), _adapter = new WeakMap(), _onError = new WeakMap(), _comparer = new WeakMap();

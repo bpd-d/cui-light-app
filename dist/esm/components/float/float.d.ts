@@ -1,9 +1,14 @@
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
-import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
-import { ICuiMoveData } from "../../core/listeners/move";
+import { ICuiComponent, ICuiKeysCombo } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { ICuiFloatActionCalculator, ICuiFloatSwipingAction } from "./helpers";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-export declare class CuiFloatArgs extends CuiAutoParseArgs implements CuiInteractableArgs {
+import { ICuiMoveExtensionPerformer } from "../extensions/move/performer";
+import { ICuiEventBusFacade, ICuiInteractionsFacade, ICuiStyleHelper } from "../../core/handlers/extensions/facades";
+import { ICuiActionExtensionPerformer } from "../extensions/performers";
+import { ICuiKeyActionPerformer } from "../extensions/keys/performer";
+import { ICuiParser } from "../../core/utils/parsers/interfaces";
+export declare class CuiFloatArgs extends CuiAutoParseArgs {
     escClose: boolean;
     timeout: number;
     openAct: string;
@@ -11,29 +16,31 @@ export declare class CuiFloatArgs extends CuiAutoParseArgs implements CuiInterac
     keyClose: string;
     constructor(prefix: string, defTimeout?: number);
 }
-export declare class CuiFloatComponent implements ICuiComponent {
-    #private;
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
-}
-export declare class CuiFloatHandler extends CuiInteractableHandler<CuiFloatArgs> {
-    #private;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
-    onBeforeOpen(): boolean;
-    onAfterOpen(): void;
-    onAfterClose(): void;
-    onBeforeClose(): boolean;
-    onMove(ev: ICuiMoveData): void;
-    onMouseDown(ev: ICuiMoveData): void;
-    onMouseMove(ev: ICuiMoveData): void;
-    onMouseUp(ev: ICuiMoveData): void;
-    peform(ev: ICuiMoveData, callback: (element: HTMLElement, x: number, y: number, diffX: number, diffY: number) => void): void;
-    resize(element: HTMLElement, x: number, y: number, diffX: number, diffY: number): void;
-    move(element: HTMLElement, x: number, y: number, diffX: number, diffY: number): void;
-    fitsWindow(top: number, left: number, width: number, height: number): boolean;
+export declare function CuiFloatComponent(prefix?: string): ICuiComponent;
+export declare class CuiFloatHandler extends CuiHandlerBase<CuiFloatArgs> {
+    _prevX: number;
+    _prevY: number;
+    _prefix: string;
+    _positionCalculator: ICuiFloatActionCalculator;
+    _resizeCalculator: ICuiFloatActionCalculator;
+    _resizeBtn: HTMLElement | null;
+    _moveBtn: HTMLElement | null;
+    _movePerformer: ICuiMoveExtensionPerformer;
+    _busFacade: ICuiEventBusFacade;
+    _openActionPerformer: ICuiActionExtensionPerformer<any>;
+    _closeActionPerformer: ICuiActionExtensionPerformer<any>;
+    _keysPerformer: ICuiKeyActionPerformer;
+    _currentAction: ICuiFloatSwipingAction | undefined;
+    _interactions: ICuiInteractionsFacade;
+    _styles: ICuiStyleHelper;
+    _keyComboParser: ICuiParser<string, ICuiKeysCombo>;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string, prefix: string);
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
+    updateSetups(): void;
+    private onMouseDown;
+    private onMouseMove;
+    private onMouseUp;
+    private onCloseAction;
 }

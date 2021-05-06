@@ -1,40 +1,23 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _writes, _reads, _raf, _isScheduled, _limit, _reportCallback;
+import { CuiRAF } from "./statics";
 export class FastDom {
     constructor() {
-        _writes.set(this, void 0);
-        _reads.set(this, void 0);
-        _raf.set(this, void 0);
-        _isScheduled.set(this, false);
-        _limit.set(this, void 0);
-        _reportCallback.set(this, void 0);
-        __classPrivateFieldSet(this, _raf, window.requestAnimationFrame.bind(window));
-        __classPrivateFieldSet(this, _writes, []);
-        __classPrivateFieldSet(this, _reads, []);
-        __classPrivateFieldSet(this, _limit, 5);
-        __classPrivateFieldSet(this, _reportCallback, undefined);
+        // private _raf: any;
+        this._isScheduled = false;
+        // this._raf = window.requestAnimationFrame.bind(window)
+        this._writes = [];
+        this._reads = [];
+        this._limit = 5;
+        this._reportCallback = undefined;
     }
     onError(callback) {
-        __classPrivateFieldSet(this, _reportCallback, callback);
+        this._reportCallback = callback;
     }
     mutate(callback, ctx, ...args) {
-        __classPrivateFieldGet(this, _reads).push(this.createTask(callback, ctx, ...args));
+        this._reads.push(this.createTask(callback, ctx, ...args));
         this.schedule();
     }
     fetch(callback, ctx, ...args) {
-        __classPrivateFieldGet(this, _writes).push(this.createTask(callback, ctx, ...args));
+        this._writes.push(this.createTask(callback, ctx, ...args));
         this.schedule();
     }
     createTask(callback, ctx, ...args) {
@@ -47,28 +30,28 @@ export class FastDom {
         }
     }
     schedule(recursion) {
-        if (!__classPrivateFieldGet(this, _isScheduled)) {
-            __classPrivateFieldSet(this, _isScheduled, true);
-            if (recursion && recursion >= __classPrivateFieldGet(this, _limit)) {
+        if (!this._isScheduled) {
+            this._isScheduled = true;
+            if (recursion && recursion >= this._limit) {
                 throw new Error("Fast Dom limit reached");
             }
             else {
-                __classPrivateFieldGet(this, _raf).call(this, this.flush.bind(this, recursion));
+                CuiRAF(this.flush.bind(this, recursion));
             }
         }
     }
     flush(recursion) {
         let rec = recursion !== null && recursion !== void 0 ? recursion : 0;
         let error = null;
-        let writes = __classPrivateFieldGet(this, _writes);
-        let reads = __classPrivateFieldGet(this, _reads);
+        let writes = this._writes;
+        let reads = this._reads;
         try {
             this.run(reads);
             this.run(writes);
         }
         catch (e) {
-            if (__classPrivateFieldGet(this, _reportCallback)) {
-                __classPrivateFieldGet(this, _reportCallback).call(this, e);
+            if (this._reportCallback) {
+                this._reportCallback(e);
             }
             else {
                 console.error(`An error has been captured in interactions: ${e.message}`);
@@ -76,18 +59,18 @@ export class FastDom {
             }
             error = e;
         }
-        __classPrivateFieldSet(this, _isScheduled, false);
-        if (error || __classPrivateFieldGet(this, _writes).length || __classPrivateFieldGet(this, _reads).length) {
+        this._isScheduled = false;
+        if (error || this._writes.length || this._reads.length) {
             this.schedule(rec + 1);
         }
     }
 }
-_writes = new WeakMap(), _reads = new WeakMap(), _raf = new WeakMap(), _isScheduled = new WeakMap(), _limit = new WeakMap(), _reportCallback = new WeakMap();
 export class SyncInteractions {
     constructor() {
+        // raf: any;
         this.isRunning = false;
         this.tasks = [];
-        this.raf = window.requestAnimationFrame.bind(window);
+        // this.raf = window.requestAnimationFrame.bind(window)
     }
     mutate(callback, ctx, ...args) {
         this.tasks.push(this.createTask(callback, ctx, ...args));
@@ -100,7 +83,7 @@ export class SyncInteractions {
     schedule() {
         if (!this.isRunning) {
             this.isRunning = true;
-            this.raf(this.flush.bind(this));
+            CuiRAF(this.flush.bind(this));
         }
     }
     flush() {

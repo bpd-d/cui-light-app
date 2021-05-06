@@ -34,15 +34,15 @@ const parserCallbacks: TypeParserCallbacks = {
 }
 
 export class CuiAutoParseArgs implements ICuiParsable {
-    #parser: TypeParser;
-    #defaults: any;
-    #defaultsLength: number;
-    #options: CuiAutoParseOptions
+    private _parser: TypeParser;
+    private _defaults: any;
+    private _defaultsLength: number;
+    private _options: CuiAutoParseOptions
     constructor(options?: CuiAutoParseOptions) {
-        this.#options = options ?? {};
-        this.#parser = new TypeParser(this.#options.props);
-        this.#defaults = {};
-        this.#defaultsLength = 0;
+        this._options = options ?? {};
+        this._parser = new TypeParser(this._options.props);
+        this._defaults = {};
+        this._defaultsLength = 0;
     }
 
     parse(args: any): void {
@@ -51,9 +51,9 @@ export class CuiAutoParseArgs implements ICuiParsable {
             return;
         }
 
-        if (typeof args === 'string' && this.#options.main) {
-            const currentType: string = typeof (this as any)[this.#options.main];
-            (this as any)[this.#options.main] = this.#parser.parseValue(this.#options.main, args, currentType);
+        if (typeof args === 'string' && this._options.main) {
+            const currentType: string = typeof (this as any)[this._options.main];
+            (this as any)[this._options.main] = this._parser.parseValue(this._options.main, args, currentType);
             return;
         }
 
@@ -61,11 +61,11 @@ export class CuiAutoParseArgs implements ICuiParsable {
             const currentType: string = typeof thisValue;
             // In case args doesn't have property, set default value set during object construction
             if (!args[thisProp]) {
-                (this as any)[thisProp] = this.#defaults[thisProp];
+                (this as any)[thisProp] = this._defaults[thisProp];
                 return;
             }
             // Case that value is in args, parse and adjust
-            const newVal = this.#parser.parseValue(thisProp, args[thisProp], currentType);
+            const newVal = this._parser.parseValue(thisProp, args[thisProp], currentType);
             if (newVal) {
                 (this as any)[thisProp] = newVal;
             }
@@ -73,11 +73,11 @@ export class CuiAutoParseArgs implements ICuiParsable {
     }
 
     fillDefaultValues() {
-        if (this.#defaultsLength === 0) {
+        if (this._defaultsLength === 0) {
             enumerateObject(this, (prperty, value) => {
-                this.#defaults[prperty] = value;
+                this._defaults[prperty] = value;
             })
-            this.#defaultsLength = Object.keys(this.#defaults).length;
+            this._defaultsLength = Object.keys(this._defaults).length;
         }
     }
 }
@@ -85,13 +85,13 @@ export class CuiAutoParseArgs implements ICuiParsable {
 
 
 class TypeParser {
-    #props: CuiArgProps;
+    private _props: CuiArgProps;
     constructor(props?: CuiArgProps) {
-        this.#props = props ?? {};
+        this._props = props ?? {};
     }
 
     parseValue(name: string, value: any, type: string): string | number | boolean | undefined {
-        let prop = this.#props[name];
+        let prop = this._props[name];
         let callback = parserCallbacks[prop?.type ?? type];
         let newVal = callback?.(value);
         if (!newVal) {

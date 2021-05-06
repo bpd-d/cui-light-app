@@ -1,4 +1,4 @@
-import { CuiUtils } from "./utils";
+import { CuiCore } from "./core";
 export interface IUIInteractionProvider {
     mutate(callback: any, ctx: any, ...args: any[]): void;
     fetch(callback: any, ctx: any, ...args: any[]): void;
@@ -42,9 +42,6 @@ export interface CuiCachable {
 export interface ICuiParsable {
     parse(val: any): void;
 }
-export interface ICui {
-    getId(): string;
-}
 export interface ICuiManager<T> {
     put(key: string, element: T): void;
     get(key: string): T | undefined;
@@ -56,7 +53,7 @@ export interface ICuiPlugin {
     description: string;
     name: string;
     setup: any;
-    init(utils: CuiUtils): void;
+    init(utils: CuiCore): void;
     destroy(): void;
 }
 export interface ICuiMutiationPlugin {
@@ -66,27 +63,18 @@ export interface CuiContext {
     getId(): string;
 }
 export interface ICuiComponentFactory {
-    get(element: Element, sutils: CuiUtils): ICuiComponentHandler;
+    get(element: Element, sutils: CuiCore): ICuiComponentHandler;
 }
 export interface ICuiComponent {
     attribute: string;
-    getStyle(): string | null;
-    get(element: HTMLElement, sutils: CuiUtils): ICuiComponentHandler;
+    style?: () => string;
+    get(element: HTMLElement, sutils: CuiCore): ICuiComponentHandler;
 }
 export interface ICuiPluginManager {
-    init(utils: CuiUtils): void;
+    init(utils: CuiCore): void;
     get(name: string): ICuiPlugin | undefined;
     has(name: string): boolean;
     onMutation(mutation: MutationRecord): Promise<boolean>;
-}
-export interface ICuiObservableArg {
-}
-export interface ICuiObservable {
-    key: string;
-    on(arg: ICuiObservableArg): Promise<boolean>;
-}
-export interface CuiObservables {
-    [key: string]: ICuiObservable;
 }
 export interface CuiHandlers {
     [id: string]: ICuiComponentHandler;
@@ -114,4 +102,14 @@ export interface ICuiMeasure {
     target: string;
     method: string;
     time: number;
+}
+export interface ICuiKeysCombo {
+    key?: string;
+    isCtrl: boolean;
+    isAlt: boolean;
+    isShift: boolean;
+}
+export interface ICuiPair<T, V> {
+    key: T;
+    value: V;
 }

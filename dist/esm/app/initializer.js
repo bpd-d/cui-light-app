@@ -7,20 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _window;
 import { CuiSetupInit } from "../core/models/setup";
 import { is } from "../core/utils/functions";
 import { CuiInstance } from "./instance";
@@ -28,8 +14,7 @@ import { ICONS } from "../core/utils/statics";
 import { SWIPE_ANIMATIONS_DEFINITIONS } from "../core/animation/definitions";
 export class CuiInitializer {
     constructor() {
-        _window.set(this, void 0);
-        __classPrivateFieldSet(this, _window, window);
+        this._window = window;
     }
     init(setup) {
         var _a, _b;
@@ -39,7 +24,7 @@ export class CuiInitializer {
             const result = {
                 result: false
             };
-            if (is(__classPrivateFieldGet(this, _window)[appPrefix])) {
+            if (is(this._window[appPrefix])) {
                 result.message = "Instance is already initialized";
                 return result;
             }
@@ -54,8 +39,8 @@ export class CuiInitializer {
                 }
             }
             try {
-                __classPrivateFieldGet(this, _window)[appPrefix] = new CuiInstance(settings, (_a = setup.plugins) !== null && _a !== void 0 ? _a : [], (_b = setup.components) !== null && _b !== void 0 ? _b : []);
-                yield __classPrivateFieldGet(this, _window)[appPrefix].init();
+                this._window[appPrefix] = new CuiInstance(settings, (_a = setup.plugins) !== null && _a !== void 0 ? _a : [], (_b = setup.components) !== null && _b !== void 0 ? _b : []);
+                yield this._window[appPrefix].init();
             }
             catch (e) {
                 console.error(e);
@@ -67,4 +52,3 @@ export class CuiInitializer {
         });
     }
 }
-_window = new WeakMap();

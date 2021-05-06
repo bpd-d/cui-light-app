@@ -1,11 +1,17 @@
-import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiIntersectionResult } from "../../core/intersection/interfaces";
-import { CuiIntersectionListener } from "../../core/intersection/intersection";
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiAutoParseArgs } from "../..//core/utils/arguments";
-import { getChildSelectorFromScoped, getIntOrDefault, joinWithScopeSelector } from "../../core/utils/functions";
+import { getIntOrDefault, joinWithScopeSelector } from "../../core/utils/functions";
+import { CuiStyleHelper, getCuiHandlerInteractions, ICuiInteractionsFacade, ICuiStyleHelper } from "../../core/handlers/extensions/facades";
 import { ParallaxAnimatorsHandler } from "./animator";
+import { CuiComponentBaseHook } from "../base";
+import { getCuiIntersectionPerformer, ICuiIntersectionPerformer } from "../extensions/scroll/performers";
+import { ATTRIBUTES } from "../../core/utils/statics";
+import { getCuiScrollExtension } from "../extensions/scroll/scroll";
+import { CuiComponentMutationExtension } from "../extensions/mutations/mutations";
+import { getCuiMutationPerformer, ICuiMutationPerformer } from "../extensions/mutations/performer";
 
 const PARALLAX_ATTRIBUTE_ANIMATTION = 'data-parallax-animation';
 const PARALLAX_ATTRIBUTE_START = 'data-parallax-start-ratio';
@@ -19,7 +25,6 @@ interface TargetSetupItem {
 }
 
 export class CuiParallaxArgs extends CuiAutoParseArgs {
-    root: boolean;
     targets: string;
     startRatio: number;
     stopRatio: number;
@@ -30,7 +35,6 @@ export class CuiParallaxArgs extends CuiAutoParseArgs {
                 "targets": { corrector: joinWithScopeSelector }
             }
         });
-        this.root = false;
         this.targets = joinWithScopeSelector("> *");
         this.startRatio = 0;
         this.stopRatio = 1;
@@ -39,71 +43,86 @@ export class CuiParallaxArgs extends CuiAutoParseArgs {
     }
 }
 
-export class CuiParallaxComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string) {
-        this.attribute = `${prefix ?? 'cui'}-parallax`;
-    }
-    getStyle(): string {
-        return "";
-    }
-    get(element: HTMLElement, sutils: CuiUtils): ICuiComponentHandler {
-        return new CuiParallaxHandler(element, sutils, this.attribute)
-    }
-
+export function CuiParallaxComponent(prefix?: string): ICuiComponent {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: 'parallax',
+        create: (element: HTMLElement, utils: CuiCore, prefix: string, attribute: string) => {
+            return new CuiParallaxHandler(element, utils, attribute);
+        }
+    })
 }
 
-export class CuiParallaxHandler extends CuiMutableHandler<CuiParallaxArgs> {
+export class CuiParallaxHandler extends CuiHandlerBase<CuiParallaxArgs> {
 
-    #scrollListener: CuiIntersectionListener | undefined;
-    #defaultAnimator: ParallaxAnimatorsHandler | undefined;
-    #targetSetup: TargetSetupItem[];
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
+
+
+    private _defaultAnimator: ParallaxAnimatorsHandler | undefined;
+    private _targetSetup: TargetSetupItem[];
+    private _interactions: ICuiInteractionsFacade;
+    private _intersectionPerformer: ICuiIntersectionPerformer;
+    private _mutationPerformer: ICuiMutationPerformer;
+    private _styles: ICuiStyleHelper;
+
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string) {
         super("CuiParallaxHandler", element, attribute, new CuiParallaxArgs(), utils);
-        this.#scrollListener = undefined;
-        this.#defaultAnimator = undefined;
-        this.#targetSetup = [];
+        this._defaultAnimator = undefined;
+        this._targetSetup = [];
+        this._interactions = getCuiHandlerInteractions(utils.interactions);
+        const root = element.hasAttribute(ATTRIBUTES.root) ? window : element;
+        this._styles = new CuiStyleHelper();
+
+        this._intersectionPerformer = getCuiIntersectionPerformer({
+            element: root,
+            callback: this.onIntersection.bind(this)
+        })
+
+        this._mutationPerformer = getCuiMutationPerformer(this.onMutation.bind(this));
+
+        this.extend(getCuiScrollExtension({
+            element: root,
+            performer: this._intersectionPerformer,
+            threshold: 5
+        }))
+
+        this.extend(new CuiComponentMutationExtension(
+            element,
+            this._mutationPerformer
+        ))
     }
 
 
-    onInit(): void {
-        this.#defaultAnimator = new ParallaxAnimatorsHandler(this.args.animation, this.utils.setup.parallaxAnimations[this.args.animation])
-        this.setMutationSelector(getChildSelectorFromScoped(this.args.targets))
-        this.#targetSetup = this.getTargets();
-        this.#scrollListener = new CuiIntersectionListener(this.getParent(), { threshold: this.utils.setup.scrollThreshold });
-        this.#scrollListener.setCallback(this.onIntersection.bind(this));
-        this.#scrollListener.setChildren(this.#targetSetup.map(item => item.element));
-        this.#scrollListener.attach();
+    async onHandle(): Promise<boolean> {
+        this.updateArguments();
+        this._intersectionPerformer.callInitialEvent();
+        return true;
     }
-
-    onUpdate(): void {
-        if (!this.prevArgs || !this.#scrollListener) {
-            return;
-        }
-        if (this.prevArgs.targets !== this.args.targets) {
+    async onRefresh(): Promise<boolean> {
+        if (this.prevArgs && this.prevArgs.targets !== this.args.targets) {
             this.clean();
-            this.setMutationSelector(getChildSelectorFromScoped(this.args.targets))
-            this.#targetSetup = this.getTargets();
-            this.#scrollListener.setChildren(this.#targetSetup.map(item => item.element));
+            this.updateArguments()
         }
-        if (this.prevArgs.root !== this.args.root) {
-            this.#scrollListener.setParent(this.getParent());
-        }
+        return true;
     }
-    onDestroy(): void {
+    async onRemove(): Promise<boolean> {
         this.clean();
-        if (this.#scrollListener) {
-            this.#scrollListener.detach();
-        }
+        return true;
+    }
+
+    private updateArguments() {
+        this._mutationPerformer.setSelector(this.args.targets);
+        this._defaultAnimator = new ParallaxAnimatorsHandler(this.args.animation, this.core.setup.parallaxAnimations[this.args.animation])
+        this._targetSetup = this.getTargets();
+        this._intersectionPerformer.setChildren(this._targetSetup.map(item => item.element));
     }
 
     onIntersection(ev: CuiIntersectionResult) {
-        this.mutate(() => {
+        this._interactions.mutate(() => {
             ev.items.forEach((item, index) => {
-                if (index >= this.#targetSetup.length) {
+                if (index >= this._targetSetup.length) {
                     return;
                 }
-                const setup = this.#targetSetup[index];
+                const setup = this._targetSetup[index];
                 if (setup.animator)
                     setup.animator.perform(item.element, calculateRatio(setup.start, setup.stop, item.verticalRatio))
             })
@@ -111,12 +130,9 @@ export class CuiParallaxHandler extends CuiMutableHandler<CuiParallaxArgs> {
 
     }
 
-    onMutation(record: CuiChildMutation): void {
-        if (!this.#scrollListener) {
-            return;
-        }
-        this.#targetSetup = this.getTargets();
-        this.#scrollListener.setChildren(this.#targetSetup.map(item => item.element));
+    onMutation(record: MutationRecord[]): void {
+        this._targetSetup = this.getTargets();
+        this._intersectionPerformer.setChildren(this._targetSetup.map(item => item.element));
     }
 
     private getTargets(): TargetSetupItem[] {
@@ -124,16 +140,12 @@ export class CuiParallaxHandler extends CuiMutableHandler<CuiParallaxArgs> {
         this.element.querySelectorAll(this.args.targets).forEach(target => {
             targetSetup.push({
                 element: target as HTMLElement,
-                animator: this.getTargetAnimator(target) ?? this.#defaultAnimator,
+                animator: this.getTargetAnimator(target) ?? this._defaultAnimator,
                 start: getIntOrDefault(target.getAttribute(PARALLAX_ATTRIBUTE_START), this.args.startRatio),
                 stop: getIntOrDefault(target.getAttribute(PARALLAX_ATTRIBUTE_STOP), this.args.stopRatio),
             })
         })
         return targetSetup;
-    }
-
-    private getParent(): Window | HTMLElement {
-        return this.args.root ? window : this.element;
     }
 
     private getTargetAnimator(target: Element): ParallaxAnimatorsHandler | undefined {
@@ -142,7 +154,7 @@ export class CuiParallaxHandler extends CuiMutableHandler<CuiParallaxArgs> {
         }
         const name = target.getAttribute(PARALLAX_ATTRIBUTE_ANIMATTION);
         //@ts-ignore name was checked already
-        let setup = this.utils.setup.parallaxAnimations[name];
+        let setup = this.core.setup.parallaxAnimations[name];
         if (!setup) {
             return undefined;
         }
@@ -151,16 +163,10 @@ export class CuiParallaxHandler extends CuiMutableHandler<CuiParallaxArgs> {
     }
 
     private clean() {
-        this.#targetSetup.forEach(setup => {
-            this.utils.interactions.mutate(cleanStyle, null, setup.element);
+        this._targetSetup.forEach(setup => {
+            this.core.interactions.mutate(this._styles.clean, null, setup.element);
 
         })
-    }
-}
-
-function cleanStyle(target: HTMLElement) {
-    if (target && target.style) {
-        target.removeAttribute('style')
     }
 }
 

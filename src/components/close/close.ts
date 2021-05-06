@@ -1,13 +1,17 @@
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { is, getParentCuiElement, are } from "../../core/utils/functions";
 import { CuiActionsListFactory } from "../../core/utils/actions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-import { CuiClickableArgs } from "src/core/models/arguments";
-import { CuiClickModule } from "../modules/click/click";
-import { InteractionEvent } from "src/core/models/events";
+import { CuiClickableArgs } from "../../core/models/arguments";
+import { clickExtension } from "../extensions/click/click";
+import { InteractionEvent } from "../../core/models/events";
+import { getEventBusFacade, ICuiEventBusFacade } from "../../core/handlers/extensions/facades";
+import { eventExtension } from "../extensions/event/event";
+import { CuiActionsHelper } from "../../core/helpers/helpers";
+import { CuiComponentBaseHook } from "../base";
+import { callbackPerformer } from "../extensions/performers";
 
 export class CuiCloseArgs extends CuiAutoParseArgs implements CuiClickableArgs {
     target: string;
@@ -31,35 +35,35 @@ export class CuiCloseArgs extends CuiAutoParseArgs implements CuiClickableArgs {
 
 }
 
-export class CuiCloseComponent implements ICuiComponent {
-    attribute: string;
-    #prefix: string;
-
-    constructor(prefix?: string) {
-        this.#prefix = prefix ?? 'cui';
-        this.attribute = `${this.#prefix}-close`;
-
-    }
-
-    getStyle(): string | null {
-        return null;
-    }
-
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler {
-        return new CuiCloseHandler(element, utils, this.attribute, this.#prefix);
-    }
+export function CuiCloseComponent(prefix?: string) {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "close",
+        create: (element: HTMLElement, utils: CuiCore, prefix: string, attribute: string) => {
+            return new CuiCloseHandler(element, utils, attribute);
+        }
+    })
 }
 
 export class CuiCloseHandler extends CuiHandlerBase<CuiCloseArgs> {
-    #eventId: string | null;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string) {
+    private _busFacade: ICuiEventBusFacade;
+    private _actionsHelper: CuiActionsHelper;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string) {
         super("CuiCloseHandler", element, attribute, new CuiCloseArgs(utils.setup.animationTime), utils);
-        this.#eventId = null;
-        this.addModule(new CuiClickModule(this.element, this.args, this.onClose.bind(this)));
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, element);
+        this._actionsHelper = new CuiActionsHelper(utils.interactions);
+
+        this.extend(clickExtension({
+            element: element,
+            performer: callbackPerformer(this.onClose.bind(this))
+        }))
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.CLOSE,
+            performer: callbackPerformer(() => this.onClose(null))
+        }))
     }
 
     async onHandle(): Promise<boolean> {
-        this.#eventId = this.onEvent(EVENTS.CLOSE, this.onClose.bind(this));
         return true;
     }
 
@@ -67,66 +71,46 @@ export class CuiCloseHandler extends CuiHandlerBase<CuiCloseArgs> {
         return true;
     }
     async onRemove(): Promise<boolean> {
-        this.detachEvent(EVENTS.CLOSE, this.#eventId);
+        this._busFacade.detachEmittedEvents();
         return true;
     }
 
-
-    onClose(ev: MouseEvent) {
-        if (this.isLocked) {
+    onClose(ev: MouseEvent | null) {
+        if (!this.lock()) {
             return;
         }
         const target = this.getTarget();
         if (!is(target)) {
-            this._log.warning(`Target ${this.args.target} not found`, 'onClick')
+            this.log.warning(`Target ${this.args.target} not found`, 'onClick')
             return;
         }
-        this.isLocked = true;
+
         //@ts-ignore target is checked
         this.run(target).then((result) => {
             if (result)
                 this.emitClose(ev);
         }).catch((e) => {
-            this._log.exception(e);
+            this.log.exception(e);
         }).finally(() => {
-            this.isLocked = false;
+            this.unlock();
         })
     }
 
     private async run(target: Element): Promise<boolean> {
         let cuiId = (target as any).$cuid;
         if (is(cuiId)) {
-            await this.utils.bus.emit(EVENTS.CLOSE, cuiId, this.args.state);
+            await this.core.bus.emit(EVENTS.CLOSE, cuiId, this.args.state);
             return false;
         } else if (are(this.args.action, this.args.timeout)) {
             let actions = CuiActionsListFactory.get(this.args.action);
-            return this.actionsHelper.performActions(target, actions, this.args.timeout, () => {
-                this.helper.removeClass(this.activeClassName, target)
+            return this._actionsHelper.performActions(target, actions, this.args.timeout, () => {
+                this.classes.removeClass(this.activeClassName, target)
             });
         } else {
-            this.helper.removeClassesAs(target, this.activeClassName);
+            this.asyncClasses.removeClasses(target, this.activeClassName);
             return true;
         }
     }
-
-    // private removeActiveClass(target: Element) {
-    //     if (is(target) && this.helper.hasClass(this.activeClassName, target)) {
-    //         this.helper.removeClass(this.activeClassName, target);
-    //     }
-    // }
-
-    // private removeActiveClassAsync(target: Element) {
-    //     this.fetch(() => {
-    //         if (is(target) && this.helper.hasClass(this.activeClassName, target)) {
-    //             this.helper.removeClassesAs(target, this.activeClassName);
-    //         }
-    //     })
-
-    // }
-    // private onActionFinish(ev: MouseEvent, shouldEmit: boolean) {
-    //     if (shouldEmit)
-    //         this.emitClose(ev);
-    // }
 
     private getTarget(): Element | undefined {
         if (!is(this.args.target)) {
@@ -135,8 +119,8 @@ export class CuiCloseHandler extends CuiHandlerBase<CuiCloseArgs> {
         return document.querySelector(this.args.target) ?? getParentCuiElement(this.element);
     }
 
-    private emitClose(ev: MouseEvent) {
-        this.emitEvent<InteractionEvent>(EVENTS.CLOSED, {
+    private emitClose(ev: MouseEvent | null) {
+        this._busFacade.emit<InteractionEvent<string>>(EVENTS.CLOSED, {
             state: this.args.state,
             event: ev
         })

@@ -7,20 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _prefix, _prefix_1, _bodyClass, _attribute, _triggerHoverListener, _trigger, _windowClickEventId, _openEventId, _closeEventId, _positionCalculator, _posClass, _autoTask, _actions;
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { is, joinWithScopeSelector, replacePrefix } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
@@ -30,7 +16,12 @@ import { CuiBasePositionCalculator } from "../../core/position/calculator";
 import { CuiTaskRunner } from "../../core/utils/task";
 import { CuiActionsListFactory } from "../../core/utils/actions";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-import { CuiHoverModule } from "../modules/hover/hover";
+import { CuiHoverModule } from "../extensions/hover/hover";
+import { CuiComponentBaseHook } from "../base";
+import { getAdvancedCuiWindowClickPerformer } from "../extensions/window/performer";
+import { eventExtension } from "../extensions/event/event";
+import { getEventBusFacade, getCuiHandlerInteractions } from "../../core/handlers/extensions/facades";
+import { callbackPerformer } from "../extensions/performers";
 const bodyClass = '{prefix}-drop-open';
 const DROP_POSITION = "{prefix}-drop-position-";
 const DROP_TRIGGER = "{prefix}-drop-trigger";
@@ -54,68 +45,61 @@ export class CuiDropArgs extends CuiAutoParseArgs {
         this.margin = 8;
     }
 }
-export class CuiDropComponenet {
-    constructor(prefix) {
-        _prefix.set(this, void 0);
-        __classPrivateFieldSet(this, _prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${__classPrivateFieldGet(this, _prefix)}-drop`;
-    }
-    getStyle() {
-        return null;
-    }
-    get(element, utils) {
-        return new CuiDropHandler(element, utils, this.attribute, __classPrivateFieldGet(this, _prefix));
-    }
+export function CuiDropComponent(prefix) {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "drop",
+        create: (element, utils, prefix, attribute) => {
+            return new CuiDropHandler(element, utils, attribute, prefix);
+        }
+    });
 }
-_prefix = new WeakMap();
 export class CuiDropHandler extends CuiHandlerBase {
     constructor(element, utils, attribute, prefix) {
-        super("CuidropHandler", element, attribute, new CuiDropArgs(prefix), utils);
-        _prefix_1.set(this, void 0);
-        _bodyClass.set(this, void 0);
-        _attribute.set(this, void 0);
-        _triggerHoverListener.set(this, void 0);
-        _trigger.set(this, void 0);
-        _windowClickEventId.set(this, void 0);
-        _openEventId.set(this, void 0);
-        _closeEventId.set(this, void 0);
-        _positionCalculator.set(this, void 0);
-        _posClass.set(this, void 0);
-        _autoTask.set(this, void 0);
-        _actions.set(this, void 0);
-        __classPrivateFieldSet(this, _attribute, attribute);
-        __classPrivateFieldSet(this, _prefix_1, prefix);
-        __classPrivateFieldSet(this, _bodyClass, replacePrefix(bodyClass, prefix));
-        __classPrivateFieldSet(this, _windowClickEventId, null);
-        __classPrivateFieldSet(this, _openEventId, null);
-        __classPrivateFieldSet(this, _closeEventId, null);
+        super("CuiDropHandler", element, attribute, new CuiDropArgs(prefix), utils);
+        this._prefix = prefix;
+        this._bodyClass = replacePrefix(bodyClass, prefix);
+        this._windowClickEventId = null;
         this.onTriggerClick = this.onTriggerClick.bind(this);
-        __classPrivateFieldSet(this, _positionCalculator, new CuiBasePositionCalculator());
-        __classPrivateFieldGet(this, _positionCalculator).setMargin(8);
-        __classPrivateFieldGet(this, _positionCalculator).setPreferred("bottom-left");
-        __classPrivateFieldSet(this, _posClass, "");
-        __classPrivateFieldSet(this, _triggerHoverListener, undefined);
-        __classPrivateFieldSet(this, _trigger, this.element);
-        __classPrivateFieldSet(this, _actions, []);
-        __classPrivateFieldSet(this, _autoTask, new CuiTaskRunner(this.args.timeout, false, this.close.bind(this)));
+        this._positionCalculator = new CuiBasePositionCalculator();
+        this._positionCalculator.setMargin(8);
+        this._positionCalculator.setPreferred("bottom-left");
+        this._posClass = "";
+        this._triggerHoverListener = undefined;
+        this._trigger = this.element;
+        this._actions = [];
+        this._autoTask = new CuiTaskRunner(this.args.timeout, false, this.close.bind(this));
+        this._windowClickPerformer = getAdvancedCuiWindowClickPerformer(this.close.bind(this), element);
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, element);
+        this._interactions = getCuiHandlerInteractions(utils.interactions);
         if (!utils.isPlugin("click-plugin")) {
             this.logWarning("Window click plugin is not available: outClose will not work");
         }
-        this.addModule(new CuiHoverModule(this.element, this.onElementHover.bind(this)));
+        this.extend(new CuiHoverModule(this.element, this.onElementHover.bind(this)));
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.WINDOW_CLICK,
+            performer: this._windowClickPerformer
+        }));
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.OPEN,
+            performer: callbackPerformer(this.open.bind(this))
+        }));
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.CLOSE,
+            performer: callbackPerformer(this.close.bind(this))
+        }));
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
-            __classPrivateFieldSet(this, _trigger, this.acquireTrigger());
-            __classPrivateFieldSet(this, _triggerHoverListener, new CuiHoverListener(__classPrivateFieldGet(this, _trigger)));
-            __classPrivateFieldGet(this, _triggerHoverListener).setCallback(this.onHoverEvent.bind(this));
-            __classPrivateFieldGet(this, _triggerHoverListener).attach();
+            this._trigger = this.acquireTrigger();
+            this._triggerHoverListener = new CuiHoverListener(this._trigger);
+            this._triggerHoverListener.setCallback(this.onHoverEvent.bind(this));
+            this._triggerHoverListener.attach();
             //@ts-ignore
-            __classPrivateFieldGet(this, _trigger).addEventListener('click', this.onTriggerClick);
+            this._trigger.addEventListener('click', this.onTriggerClick);
             // this.setTriggerEvent();
-            __classPrivateFieldSet(this, _openEventId, this.onEvent(EVENTS.OPEN, this.open.bind(this)));
-            __classPrivateFieldSet(this, _closeEventId, this.onEvent(EVENTS.CLOSE, this.close.bind(this)));
             this.setDataFromArgs();
-            this.mutate(() => {
+            this._interactions.mutate(() => {
                 AriaAttributes.setAria(this.element, 'aria-dropdown', "");
             });
             return true;
@@ -124,19 +108,19 @@ export class CuiDropHandler extends CuiHandlerBase {
     onRefresh() {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.prevArgs && this.args.trigger !== this.prevArgs.trigger) {
-                if (__classPrivateFieldGet(this, _triggerHoverListener) && __classPrivateFieldGet(this, _triggerHoverListener).isAttached()) {
-                    __classPrivateFieldGet(this, _triggerHoverListener).detach();
+                if (this._triggerHoverListener && this._triggerHoverListener.isAttached()) {
+                    this._triggerHoverListener.detach();
                 }
                 else if (this.prevArgs && this.prevArgs.mode === 'click') {
                     //@ts-ignore 
-                    __classPrivateFieldGet(this, _trigger).removeEventListener('click', this.onTriggerClick);
+                    this._trigger.removeEventListener('click', this.onTriggerClick);
                 }
-                __classPrivateFieldSet(this, _trigger, this.acquireTrigger());
-                __classPrivateFieldSet(this, _triggerHoverListener, new CuiHoverListener(__classPrivateFieldGet(this, _trigger)));
-                __classPrivateFieldGet(this, _triggerHoverListener).setCallback(this.onHoverEvent.bind(this));
-                __classPrivateFieldGet(this, _triggerHoverListener).attach();
+                this._trigger = this.acquireTrigger();
+                this._triggerHoverListener = new CuiHoverListener(this._trigger);
+                this._triggerHoverListener.setCallback(this.onHoverEvent.bind(this));
+                this._triggerHoverListener.attach();
                 //@ts-ignore
-                __classPrivateFieldGet(this, _trigger).addEventListener('click', this.onTriggerClick);
+                this._trigger.addEventListener('click', this.onTriggerClick);
             }
             this.setDataFromArgs();
             return true;
@@ -144,32 +128,32 @@ export class CuiDropHandler extends CuiHandlerBase {
     }
     onRemove() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.detachEvent(EVENTS.OPEN, __classPrivateFieldGet(this, _openEventId));
-            this.detachEvent(EVENTS.CLOSE, __classPrivateFieldGet(this, _closeEventId));
+            this._busFacade.detachEmittedEvents();
             return true;
         });
     }
     setDataFromArgs() {
-        __classPrivateFieldGet(this, _positionCalculator).setStatic(this.args.pos);
-        __classPrivateFieldGet(this, _positionCalculator).setMargin(this.args.margin);
-        __classPrivateFieldGet(this, _autoTask).setTimeout(this.args.timeout);
-        __classPrivateFieldSet(this, _actions, CuiActionsListFactory.get(this.args.action));
+        this._positionCalculator.setStatic(this.args.pos);
+        this._positionCalculator.setMargin(this.args.margin);
+        this._autoTask.setTimeout(this.args.timeout);
+        this._actions = CuiActionsListFactory.get(this.args.action);
+        this._windowClickPerformer.setEnabled(this.args.outClose);
     }
     /**
     * Api Method open
     */
     open() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.checkLockAndWarn('open')) {
-                return false;
-            }
             if (this.isActive()) {
                 return this.close();
             }
             if (this.isAnyActive()) {
                 yield this.findAndCloseOpenedDrop();
             }
-            this._log.debug(`Drop ${this.cuid}`, 'open');
+            if (!this.lock('open')) {
+                return false;
+            }
+            this.log.debug(`Drop ${this.cuid}`, 'open');
             this.onOpen();
             return true;
         });
@@ -179,12 +163,15 @@ export class CuiDropHandler extends CuiHandlerBase {
      */
     close() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.checkLockAndWarn("close") || !this.isActive()) {
+            if (!this.isActive()) {
+                return false;
+            }
+            if (!this.lock('close')) {
                 return false;
             }
             this.logInfo(`Drop ${this.cuid}`, 'close');
             this.onClose();
-            this.emitEvent(EVENTS.CLOSED, {
+            this._busFacade.emit(EVENTS.CLOSED, {
                 timestamp: Date.now()
             });
             return true;
@@ -194,30 +181,28 @@ export class CuiDropHandler extends CuiHandlerBase {
      * Set of actions performed during drop open
      */
     onOpen() {
-        this.isLocked = true;
-        this.helper.setClass(this.activeClassName, this.element);
-        this.mutate(() => {
-            const box = __classPrivateFieldGet(this, _trigger).getBoundingClientRect();
+        this.classes.setClass(this.activeClassName, this.element);
+        this._interactions.mutate(() => {
+            const box = this._trigger.getBoundingClientRect();
             try {
-                const [x, y, pos] = __classPrivateFieldGet(this, _positionCalculator).calculate(box, this.element.getBoundingClientRect());
+                const [x, y, pos] = this._positionCalculator.calculate(box, this.element.getBoundingClientRect());
                 this.element.style.top = `${y - box.top}px`;
                 this.element.style.left = `${x - box.left}px`;
-                __classPrivateFieldSet(this, _posClass, replacePrefix(DROP_POSITION + pos, __classPrivateFieldGet(this, _prefix_1)));
+                this._posClass = replacePrefix(DROP_POSITION + pos, this._prefix);
                 this.toggleActions();
-                this.helper.setClass(__classPrivateFieldGet(this, _posClass), this.element);
-                this.helper.setClass(__classPrivateFieldGet(this, _bodyClass), document.body);
-                this.emitEvent(EVENTS.OPENED, {
+                this.classes.setClass(this._posClass, this.element);
+                this.classes.setClass(this._bodyClass, document.body);
+                AriaAttributes.setAria(this.element, 'aria-expanded', 'true');
+            }
+            catch (e) {
+                this.log.exception(e);
+            }
+            finally {
+                this.unlock();
+                this._busFacade.emit(EVENTS.OPENED, {
                     timestamp: Date.now()
                 });
                 this.runAutoCloseTask();
-                AriaAttributes.setAria(this.element, 'aria-expanded', 'true');
-                __classPrivateFieldSet(this, _windowClickEventId, this.onEvent(EVENTS.WINDOW_CLICK, this.onWindowClick.bind(this)));
-            }
-            catch (e) {
-                this._log.exception(e);
-            }
-            finally {
-                this.isLocked = false;
             }
         });
     }
@@ -225,46 +210,32 @@ export class CuiDropHandler extends CuiHandlerBase {
         * Set of actions performed during drop close
         */
     onClose() {
-        this.isLocked = true;
-        this.mutate(() => {
-            this.helper.removeClass(this.activeClassName, this.element);
-            this.helper.removeClass(__classPrivateFieldGet(this, _bodyClass), document.body);
+        this._interactions.mutate(() => {
+            this.classes.removeClass(this.activeClassName, this.element);
+            this.classes.removeClass(this._bodyClass, document.body);
             this.toggleActions();
-            this.helper.removeClass(__classPrivateFieldGet(this, _posClass), this.element);
+            this.classes.removeClass(this._posClass, this.element);
             AriaAttributes.setAria(this.element, 'aria-expanded', 'false');
-            this.detachEvent(EVENTS.WINDOW_CLICK, __classPrivateFieldGet(this, _windowClickEventId));
-            this.isLocked = false;
+            this.unlock();
         });
     }
-    /**
-     * Event invoked when window is clicked
-     * @param ev
-     */
-    onWindowClick(ev) {
-        if (!this.args.outClose) {
-            return;
-        }
-        if (!this.element.contains(ev.ev.target)) {
-            this.close();
-        }
-    }
     isAnyActive() {
-        return this.helper.hasClass(__classPrivateFieldGet(this, _bodyClass), document.body);
+        return this.classes.hasClass(this._bodyClass, document.body);
     }
     /**
      * Finds and opens other active drop element
      */
     findAndCloseOpenedDrop() {
         return __awaiter(this, void 0, void 0, function* () {
-            const opened = document.querySelector(`[${__classPrivateFieldGet(this, _attribute)}].${this.activeClassName}`);
+            const opened = document.querySelector(`[${this.attribute}].${this.activeClassName}`);
             if (!is(opened)) {
-                this._log.warning("Opened drop was not found");
+                this.log.warning("Opened drop was not found");
                 return false;
             }
             //@ts-ignore opened checked
-            const handler = opened.$handlers[__classPrivateFieldGet(this, _attribute)];
+            const handler = opened.$handlers[this.attribute];
             if (!is(handler)) {
-                this._log.warning("Drop handler was not found in the element");
+                this.log.warning("Drop handler was not found in the element");
                 return false;
             }
             return handler.close();
@@ -303,24 +274,12 @@ export class CuiDropHandler extends CuiHandlerBase {
      */
     onElementHover(ev) {
         if (ev.isHovering) {
-            __classPrivateFieldGet(this, _autoTask).stop();
+            this._autoTask.stop();
         }
         else if (!ev.isHovering && this.args.autoClose) {
             this.runAutoCloseTask();
         }
     }
-    // /**
-    //  * Sets event on trigger button
-    //  */
-    // private setTriggerEvent() {
-    //     if (this.args.mode === 'hover' && this.#triggerHoverListener) {
-    //         this.#triggerHoverListener.setCallback(this.onHoverEvent.bind(this));
-    //         this.#triggerHoverListener.attach();
-    //     } else {
-    //         //@ts-ignore
-    //         this.#trigger.addEventListener('click', this.onTriggerClick)
-    //     }
-    // }
     /**
      * Runs auto-close task on opened element
      */
@@ -328,10 +287,10 @@ export class CuiDropHandler extends CuiHandlerBase {
         if (!this.args.autoClose) {
             return;
         }
-        __classPrivateFieldGet(this, _autoTask).start();
+        this._autoTask.start();
     }
     toggleActions() {
-        __classPrivateFieldGet(this, _actions).forEach(action => {
+        this._actions.forEach(action => {
             action.toggle(this.element);
         });
     }
@@ -345,4 +304,3 @@ export class CuiDropHandler extends CuiHandlerBase {
         return ret !== null && ret !== void 0 ? ret : this.element;
     }
 }
-_prefix_1 = new WeakMap(), _bodyClass = new WeakMap(), _attribute = new WeakMap(), _triggerHoverListener = new WeakMap(), _trigger = new WeakMap(), _windowClickEventId = new WeakMap(), _openEventId = new WeakMap(), _closeEventId = new WeakMap(), _positionCalculator = new WeakMap(), _posClass = new WeakMap(), _autoTask = new WeakMap(), _actions = new WeakMap();

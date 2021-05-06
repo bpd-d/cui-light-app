@@ -1,12 +1,25 @@
-import { ICuiComponent, ICuiComponentHandler, ICuiParsable } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { EVENTS } from "../../core/utils/statics";
-import { is, getOffsetTop, are, getEnumOrDefault } from "../../core/utils/functions";
+import { is, getOffsetTop, getEnumOrDefault } from "../../core/utils/functions";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-import { CuiClickModule } from "../modules/click/click";
-import { CuiClickableArgs } from "src/core/models/arguments";
-import { CuiScrollByEvent } from "src/core/models/events";
+import { clickExtension } from "../extensions/click/click";
+import { CuiClickableArgs } from "../../core/models/arguments";
+import { CuiScrollByEvent } from "../../core/models/events";
+import { getEventBusFacade, ICuiEventBusFacade } from "../../core/handlers/extensions/facades";
+import { clickPerformer, ICuiClickPerfromerHook } from "../extensions/click/performer";
+import { CuiComponentBaseHook } from "../base";
+
+
+/**
+ * Component scrolls to specified target in the document
+ * Arguments:
+ * target - selector to target element where page should be scrolled to.
+ * parent - set parent selector if parent should be different than html parent
+ * behavior - auto/smooth - choose between step and smooth scrolling
+ *
+ */
 
 export class CuiScrollArgs extends CuiAutoParseArgs implements CuiClickableArgs {
     target: string;
@@ -31,54 +44,47 @@ export class CuiScrollArgs extends CuiAutoParseArgs implements CuiClickableArgs 
 }
 
 
-/**
- * Component scrolls to specified target in the document
- * Arguments: 
- * target - selector to target element where page should be scrolled to.
- * parent - set parent selector if parent should be different than html parent
- * behavior - auto/smooth - choose between step and smooth scrolling
- * 
- */
-
-export class CuiScrollComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string) {
-        this.attribute = is(prefix) ? prefix + 'scroll' : 'cui-scroll';
-    }
-
-    getStyle(): string | null {
-        return null;
-    }
-
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler {
-        return new CuiScrollHandler(element, utils, this.attribute);
-    }
+export function CuiScrollComponent(prefix?: string): ICuiComponent {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "scroll",
+        create: (element: HTMLElement, utils: CuiCore, prefix: string, attribute: string) => {
+            return new CuiScrollHandler(element, utils, attribute);
+        }
+    })
 }
-
-export interface CuiScrollAttribute {
-    target?: string;
-    parent?: string;
-    behavior?: 'auto' | 'smooth';
-}
-
-
 
 export class CuiScrollHandler extends CuiHandlerBase<CuiScrollArgs> {
 
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
-        super("CuiScrollHandler", element, attribute, new CuiScrollArgs(), utils);
+    private _busFacade: ICuiEventBusFacade;
+    private _clickPerformer: ICuiClickPerfromerHook;
 
-        this.addModule(new CuiClickModule(this.element, this.args, this.onClick.bind(this)));
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string) {
+        super("CuiScrollHandler", element, attribute, new CuiScrollArgs(), utils);
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, element);
+        this._clickPerformer = clickPerformer(this.onClick.bind(this));
+        this.extend(clickExtension({
+            element: element,
+            performer: this._clickPerformer
+        }));
     }
 
     async onHandle(): Promise<boolean> {
+        this.handleUpdate();
         return true;
     }
     async onRefresh(): Promise<boolean> {
+        this.handleUpdate();
         return true;
     }
     async onRemove(): Promise<boolean> {
+        this._busFacade.detachEmittedEvents();
         return true;
+    }
+
+    handleUpdate() {
+        this._clickPerformer.preventDefault(this.args.prevent);
+        this._clickPerformer.stopPropagation(this.args.stopPropagation);
     }
 
     onClick(ev: MouseEvent) {
@@ -98,7 +104,7 @@ export class CuiScrollHandler extends CuiHandlerBase<CuiScrollArgs> {
             behavior: this.args.behavior
         });
 
-        this.emitEvent<CuiScrollByEvent>(EVENTS.ON_SCROLL, {
+        this._busFacade.emit<CuiScrollByEvent>(EVENTS.ON_SCROLL, {
             to: to,
             by: by,
             target: target,

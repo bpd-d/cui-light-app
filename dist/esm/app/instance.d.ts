@@ -1,16 +1,23 @@
 import { CuiSetupInit } from "../core/models/setup";
 import { ICuiPlugin, ICuiComponent, CuiElement } from "../core/models/interfaces";
-import { CuiUtils } from "../core/models/utils";
+import { CuiCore } from "../core/models/core";
 import { ElementManager } from "./managers/element";
 import { ICuiApiHandler } from "src/core/api/interfaces";
 export declare class CuiInstance {
-    #private;
+    private _log;
+    private _mutationObserver;
+    private _core;
+    private _plugins;
+    private _components;
+    private _rootElement;
+    private _mutatedAttributes;
+    private _api;
     constructor(setup: CuiSetupInit, plugins: ICuiPlugin[], components: ICuiComponent[]);
     init(): Promise<CuiInstance>;
     finish(): void;
     get(selector: string): ElementManager | undefined;
     all(selector: string): Element[] | undefined;
-    getUtils(): CuiUtils;
+    getUtils(): CuiCore;
     on(event: string, callback: any, element?: CuiElement): string | null;
     detach(event: string, id: string): void;
     detachAll(event: string): void;

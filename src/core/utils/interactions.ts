@@ -1,33 +1,34 @@
 import { IUIInteractionProvider } from "../models/interfaces";
+import { CuiRAF } from "./statics";
 
 export class FastDom implements IUIInteractionProvider {
-    #writes: any[];
-    #reads: any[];
-    #raf: any;
-    #isScheduled: boolean = false;
-    #limit: number;
-    #reportCallback: ((e: Error) => void) | undefined;
+    private _writes: any[];
+    private _reads: any[];
+    // private _raf: any;
+    private _isScheduled: boolean = false;
+    private _limit: number;
+    private _reportCallback: ((e: Error) => void) | undefined;
 
     constructor() {
-        this.#raf = window.requestAnimationFrame.bind(window)
-        this.#writes = []
-        this.#reads = []
-        this.#limit = 5;
-        this.#reportCallback = undefined;
+        // this._raf = window.requestAnimationFrame.bind(window)
+        this._writes = []
+        this._reads = []
+        this._limit = 5;
+        this._reportCallback = undefined;
 
     }
 
     onError(callback: (e: Error) => void) {
-        this.#reportCallback = callback;
+        this._reportCallback = callback;
     }
 
     mutate(callback: any, ctx: any, ...args: any[]): void {
-        this.#reads.push(this.createTask(callback, ctx, ...args))
+        this._reads.push(this.createTask(callback, ctx, ...args))
         this.schedule()
     }
 
     fetch(callback: any, ctx: any, ...args: any[]): void {
-        this.#writes.push(this.createTask(callback, ctx, ...args))
+        this._writes.push(this.createTask(callback, ctx, ...args))
         this.schedule()
     }
 
@@ -43,12 +44,12 @@ export class FastDom implements IUIInteractionProvider {
     }
 
     private schedule(recursion?: number) {
-        if (!this.#isScheduled) {
-            this.#isScheduled = true;
-            if (recursion && recursion >= this.#limit) {
+        if (!this._isScheduled) {
+            this._isScheduled = true;
+            if (recursion && recursion >= this._limit) {
                 throw new Error("Fast Dom limit reached")
             } else {
-                this.#raf(this.flush.bind(this, recursion));
+                CuiRAF(this.flush.bind(this, recursion));
             }
 
         }
@@ -57,23 +58,23 @@ export class FastDom implements IUIInteractionProvider {
     private flush(recursion?: number) {
         let rec: number = recursion ?? 0;
         let error = null;
-        let writes = this.#writes;
-        let reads = this.#reads;
+        let writes = this._writes;
+        let reads = this._reads;
 
         try {
             this.run(reads);
             this.run(writes);
         } catch (e) {
-            if (this.#reportCallback) {
-                this.#reportCallback(e);
+            if (this._reportCallback) {
+                this._reportCallback(e);
             } else {
                 console.error(`An error has been captured in interactions: ${e.message}`);
                 //console.error(e)
             }
             error = e
         }
-        this.#isScheduled = false;
-        if (error || this.#writes.length || this.#reads.length) {
+        this._isScheduled = false;
+        if (error || this._writes.length || this._reads.length) {
             this.schedule(rec + 1);
         }
     }
@@ -81,11 +82,11 @@ export class FastDom implements IUIInteractionProvider {
 
 export class SyncInteractions implements IUIInteractionProvider {
     tasks: any[];
-    raf: any;
+    // raf: any;
     isRunning: boolean = false;
     constructor() {
         this.tasks = [];
-        this.raf = window.requestAnimationFrame.bind(window)
+        // this.raf = window.requestAnimationFrame.bind(window)
     }
 
     mutate(callback: any, ctx: any, ...args: any[]): void {
@@ -101,7 +102,7 @@ export class SyncInteractions implements IUIInteractionProvider {
     private schedule() {
         if (!this.isRunning) {
             this.isRunning = true;
-            this.raf(this.flush.bind(this))
+            CuiRAF(this.flush.bind(this))
         }
     }
 

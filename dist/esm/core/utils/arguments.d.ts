@@ -15,7 +15,10 @@ export interface CuiAutoParseOptions {
     props?: CuiArgProps;
 }
 export declare class CuiAutoParseArgs implements ICuiParsable {
-    #private;
+    private _parser;
+    private _defaults;
+    private _defaultsLength;
+    private _options;
     constructor(options?: CuiAutoParseOptions);
     parse(args: any): void;
     fillDefaultValues(): void;

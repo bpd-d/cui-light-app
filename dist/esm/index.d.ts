@@ -1,8 +1,3 @@
-import { CuiInit } from './app/init';
-export declare const CUI_LIGHT_VERSION = "0.4.3";
-declare global {
-    interface Window {
-        cuiInit: CuiInit;
-    }
-}
-export { CuiInstance } from './app/instance';
+export declare const CUI_LIGHT_VERSION = "0.5.0";
+export { CuiInit } from './app/init';
+export { ElementManager } from './app/managers/element';

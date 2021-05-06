@@ -38,10 +38,10 @@ module.exports = {
         extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
-        filename: '[name].js',
+        filename: 'cui-light.js',
         path: path.resolve(__dirname, 'dist'),
         libraryTarget: 'umd',
-        library: "cui-light-app",
+        library: "cuiLight",
         umdNamedDefine: true
     },
     plugins: [

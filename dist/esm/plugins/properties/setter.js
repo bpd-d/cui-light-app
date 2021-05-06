@@ -1,41 +1,31 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _utils;
-import { are, is } from "../../core/utils/functions";
-export class PropertySetter {
-    constructor(utils) {
-        _utils.set(this, void 0);
-        __classPrivateFieldSet(this, _utils, utils);
-    }
-    setProperty(property, value) {
-        if (!are(property, value)) {
-            return;
-        }
-        __classPrivateFieldGet(this, _utils).interactions.mutate(() => {
-            __classPrivateFieldGet(this, _utils).setProperty(property, value);
-        }, null);
-    }
-    setProperties(set) {
-        if (!is(set)) {
-            return;
-        }
-        __classPrivateFieldGet(this, _utils).interactions.mutate(() => {
-            for (let property in set) {
-                if (is(set[property]))
-                    __classPrivateFieldGet(this, _utils).setProperty(property, set[property]);
-            }
-        }, null);
-    }
-}
-_utils = new WeakMap();
+"use strict";
+// import { CuiUtils } from "../../core/models/utils";
+// import { are, is } from "../../core/utils/functions";
+// export interface PropertySet {
+//     [property: string]: string;
+// }
+// export class PropertySetter {
+//     #utils: CuiUtils;
+//     constructor(utils: CuiUtils) {
+//         this.#utils = utils;
+//     }
+//     setProperty(property: string, value: string) {
+//         if (!are(property, value)) {
+//             return;
+//         }
+//         this.#utils.interactions.mutate(() => {
+//             this.#utils.setProperty(property, value)
+//         }, null)
+//     }
+//     setProperties(set: PropertySet) {
+//         if (!is(set)) {
+//             return;
+//         }
+//         this.#utils.interactions.mutate(() => {
+//             for (let property in set) {
+//                 if (is(set[property]))
+//                     this.#utils.setProperty(property, set[property])
+//             }
+//         }, null)
+//     }
+// }

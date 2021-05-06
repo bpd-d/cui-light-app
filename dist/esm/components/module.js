@@ -1,10 +1,10 @@
 import { CuiAccordionComponent } from "./accordion/accordion";
-import { CuiBanerComponent } from "./banner/banner";
+import { CuiBannerComponent } from "./banner/banner";
 import { CuiCircleComponent } from "./circle/circle";
 import { CuiCloseComponent } from "./close/close";
 import { CuiCoverComponent } from "./cover/cover";
 import { CuiDialogComponent } from "./dialog/dialog";
-import { CuiDropComponenet } from "./drop/drop";
+import { CuiDropComponent } from "./drop/drop";
 import { CuiFloatComponent } from "./float/float";
 import { CuiIconComponent } from "./icon/icon";
 //import { CuiIntersectionComponent } from "./intersection/intersection";
@@ -14,6 +14,7 @@ import { CuiOpenComponent } from "./open/open";
 import { CuiParallaxComponent } from "./parallax/parallax";
 import { CuiResizeComponent } from "./resize/resize";
 import { CuiScrollComponent } from "./scroll/scroll";
+import { CuiScrollSwitchComponent } from "./scroll/switch";
 import { CuiScrollspyComponent } from "./scrollspy/scrollspy";
 import { CuiSortableComponent } from "./sortable/sortable";
 import { CuiSpinnerComponent } from "./spinner/spinner";
@@ -29,29 +30,29 @@ import { CuiTooltipComponent } from "./tooltip/tooltip";
 export function GetComponents(attributes) {
     let prefix = attributes === null || attributes === void 0 ? void 0 : attributes.prefix;
     return [
-        new CuiIconComponent(prefix),
-        new CuiTooltipComponent(prefix),
-        new CuiCircleComponent(prefix),
-        new CuiSpinnerComponent(prefix),
-        new CuiScrollComponent(prefix),
-        new CuiScrollspyComponent(prefix),
-        //new CuiIntersectionComponent(prefix),
-        new CuiOpenComponent(prefix),
-        new CuiCloseComponent(prefix),
-        new CuiToggleComponent(prefix),
-        new CuiDialogComponent(prefix),
-        new CuiOffCanvasComponent(prefix),
-        new CuiAccordionComponent(prefix),
-        new CuiDropComponenet(prefix),
-        new CuiOffsetComponent(prefix),
-        new CuiSwitchComponent(prefix),
-        new CuiSwitcherComponent(prefix),
-        new CuiFloatComponent(prefix),
-        new CuiSliderComponent(prefix),
-        new CuiBanerComponent(prefix),
-        new CuiCoverComponent(prefix),
-        new CuiSortableComponent(prefix),
-        new CuiResizeComponent(prefix),
-        new CuiParallaxComponent(prefix)
+        CuiIconComponent(prefix),
+        CuiTooltipComponent(prefix),
+        CuiCircleComponent(prefix),
+        CuiSpinnerComponent(prefix),
+        CuiScrollComponent(prefix),
+        CuiScrollspyComponent(prefix),
+        CuiOpenComponent(prefix),
+        CuiCloseComponent(prefix),
+        CuiToggleComponent(prefix),
+        CuiDialogComponent(prefix),
+        CuiOffCanvasComponent(prefix),
+        CuiAccordionComponent(prefix),
+        CuiDropComponent(prefix),
+        CuiOffsetComponent(prefix),
+        CuiSwitchComponent(prefix),
+        CuiSwitcherComponent(prefix),
+        CuiFloatComponent(prefix),
+        CuiSliderComponent(prefix),
+        CuiBannerComponent(prefix),
+        CuiCoverComponent(prefix),
+        CuiSortableComponent(prefix),
+        CuiResizeComponent(prefix),
+        CuiParallaxComponent(prefix),
+        CuiScrollSwitchComponent(prefix)
     ];
 }

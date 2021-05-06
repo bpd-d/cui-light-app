@@ -1,8 +1,7 @@
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-import { CuiClickableArgs } from "src/core/models/arguments";
+import { CuiClickableArgs } from "../../core/models/arguments";
 export declare class CuiCloseArgs extends CuiAutoParseArgs implements CuiClickableArgs {
     target: string;
     action: string;
@@ -12,20 +11,15 @@ export declare class CuiCloseArgs extends CuiAutoParseArgs implements CuiClickab
     stopPropagation: boolean;
     constructor(timeout?: number);
 }
-export declare class CuiCloseComponent implements ICuiComponent {
-    #private;
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
-}
+export declare function CuiCloseComponent(prefix?: string): import("../../core/models/interfaces").ICuiComponent;
 export declare class CuiCloseHandler extends CuiHandlerBase<CuiCloseArgs> {
-    #private;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string);
+    private _busFacade;
+    private _actionsHelper;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
-    onClose(ev: MouseEvent): void;
+    onClose(ev: MouseEvent | null): void;
     private run;
     private getTarget;
     private emitClose;

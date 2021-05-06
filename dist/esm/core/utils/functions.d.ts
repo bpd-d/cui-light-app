@@ -1,5 +1,5 @@
 import { CuiLightMode, CuiWindowSize } from "./types";
-import { CuiElement } from "../models/interfaces";
+import { CuiElement, CuiHTMLElement, ICuiKeysCombo, ICuiPair } from "../models/interfaces";
 /**
  * Checks if value is defined an is not null
  * Additionally with type check it can check value if it is not empty string or collection or object
@@ -53,6 +53,14 @@ export declare function getSystemPrintMode(): boolean;
 export declare function are(...attributes: any[]): boolean;
 export declare function calcWindowSize(width: number): CuiWindowSize;
 /**
+ * Simply splits text by character or returns empty array
+ * @param text Text to split
+ * @param splitBy character to split by
+ * @returns array of split characters
+ */
+export declare function splitText(text: string, splitBy: string): string[];
+export declare function generateSplitText(text: string, splitBy: string): Generator<string, void, unknown>;
+/**
  * Creates object from string.
  * Supported syntaxes are:
  * - JSON
@@ -62,6 +70,7 @@ export declare function calcWindowSize(width: number): CuiWindowSize;
  * @param attribute - attribute value
  */
 export declare function parseAttributeString(attribute: string | null): any;
+export declare function parseSingleAttribute(value: string): ICuiPair<string, string> | undefined;
 /**
  * Creates object from JSON string
 * String must start with { and end with }
@@ -161,3 +170,14 @@ export declare function joinWithScopeSelector(value: string): string;
 export declare function measure(name?: string): (target: Object, propertyKey: string, descriptor: PropertyDescriptor) => PropertyDescriptor;
 export declare function getChildSelectorFromScoped(scopedSelector: string): string;
 export declare function applyMixins(derivedCtor: any, constructors: any[]): void;
+export declare function isInViewport(element: HTMLElement): boolean;
+export declare function matchesKeyCombo(event: KeyboardEvent, compare: ICuiKeysCombo): boolean;
+/**
+ * Performs query all and returns result as an array
+ * @param root - root element to query from
+ * @param selector - query selector
+ * @returns list of found elements
+ */
+export declare function queryAll(root: Document | Element, selector: string): HTMLElement[];
+export declare function findMatchingElementIndex<T>(item: T, items: T[]): number;
+export declare function getCuiElementsBySelector(selector: string): CuiHTMLElement[];

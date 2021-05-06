@@ -1,7 +1,7 @@
 import { FastDom, SyncInteractions } from "../utils/interactions";
 export class CuiInteractionsFactory {
     /**
-     * Gets new instance of component focused logger
+     * Gets new instance interactions provider
      * @param type - Interactions type
      */
     static get(type, errorReport) {

@@ -1,12 +1,11 @@
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
-import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-import { GlobalClickEvent } from "src/core/models/events";
 export interface CuiDialogEvent {
     timestamp: number;
 }
-export declare class CuiDialogArgs extends CuiAutoParseArgs implements CuiInteractableArgs {
+export declare class CuiDialogArgs extends CuiAutoParseArgs {
     escClose: boolean;
     outClose: boolean;
     timeout: number;
@@ -15,23 +14,26 @@ export declare class CuiDialogArgs extends CuiAutoParseArgs implements CuiIntera
     keyClose: string;
     constructor(prefix: string, defTimeout?: number);
 }
-export declare class CuiDialogComponent implements ICuiComponent {
-    #private;
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
-}
-export declare class CuiDialogHandler extends CuiInteractableHandler<CuiDialogArgs> {
-    #private;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+export declare function CuiDialogComponent(prefix?: string): ICuiComponent;
+export declare class CuiDialogHandler extends CuiHandlerBase<CuiDialogArgs> {
+    private _bodyClass;
+    private _busFacade;
+    private _interactions;
+    private _openActionPerformer;
+    private _closeActionPerformer;
+    private _keysPerformer;
+    private _freezeHelper;
+    private _keyComboParser;
+    private _windowClickPerformer;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string, prefix: string);
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
+    private updateSetup;
+    private closeOutside;
     onBeforeOpen(): boolean;
     onAfterOpen(): void;
     onAfterClose(): void;
     onBeforeClose(): boolean;
     private isAnyActive;
-    onWindowClick(ev: GlobalClickEvent): void;
 }

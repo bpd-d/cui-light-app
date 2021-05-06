@@ -1,86 +1,62 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _target, _inProgress, _threshold, _prevX, _prevY, _callback, _isAttached, _box, _task, _listener;
 import { CuiElementBoxFactory } from "../models/elements";
 import { getRangeValueOrDefault, is } from "../utils/functions";
 import { CuiTaskRunner } from "../utils/task";
 const DEFAULT_SCROLL_END_TIMEOUT = 50;
 export class CuiScrollListener {
     constructor(target, threshold) {
-        _target.set(this, void 0);
-        _inProgress.set(this, void 0);
-        _threshold.set(this, void 0);
-        _prevX.set(this, void 0);
-        _prevY.set(this, void 0);
-        _callback.set(this, void 0);
-        _isAttached.set(this, void 0);
-        _box.set(this, void 0);
-        _task.set(this, void 0);
-        _listener.set(this, void 0);
-        __classPrivateFieldSet(this, _target, target);
-        __classPrivateFieldSet(this, _box, CuiElementBoxFactory.get(target));
-        __classPrivateFieldSet(this, _inProgress, false);
-        __classPrivateFieldSet(this, _threshold, getRangeValueOrDefault(threshold, 0, 100, 0));
-        __classPrivateFieldSet(this, _prevX, __classPrivateFieldSet(this, _prevY, 0));
-        __classPrivateFieldSet(this, _isAttached, false);
-        __classPrivateFieldSet(this, _callback, undefined);
-        __classPrivateFieldSet(this, _task, new CuiTaskRunner(DEFAULT_SCROLL_END_TIMEOUT, false, this.onScrollFinish.bind(this)));
-        __classPrivateFieldSet(this, _listener, this.listener.bind(this));
+        this._target = target;
+        this._box = CuiElementBoxFactory.get(target);
+        this._inProgress = false;
+        this._threshold = getRangeValueOrDefault(threshold, 0, 100, 0);
+        this._prevX = this._prevY = 0;
+        this._isAttached = false;
+        this._callback = undefined;
+        this._task = new CuiTaskRunner(DEFAULT_SCROLL_END_TIMEOUT, false, this.onScrollFinish.bind(this));
+        this._listener = this.listener.bind(this);
     }
     setCallback(callback) {
-        __classPrivateFieldSet(this, _callback, callback);
+        this._callback = callback;
     }
     attach() {
-        __classPrivateFieldGet(this, _target).addEventListener('scroll', __classPrivateFieldGet(this, _listener));
-        __classPrivateFieldSet(this, _isAttached, true);
+        this._target.addEventListener('scroll', this._listener);
+        this._isAttached = true;
         this.listener(undefined, true, "init");
     }
     detach() {
-        __classPrivateFieldGet(this, _target).removeEventListener('scroll', __classPrivateFieldGet(this, _listener));
-        __classPrivateFieldGet(this, _task).stop();
-        __classPrivateFieldSet(this, _isAttached, false);
+        this._target.removeEventListener('scroll', this._listener);
+        this._task.stop();
+        this._isAttached = false;
     }
     setTarget(target) {
-        if (target !== __classPrivateFieldGet(this, _target)) {
+        if (target !== this._target) {
             this.detach();
-            __classPrivateFieldSet(this, _target, target);
+            this._target = target;
             this.attach();
         }
     }
     setThreshold(threshold) {
-        __classPrivateFieldSet(this, _threshold, getRangeValueOrDefault(threshold, 0, 100, 0));
+        this._threshold = getRangeValueOrDefault(threshold, 0, 100, 0);
     }
     isInProgress() {
-        return __classPrivateFieldGet(this, _inProgress);
+        return this._inProgress;
     }
     isAttached() {
-        return __classPrivateFieldGet(this, _isAttached);
+        return this._isAttached;
     }
     listener(ev, initial, source) {
-        if (!is(__classPrivateFieldGet(this, _callback))) {
+        if (!is(this._callback)) {
             return;
         }
-        let left = __classPrivateFieldGet(this, _box).getScrollLeft();
-        let top = __classPrivateFieldGet(this, _box).getScrollTop();
-        __classPrivateFieldSet(this, _prevX, __classPrivateFieldGet(this, _prevX) + left);
-        __classPrivateFieldSet(this, _prevY, __classPrivateFieldGet(this, _prevY) + top);
-        if (__classPrivateFieldGet(this, _inProgress) || (!this.passedThreshold() && is(ev))) {
+        let left = this._box.getScrollLeft();
+        let top = this._box.getScrollTop();
+        this._prevX += left;
+        this._prevY += top;
+        if (this._inProgress || (!this.passedThreshold() && is(ev))) {
             return;
         }
-        __classPrivateFieldSet(this, _inProgress, true);
+        this._inProgress = true;
         // @ts-ignore - callback already checked
-        __classPrivateFieldGet(this, _callback).call(this, {
+        this._callback({
             base: ev,
             top: top,
             left: left,
@@ -89,16 +65,15 @@ export class CuiScrollListener {
             source: source !== null && source !== void 0 ? source : "event"
         });
         if (is(ev))
-            __classPrivateFieldGet(this, _task).start();
-        __classPrivateFieldSet(this, _inProgress, false);
-        __classPrivateFieldSet(this, _prevX, 0);
-        __classPrivateFieldSet(this, _prevY, 0);
+            this._task.start();
+        this._inProgress = false;
+        this._prevX = 0;
+        this._prevY = 0;
     }
     passedThreshold() {
-        return __classPrivateFieldGet(this, _threshold) <= 0 || (__classPrivateFieldGet(this, _prevX) >= __classPrivateFieldGet(this, _threshold) || __classPrivateFieldGet(this, _prevY) >= __classPrivateFieldGet(this, _threshold));
+        return this._threshold <= 0 || (this._prevX >= this._threshold || this._prevY >= this._threshold);
     }
     onScrollFinish() {
         this.listener(undefined, false, "task");
     }
 }
-_target = new WeakMap(), _inProgress = new WeakMap(), _threshold = new WeakMap(), _prevX = new WeakMap(), _prevY = new WeakMap(), _callback = new WeakMap(), _isAttached = new WeakMap(), _box = new WeakMap(), _task = new WeakMap(), _listener = new WeakMap();

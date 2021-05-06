@@ -4,93 +4,93 @@ export interface ElementBuilderAttribute {
     [name: string]: string;
 }
 export class ElementBuilder {
-    #id: string | undefined;
-    #classes: string[];
-    #attributes: ElementBuilderAttribute | undefined;
-    #tag: string;
-    #text: string | undefined;
-    #children: Element[];
-    #rawChildren: ElementBuilder[];
-    #callback: ((ev: any) => void) | undefined;
-    #evName: string | undefined;
+    private _id: string | undefined;
+    private _classes: string[];
+    private _attributes: ElementBuilderAttribute | undefined;
+    private _tag: string;
+    private _text: string | undefined;
+    private _children: Element[];
+    private _rawChildren: ElementBuilder[];
+    private _callback: ((ev: any) => void) | undefined;
+    private _evName: string | undefined;
     constructor(tag: string) {
-        this.#tag = tag;
-        this.#classes = [];
-        this.#attributes = undefined;
-        this.#id = undefined;
-        this.#text = undefined;
-        this.#children = [];
-        this.#rawChildren = [];
-        this.#evName = undefined;
-        this.#callback = undefined;
+        this._tag = tag;
+        this._classes = [];
+        this._attributes = undefined;
+        this._id = undefined;
+        this._text = undefined;
+        this._children = [];
+        this._rawChildren = [];
+        this._evName = undefined;
+        this._callback = undefined;
     }
 
     setId(id: string): ElementBuilder {
-        this.#id = id;
+        this._id = id;
         return this;
     }
 
     setClasses(...classList: string[]): ElementBuilder {
-        this.#classes = classList;
+        this._classes = classList;
         return this;
     }
 
     setAttributes(attributes: ElementBuilderAttribute): ElementBuilder {
-        this.#attributes = attributes;
+        this._attributes = attributes;
         return this;
     }
 
     setTextContent(text: string) {
-        this.#text = text;
+        this._text = text;
         return this;
     }
 
     setChildren(...elements: Element[]) {
-        this.#children = [...elements];
+        this._children = [...elements];
         return this;
     }
 
     setRawChildren(...elements: ElementBuilder[]) {
-        this.#rawChildren = [...elements];
+        this._rawChildren = [...elements];
         return this;
     }
 
     onEvent(name: string, callback: (ev: any) => void) {
-        this.#evName = name;
-        this.#callback = callback;
+        this._evName = name;
+        this._callback = callback;
         return this;
     }
 
     build(innerHTML?: string): HTMLElement {
-        let element = document.createElement(this.#tag);
-        if (is(this.#id)) {
+        let element = document.createElement(this._tag);
+        if (is(this._id)) {
             // @ts-ignore id is checked
-            element.id = this.#id;
+            element.id = this._id;
         }
-        if (is(this.#classes)) {
-            element.classList.add(...this.#classes);
+        if (is(this._classes)) {
+            element.classList.add(...this._classes);
         }
-        if (is(this.#attributes)) {
+        if (is(this._attributes)) {
             // @ts-ignore attributes are checked
-            enumerateObject(this.#attributes, (attr: string, value: string) => {
+            enumerateObject(this._attributes, (attr: string, value: string) => {
                 element.setAttribute(attr, value);
             })
         }
         if (is(innerHTML)) {
             // @ts-ignore innerHTML checked already
             element.innerHTML = innerHTML;
-        } else if (is(this.#text)) {
+        } else if (is(this._text)) {
             // @ts-ignore text checked already
-            element.textContent = this.#text;
+            element.textContent = this._text;
         }
-        this.#rawChildren.forEach(raw => { element.appendChild(raw.build()) });
-        this.#children.forEach(child => element.appendChild(child));
+        this._rawChildren.forEach(raw => { element.appendChild(raw.build()) });
+        this._children.forEach(child => element.appendChild(child));
 
-        if (are(this.#evName, this.#callback)) {
+        if (are(this._evName, this._callback)) {
             // @ts-ignore
-            element.addEventListener(this.#evName, (ev) => {
+            element.addEventListener(this._evName, (ev) => {
                 // @ts-ignore
-                this.#callback(ev);
+                this._callback(ev);
             })
         }
         return element;

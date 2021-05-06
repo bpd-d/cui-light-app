@@ -38,10 +38,10 @@ export class EmitHandler implements ICuiEventEmitHandler {
 
 export class SimpleEventEmitHandlerAdapter implements ICuiQueueAdapter<EmitHandlerData> {
     type?: CuiQueueAdapterType;
-    #executor: ICuiCallbackExecutor;
+    private _executor: ICuiCallbackExecutor;
     constructor(executor: ICuiCallbackExecutor) {
         this.type = 'single';
-        this.#executor = executor;
+        this._executor = executor;
     }
 
     async onFlush(items: EmitHandlerData[]): Promise<boolean> {
@@ -49,7 +49,7 @@ export class SimpleEventEmitHandlerAdapter implements ICuiQueueAdapter<EmitHandl
             for (let id in task.events) {
                 let event = task.events[id]
                 if (idMatches(task.cuid, event.$cuid))
-                    await this.#executor.execute(event.callback, task.args)
+                    await this._executor.execute(event.callback, task.args)
             }
         }
         return true;
@@ -58,10 +58,10 @@ export class SimpleEventEmitHandlerAdapter implements ICuiQueueAdapter<EmitHandl
 
 export class TaskedEventEmitHandlerAdapter implements ICuiQueueAdapter<EmitHandlerData> {
     type?: CuiQueueAdapterType;
-    #executor: ICuiCallbackExecutor;
+    private _executor: ICuiCallbackExecutor;
     constructor(executor: ICuiCallbackExecutor) {
         this.type = 'single';
-        this.#executor = executor;
+        this._executor = executor;
     }
 
     async onFlush(items: EmitHandlerData[]): Promise<boolean> {
@@ -70,7 +70,7 @@ export class TaskedEventEmitHandlerAdapter implements ICuiQueueAdapter<EmitHandl
             for (let id in task.events) {
                 let event = task.events[id]
                 if (idMatches(task.cuid, event.$cuid))
-                    promises.push(this.#executor.execute(event.callback, task.args))
+                    promises.push(this._executor.execute(event.callback, task.args))
             }
             await Promise.all(promises);
         }

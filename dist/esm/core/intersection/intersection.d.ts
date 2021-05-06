@@ -2,7 +2,10 @@ import { CuiElementBoxType } from "../models/elements";
 import { ICuiEventListener } from "../models/interfaces";
 import { CuiIntersectionListenerOptions, CuiIntersectionResult } from "./interfaces";
 export declare class CuiIntersectionListener implements ICuiEventListener<CuiIntersectionResult> {
-    #private;
+    private _scrollListener;
+    private _callback;
+    private _children;
+    private _box;
     constructor(element: CuiElementBoxType, options?: CuiIntersectionListenerOptions);
     /**
      * Sets child elements - ratio is calcutalated based on them

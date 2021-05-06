@@ -1,33 +1,33 @@
-import { CuiUtils } from "../../core/models/utils";
-import { are, is } from "../../core/utils/functions";
+// import { CuiUtils } from "../../core/models/utils";
+// import { are, is } from "../../core/utils/functions";
 
-export interface PropertySet {
-    [property: string]: string;
-}
-export class PropertySetter {
-    #utils: CuiUtils;
-    constructor(utils: CuiUtils) {
-        this.#utils = utils;
-    }
+// export interface PropertySet {
+//     [property: string]: string;
+// }
+// export class PropertySetter {
+//     #utils: CuiUtils;
+//     constructor(utils: CuiUtils) {
+//         this.#utils = utils;
+//     }
 
-    setProperty(property: string, value: string) {
-        if (!are(property, value)) {
-            return;
-        }
-        this.#utils.interactions.mutate(() => {
-            this.#utils.setProperty(property, value)
-        }, null)
-    }
+//     setProperty(property: string, value: string) {
+//         if (!are(property, value)) {
+//             return;
+//         }
+//         this.#utils.interactions.mutate(() => {
+//             this.#utils.setProperty(property, value)
+//         }, null)
+//     }
 
-    setProperties(set: PropertySet) {
-        if (!is(set)) {
-            return;
-        }
-        this.#utils.interactions.mutate(() => {
-            for (let property in set) {
-                if (is(set[property]))
-                    this.#utils.setProperty(property, set[property])
-            }
-        }, null)
-    }
-}
+//     setProperties(set: PropertySet) {
+//         if (!is(set)) {
+//             return;
+//         }
+//         this.#utils.interactions.mutate(() => {
+//             for (let property in set) {
+//                 if (is(set[property]))
+//                     this.#utils.setProperty(property, set[property])
+//             }
+//         }, null)
+//     }
+// }

@@ -1,32 +1,31 @@
-import { CuiChildMutation, CuiMutableHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiIntersectionResult } from "../../core/intersection/interfaces";
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiAutoParseArgs } from "../..//core/utils/arguments";
 export declare class CuiParallaxArgs extends CuiAutoParseArgs {
-    root: boolean;
     targets: string;
     startRatio: number;
     stopRatio: number;
     animation: string;
     constructor();
 }
-export declare class CuiParallaxComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string;
-    get(element: HTMLElement, sutils: CuiUtils): ICuiComponentHandler;
-}
-export declare class CuiParallaxHandler extends CuiMutableHandler<CuiParallaxArgs> {
-    #private;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
-    onInit(): void;
-    onUpdate(): void;
-    onDestroy(): void;
+export declare function CuiParallaxComponent(prefix?: string): ICuiComponent;
+export declare class CuiParallaxHandler extends CuiHandlerBase<CuiParallaxArgs> {
+    private _defaultAnimator;
+    private _targetSetup;
+    private _interactions;
+    private _intersectionPerformer;
+    private _mutationPerformer;
+    private _styles;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string);
+    onHandle(): Promise<boolean>;
+    onRefresh(): Promise<boolean>;
+    onRemove(): Promise<boolean>;
+    private updateArguments;
     onIntersection(ev: CuiIntersectionResult): void;
-    onMutation(record: CuiChildMutation): void;
+    onMutation(record: MutationRecord[]): void;
     private getTargets;
-    private getParent;
     private getTargetAnimator;
     private clean;
 }

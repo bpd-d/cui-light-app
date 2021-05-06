@@ -1,24 +1,30 @@
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
 };
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _prefix, _isMoving, _isResizing, _prevX, _prevY, _prefix_1, _moveListener, _positionCalculator, _resizeCalculator, _resizeBtn, _moveBtn;
-import { replacePrefix, is } from "../../core/utils/functions";
+import { replacePrefix } from "../../core/utils/functions";
 import { AriaAttributes } from "../../core/utils/aria";
-import { CuiInteractableHandler } from "../../core/handlers/base";
-import { CuiMoveEventListener } from "../../core/listeners/move";
-import { BasePositionCalculator, BaseResizeCalculator } from "./helpers";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { BasePositionCalculator, BaseResizeCalculator, getMoveAction } from "./helpers";
 import { CLASSES, EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { moveExtension } from "../extensions/move/move";
+import { moveExtensionPerformer } from "../extensions/move/performer";
+import { eventExtension } from "../extensions/event/event";
+import { getEventBusFacade, CuiStyleHelper, getCuiHandlerInteractions } from "../../core/handlers/extensions/facades";
+import { closeActionsPerformer, openActionsPerformer } from "../extensions/performers";
+import { getActionsHelper } from "../../core/helpers/helpers";
+import { CuiKeysHandlerExtension } from "../extensions/keys/keys";
+import { getCuiKeyActionPerformer } from "../extensions/keys/performer";
+import { CuiActionsListFactory } from "../../core/utils/actions";
+import { getKeyCloseCombos } from "../extensions/helpers/helpers";
+import { getCuiKeysComboParser } from "../../core/utils/parsers/keys";
+import { CuiComponentBaseHook } from "../base";
 const FLOAT_OPEN_ANIMATION_CLASS = '.{prefix}-float-default-in';
 const FLOAT_CLOSE_ANIMATION_CLASS = '.{prefix}-float-default-out';
 const MOVE = '.{prefix}-float-move';
@@ -33,150 +39,143 @@ export class CuiFloatArgs extends CuiAutoParseArgs {
         this.timeout = defTimeout !== null && defTimeout !== void 0 ? defTimeout : 300;
     }
 }
-export class CuiFloatComponent {
-    constructor(prefix) {
-        _prefix.set(this, void 0);
-        __classPrivateFieldSet(this, _prefix, prefix !== null && prefix !== void 0 ? prefix : 'cui');
-        this.attribute = `${__classPrivateFieldGet(this, _prefix)}-float`;
-    }
-    getStyle() {
-        return null;
-    }
-    get(element, utils) {
-        return new CuiFloatHandler(element, utils, this.attribute, __classPrivateFieldGet(this, _prefix));
-    }
+export function CuiFloatComponent(prefix) {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "float",
+        create: (element, utils, prefix, attribute) => {
+            return new CuiFloatHandler(element, utils, attribute, prefix);
+        }
+    });
 }
-_prefix = new WeakMap();
-export class CuiFloatHandler extends CuiInteractableHandler {
+export class CuiFloatHandler extends CuiHandlerBase {
     constructor(element, utils, attribute, prefix) {
         super("CuiFloatHandler", element, attribute, new CuiFloatArgs(prefix, utils.setup.animationTime), utils);
-        _isMoving.set(this, void 0);
-        _isResizing.set(this, void 0);
-        _prevX.set(this, void 0);
-        _prevY.set(this, void 0);
-        _prefix_1.set(this, void 0);
-        _moveListener.set(this, void 0);
-        _positionCalculator.set(this, void 0);
-        _resizeCalculator.set(this, void 0);
-        _resizeBtn.set(this, void 0);
-        _moveBtn.set(this, void 0);
-        __classPrivateFieldSet(this, _isMoving, false);
-        __classPrivateFieldSet(this, _isResizing, false);
-        __classPrivateFieldSet(this, _prevX, 0);
-        __classPrivateFieldSet(this, _prevY, 0);
-        __classPrivateFieldSet(this, _moveListener, new CuiMoveEventListener());
-        __classPrivateFieldGet(this, _moveListener).preventDefault(false);
-        __classPrivateFieldSet(this, _positionCalculator, new BasePositionCalculator());
-        __classPrivateFieldSet(this, _resizeCalculator, new BaseResizeCalculator(element));
-        __classPrivateFieldSet(this, _prefix_1, prefix);
-        this.move = this.move.bind(this);
-        this.resize = this.resize.bind(this);
-        __classPrivateFieldSet(this, _moveBtn, null);
-        __classPrivateFieldSet(this, _resizeBtn, null);
-        if (!utils.isPlugin("click-plugin")) {
-            this.logWarning("WindowClick plugin is not available, outClose will not work");
-        }
+        this._prevX = 0;
+        this._prevY = 0;
+        this._positionCalculator = new BasePositionCalculator();
+        this._resizeCalculator = new BaseResizeCalculator(element);
+        this._prefix = prefix;
+        this._moveBtn = null;
+        this._resizeBtn = null;
+        this._currentAction = undefined;
+        this._interactions = getCuiHandlerInteractions(utils.interactions);
+        this._styles = new CuiStyleHelper();
+        this._busFacade = getEventBusFacade(this.getId(), utils.bus, element);
+        this._keysPerformer = getCuiKeyActionPerformer(this.onCloseAction.bind(this));
+        this._keyComboParser = getCuiKeysComboParser();
+        this._movePerformer = moveExtensionPerformer({
+            onDown: this.onMouseDown.bind(this),
+            onMove: this.onMouseMove.bind(this),
+            onUp: this.onMouseUp.bind(this),
+        });
+        this._movePerformer.setEnabled(false);
+        const actionsHelper = getActionsHelper(utils.interactions);
+        this._openActionPerformer = openActionsPerformer(actionsHelper, this._busFacade, {
+            isActive: this.isActive.bind(this),
+            onFinish: () => {
+                this._movePerformer.setEnabled(true);
+            }
+        }, {
+            active: this.activeAction,
+            element: element
+        });
+        this._closeActionPerformer = closeActionsPerformer(actionsHelper, this._busFacade, {
+            isActive: this.isActive.bind(this),
+            onFinish: () => {
+                this._movePerformer.setEnabled(false);
+            }
+        }, {
+            active: this.activeAction,
+            element: element
+        });
         if (!utils.isPlugin("keys-plugin")) {
             this.logWarning("KeyObserver plugin is not available, escClose and keyClose will not work");
         }
+        this.extend(moveExtension({
+            performer: this._movePerformer
+        }));
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.OPEN,
+            performer: this._openActionPerformer,
+        }));
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.CLOSE,
+            performer: this._closeActionPerformer,
+        }));
+        this.extend(new CuiKeysHandlerExtension(element, this._busFacade, this._keysPerformer));
     }
-    onInit() {
-        AriaAttributes.setAria(this.element, 'aria-modal', "");
-        __classPrivateFieldSet(this, _moveBtn, this.element.querySelector(replacePrefix(MOVE, __classPrivateFieldGet(this, _prefix_1))));
-        __classPrivateFieldSet(this, _resizeBtn, this.element.querySelector(replacePrefix(RESIZE, __classPrivateFieldGet(this, _prefix_1))));
-        __classPrivateFieldGet(this, _moveListener).setCallback(this.onMove.bind(this));
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            AriaAttributes.setAria(this.element, 'aria-modal', "");
+            this._moveBtn = this.element.querySelector(replacePrefix(MOVE, this._prefix));
+            this._resizeBtn = this.element.querySelector(replacePrefix(RESIZE, this._prefix));
+            this.updateSetups();
+            return true;
+        });
     }
-    onUpdate() {
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.updateSetups();
+            return true;
+        });
     }
-    onDestroy() {
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this._busFacade.detachEmittedEvents();
+            return true;
+        });
     }
-    onBeforeOpen() {
-        return true;
-    }
-    onAfterOpen() {
-        __classPrivateFieldGet(this, _moveListener).attach();
-    }
-    onAfterClose() {
-        __classPrivateFieldGet(this, _moveListener).detach();
-    }
-    onBeforeClose() {
-        return true;
-    }
-    onMove(ev) {
-        switch (ev.type) {
-            case 'down':
-                this.onMouseDown(ev);
-                break;
-            case 'up':
-                this.onMouseUp(ev);
-                break;
-            case 'move':
-                this.onMouseMove(ev);
-                break;
-        }
+    updateSetups() {
+        this._closeActionPerformer.updateSetup({
+            timeout: this.args.timeout,
+            actions: CuiActionsListFactory.get(this.args.closeAct)
+        });
+        this._openActionPerformer.updateSetup({
+            timeout: this.args.timeout,
+            actions: CuiActionsListFactory.get(this.args.openAct)
+        });
+        this._keysPerformer.setKeyCombos(getKeyCloseCombos(this._keyComboParser, this.args.escClose, this.args.keyClose));
     }
     onMouseDown(ev) {
-        if (ev.target === __classPrivateFieldGet(this, _moveBtn)) {
-            __classPrivateFieldSet(this, _isMoving, true);
-            ev.event.preventDefault();
+        let type = "";
+        let calculator = undefined;
+        if (ev.target === this._moveBtn) {
+            type = 'move';
+            calculator = this._positionCalculator;
         }
-        else if (ev.target === __classPrivateFieldGet(this, _resizeBtn)) {
-            __classPrivateFieldSet(this, _isResizing, true);
-            ev.event.preventDefault();
-            //this.helper.setClass("cui-float-resize-shadow")
+        else if (ev.target === this._resizeBtn) {
+            type = "resize";
+            calculator = this._resizeCalculator;
         }
-        __classPrivateFieldSet(this, _prevX, ev.x);
-        __classPrivateFieldSet(this, _prevY, ev.y);
-        this.helper.setClassesAs(document.body, CLASSES.swipingOn);
+        else {
+            return;
+        }
+        this._currentAction = getMoveAction(type, calculator, this.element, this._interactions, this._styles);
+        if (this._currentAction) {
+            this._currentAction.init(ev);
+        }
+        this._prevX = ev.x;
+        this._prevY = ev.y;
+        this.asyncClasses.setClasses(document.body, CLASSES.swipingOn);
         // Lock global move handler
-        this.utils.bus.emit(EVENTS.MOVE_LOCK, null, true);
+        this.core.bus.emit(EVENTS.MOVE_LOCK, null, true);
     }
     onMouseMove(ev) {
-        if (__classPrivateFieldGet(this, _isMoving)) {
-            this.peform(ev, this.move);
+        if (this._currentAction) {
+            this._currentAction.move(ev.x, ev.y, (ev.x - this._prevX), (ev.y - this._prevY));
         }
-        else if (__classPrivateFieldGet(this, _isResizing)) {
-            this.peform(ev, this.resize);
-        }
-    }
-    onMouseUp(ev) {
-        __classPrivateFieldSet(this, _isMoving, false);
-        __classPrivateFieldSet(this, _isResizing, false);
-        this.helper.removeClassesAs(document.body, CLASSES.swipingOn);
-        // Unlock global handler
-        this.utils.bus.emit(EVENTS.MOVE_LOCK, null, false);
-    }
-    peform(ev, callback) {
-        this.mutate(() => {
-            if (is(callback))
-                callback(this.element, ev.x, ev.y, (ev.x - __classPrivateFieldGet(this, _prevX)), (ev.y - __classPrivateFieldGet(this, _prevY)));
-            __classPrivateFieldSet(this, _prevX, ev.x);
-            __classPrivateFieldSet(this, _prevY, ev.y);
-        });
+        this._prevX = ev.x;
+        this._prevY = ev.y;
         ev.event.preventDefault();
     }
-    resize(element, x, y, diffX, diffY) {
-        let [newWidth, newHeight] = __classPrivateFieldGet(this, _resizeCalculator).calculate(x, y, diffX, diffY);
-        if (this.fitsWindow(element.offsetTop, element.offsetLeft, newWidth, newHeight)) {
-            this.mutate(() => {
-                element.style.width = newWidth + "px";
-                element.style.height = newHeight + "px";
-            });
-        }
+    onMouseUp(ev) {
+        this._currentAction = undefined;
+        this.asyncClasses.removeClasses(document.body, CLASSES.swipingOn);
+        // Unlock global handler
+        this.core.bus.emit(EVENTS.MOVE_LOCK, null, false);
     }
-    move(element, x, y, diffX, diffY) {
-        let [newX, newY] = __classPrivateFieldGet(this, _positionCalculator).calculate(x, y, diffX, diffY);
-        if (this.fitsWindow(newY, newX, element.offsetWidth, element.offsetHeight)) {
-            this.mutate(() => {
-                element.style.left = newX + "px";
-                element.style.top = newY + "px";
-            });
-        }
-    }
-    fitsWindow(top, left, width, height) {
-        return (top + height < window.innerHeight - 10) &&
-            (top > 10) && (left > 10) &&
-            (left + width < window.innerWidth - 10);
+    onCloseAction() {
+        this._closeActionPerformer.perform("keys");
     }
 }
-_isMoving = new WeakMap(), _isResizing = new WeakMap(), _prevX = new WeakMap(), _prevY = new WeakMap(), _prefix_1 = new WeakMap(), _moveListener = new WeakMap(), _positionCalculator = new WeakMap(), _resizeCalculator = new WeakMap(), _resizeBtn = new WeakMap(), _moveBtn = new WeakMap();

@@ -15,79 +15,79 @@ export interface CuiScrollEvent {
 }
 
 export class CuiScrollListener implements ICuiEventListener<CuiScrollEvent> {
-    #target: CuiElementBoxType;
-    #inProgress: boolean;
-    #threshold: number;
-    #prevX: number;
-    #prevY: number;
-    #callback: ((ev: CuiScrollEvent) => void) | undefined;
-    #isAttached: boolean;
-    #box: ICuiElementBox;
-    #task: ICuiTask;
-    #listener: (ev: Event) => void;
+    private _target: CuiElementBoxType;
+    private _inProgress: boolean;
+    private _threshold: number;
+    private _prevX: number;
+    private _prevY: number;
+    private _callback: ((ev: CuiScrollEvent) => void) | undefined;
+    private _isAttached: boolean;
+    private _box: ICuiElementBox;
+    private _task: ICuiTask;
+    private _listener: (ev: Event) => void;
     constructor(target: CuiElementBoxType, threshold?: number) {
-        this.#target = target;
-        this.#box = CuiElementBoxFactory.get(target);
-        this.#inProgress = false;
-        this.#threshold = getRangeValueOrDefault(threshold, 0, 100, 0);
-        this.#prevX = this.#prevY = 0;
-        this.#isAttached = false;
-        this.#callback = undefined;
-        this.#task = new CuiTaskRunner(DEFAULT_SCROLL_END_TIMEOUT, false, this.onScrollFinish.bind(this));
+        this._target = target;
+        this._box = CuiElementBoxFactory.get(target);
+        this._inProgress = false;
+        this._threshold = getRangeValueOrDefault(threshold, 0, 100, 0);
+        this._prevX = this._prevY = 0;
+        this._isAttached = false;
+        this._callback = undefined;
+        this._task = new CuiTaskRunner(DEFAULT_SCROLL_END_TIMEOUT, false, this.onScrollFinish.bind(this));
 
-        this.#listener = this.listener.bind(this);
+        this._listener = this.listener.bind(this);
     }
 
     setCallback(callback: (ev: CuiScrollEvent) => void) {
-        this.#callback = callback;
+        this._callback = callback;
     }
 
     attach() {
-        this.#target.addEventListener('scroll', this.#listener)
-        this.#isAttached = true;
+        this._target.addEventListener('scroll', this._listener)
+        this._isAttached = true;
         this.listener(undefined, true, "init");
     }
 
     detach() {
-        this.#target.removeEventListener('scroll', this.#listener)
-        this.#task.stop();
-        this.#isAttached = false;
+        this._target.removeEventListener('scroll', this._listener)
+        this._task.stop();
+        this._isAttached = false;
     }
 
     setTarget(target: CuiElementBoxType) {
-        if (target !== this.#target) {
+        if (target !== this._target) {
             this.detach();
-            this.#target = target;
+            this._target = target;
             this.attach();
         }
     }
 
     setThreshold(threshold: number) {
-        this.#threshold = getRangeValueOrDefault(threshold, 0, 100, 0);
+        this._threshold = getRangeValueOrDefault(threshold, 0, 100, 0);
     }
 
     isInProgress(): boolean {
-        return this.#inProgress;
+        return this._inProgress;
     }
 
     isAttached(): boolean {
-        return this.#isAttached;
+        return this._isAttached;
     }
 
     private listener(ev?: Event, initial?: boolean, source?: string) {
-        if (!is(this.#callback)) {
+        if (!is(this._callback)) {
             return;
         }
-        let left = this.#box.getScrollLeft();
-        let top = this.#box.getScrollTop();
-        this.#prevX += left;
-        this.#prevY += top;
-        if (this.#inProgress || (!this.passedThreshold() && is(ev))) {
+        let left = this._box.getScrollLeft();
+        let top = this._box.getScrollTop();
+        this._prevX += left;
+        this._prevY += top;
+        if (this._inProgress || (!this.passedThreshold() && is(ev))) {
             return;
         }
-        this.#inProgress = true;
+        this._inProgress = true;
         // @ts-ignore - callback already checked
-        this.#callback({
+        this._callback({
             base: ev,
             top: top,
             left: left,
@@ -96,14 +96,14 @@ export class CuiScrollListener implements ICuiEventListener<CuiScrollEvent> {
             source: source ?? "event"
         })
         if (is(ev))
-            this.#task.start();
-        this.#inProgress = false
-        this.#prevX = 0;
-        this.#prevY = 0;
+            this._task.start();
+        this._inProgress = false
+        this._prevX = 0;
+        this._prevY = 0;
     }
 
     private passedThreshold() {
-        return this.#threshold <= 0 || (this.#prevX >= this.#threshold || this.#prevY >= this.#threshold);
+        return this._threshold <= 0 || (this._prevX >= this._threshold || this._prevY >= this._threshold);
     }
 
     private onScrollFinish() {

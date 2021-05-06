@@ -1,11 +1,13 @@
 import { ICuiComponent, ICuiComponentHandler, ICuiParsable, CuiElement } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { getChildSelectorFromScoped, is } from "../../core/utils/functions";
 import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 import { CuiClickableArgs } from "src/core/models/arguments";
-import { CuiClickModule } from "../modules/click/click";
+import { clickExtension, CuiClickModule } from "../extensions/click/click";
+import { clickPerformer, ICuiClickPerfromerHook } from "../extensions/click/performer";
+import { CuiComponentBaseHook } from "../base";
 
 const SWITCHER_LIST_ITEM_SELECTOR = "li > a";
 
@@ -29,39 +31,42 @@ export class CuiSwitcherArgs extends CuiAutoParseArgs implements CuiClickableArg
     }
 }
 
-export class CuiSwitcherComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string) {
-        this.attribute = `${prefix ?? 'cui'}-switcher`;
-    }
-
-    getStyle(): string | null {
-        return null;
-    }
-
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler {
-        return new CuiSwitcherHandler(element, utils, this.attribute);
-    }
+export function CuiSwitcherComponent(prefix?: string): ICuiComponent {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "switcher",
+        create: (element: HTMLElement, utils: CuiCore, prefix: string, attribute: string) => {
+            return new CuiSwitcherHandler(element, utils, attribute)
+        }
+    })
 }
 
 export class CuiSwitcherHandler extends CuiHandlerBase<CuiSwitcherArgs>  {
-
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string) {
+    _perfromer: ICuiClickPerfromerHook;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string) {
         super("CuiSwitcherHandler", element, attribute, new CuiSwitcherArgs(), utils);
-        this.onClickEvent = this.onClickEvent.bind(this);
-        this.addModule(new CuiClickModule(this.element, this.args, this.onClickEvent.bind(this)))
+        this._perfromer = clickPerformer(this.onClickEvent.bind(this));
+        this.extend(clickExtension({
+            element: element,
+            performer: this._perfromer
+        }))
     }
 
     async onHandle(): Promise<boolean> {
-
+        this.handleArguments();
         return true;
     }
     async onRefresh(): Promise<boolean> {
-
+        this.handleArguments();
         return true;
     }
     async onRemove(): Promise<boolean> {
         return true;
+    }
+
+    private handleArguments() {
+        this._perfromer.preventDefault(this.args.prevent);
+        this._perfromer.stopPropagation(this.args.stopPropagation);
     }
 
     /**
@@ -96,10 +101,10 @@ export class CuiSwitcherHandler extends CuiHandlerBase<CuiSwitcherArgs>  {
 
     handleItemClick(ev: MouseEvent, targetCuid: string) {
         if (!this.args.index) {
-            this._log.warning("Switch cannot be performed since component doesn't specify index")
+            this.log.warning("Switch cannot be performed since component doesn't specify index")
             return;
         }
-        this.utils.bus.emit(EVENTS.SWITCH, targetCuid, this.args.index);
+        this.core.bus.emit(EVENTS.SWITCH, targetCuid, this.args.index);
     }
 
     handleListClick(ev: MouseEvent, targetCuid: string) {
@@ -114,7 +119,7 @@ export class CuiSwitcherHandler extends CuiHandlerBase<CuiSwitcherArgs>  {
             return;
         }
 
-        this.utils.bus.emit(EVENTS.SWITCH, targetCuid, targetIndex);
+        this.core.bus.emit(EVENTS.SWITCH, targetCuid, targetIndex);
     }
 }
 

@@ -1,16 +1,8 @@
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
-import { CuiClickableArgs } from "src/core/models/arguments";
-export declare class CuiScrollArgs extends CuiAutoParseArgs implements CuiClickableArgs {
-    target: string;
-    parent: string;
-    behavior: 'auto' | 'smooth';
-    prevent: boolean;
-    stopPropagation: boolean;
-    constructor();
-}
+import { CuiClickableArgs } from "../../core/models/arguments";
 /**
  * Component scrolls to specified target in the document
  * Arguments:
@@ -19,22 +11,23 @@ export declare class CuiScrollArgs extends CuiAutoParseArgs implements CuiClicka
  * behavior - auto/smooth - choose between step and smooth scrolling
  *
  */
-export declare class CuiScrollComponent implements ICuiComponent {
-    attribute: string;
-    constructor(prefix?: string);
-    getStyle(): string | null;
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler;
+export declare class CuiScrollArgs extends CuiAutoParseArgs implements CuiClickableArgs {
+    target: string;
+    parent: string;
+    behavior: 'auto' | 'smooth';
+    prevent: boolean;
+    stopPropagation: boolean;
+    constructor();
 }
-export interface CuiScrollAttribute {
-    target?: string;
-    parent?: string;
-    behavior?: 'auto' | 'smooth';
-}
+export declare function CuiScrollComponent(prefix?: string): ICuiComponent;
 export declare class CuiScrollHandler extends CuiHandlerBase<CuiScrollArgs> {
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string);
+    private _busFacade;
+    private _clickPerformer;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string);
     onHandle(): Promise<boolean>;
     onRefresh(): Promise<boolean>;
     onRemove(): Promise<boolean>;
+    handleUpdate(): void;
     onClick(ev: MouseEvent): void;
     private getTarget;
     private getTargetsParent;

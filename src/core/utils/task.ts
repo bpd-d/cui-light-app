@@ -9,52 +9,52 @@ export interface ICuiTask {
 }
 
 export class CuiTaskRunner implements ICuiTask {
-    #taskId: any;
-    #autoRenew: boolean;
-    #timeout: number;
-    #callback: (() => void) | undefined;
+    private _taskId: any;
+    private _autoRenew: boolean;
+    private _timeout: number;
+    private _callback: (() => void) | undefined;
 
     constructor(timeout: number, autoRenew: boolean, callback?: () => void) {
-        this.#autoRenew = autoRenew;
-        this.#timeout = timeout;
-        this.#callback = callback;
+        this._autoRenew = autoRenew;
+        this._timeout = timeout;
+        this._callback = callback;
     }
     start(): void {
         if (!this.canRun()) {
             return;
         }
         this.stop();
-        this.#taskId = setTimeout(() => {
+        this._taskId = setTimeout(() => {
             //@ts-ignore - already checked in canRun
-            this.#callback();
-            this.#taskId = null;
-            if (this.#autoRenew) {
+            this._callback();
+            this._taskId = null;
+            if (this._autoRenew) {
                 this.start();
             }
-        }, this.#timeout);
+        }, this._timeout);
     }
 
     stop(): void {
-        if (this.#taskId) {
-            clearTimeout(this.#taskId);
-            this.#taskId = null
+        if (this._taskId) {
+            clearTimeout(this._taskId);
+            this._taskId = null
         }
     }
 
     getId() {
-        return this.#taskId;
+        return this._taskId;
     }
 
     private canRun(): boolean {
-        return is(this.#callback) && this.#timeout > 0;
+        return is(this._callback) && this._timeout > 0;
     }
 
     setCallback(callback: () => void) {
-        this.#callback = callback;
+        this._callback = callback;
     }
 
     setTimeout(timeout: number) {
-        this.#timeout = timeout;
+        this._timeout = timeout;
     }
 
 }

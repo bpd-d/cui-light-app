@@ -1,6 +1,9 @@
 import { ElementBox, ICuiPositionEvaluator } from "./interfaces";
 export declare class CuiBasePositionEvaluator implements ICuiPositionEvaluator {
-    #private;
+    private _box;
+    private _targetWidth;
+    private _targetHeight;
+    private _margin;
     constructor();
     setElementBox(box: ElementBox): void;
     setTarget(targetBox: ElementBox): void;

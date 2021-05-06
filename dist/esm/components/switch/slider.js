@@ -7,27 +7,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _targets, _currentIdx, _links, _task, _switchEventId, _isTracking, _startX, _swipeRatio, _nextIdx, _nextElement, _ratioThreshold, _currSlider, _nextSlider, _animationDef, _targetsCount, _moveEventId;
-import { CuiMutableHandler } from "../../core/handlers/base";
+import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiTaskRunner } from "../../core/utils/task";
-import { CuiSwipeAnimationEngine } from "../../core/animation/engine";
+import { CuiTimeAnimationEngine, CuiSwipeAnimationEngine } from "../../core/animation/engine";
 import { SWIPE_ANIMATIONS_DEFINITIONS } from "../../core/animation/definitions";
-import { calculateNextIndex, is, getChildrenHeight, isInRange, joinWithScopeSelector } from "../../core/utils/functions";
+import { calculateNextIndex, is, getChildrenHeight, isInRange, joinWithScopeSelector, getRangeValueOrDefault, all } from "../../core/utils/functions";
 import { EVENTS, CLASSES } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { getEventBusFacade, CuiStyleHelper, getCuiHandlerInteractions } from "../../core/handlers/extensions/facades";
+import { getEaseTimingFunction } from "../..//core/animation/calculators";
+import { eventExtension } from "../extensions/event/event";
+import { getDefaultSwitchKeyCombo } from "../extensions/helpers/helpers";
+import { CuiKeysHandlerExtension } from "../extensions/keys/keys";
+import { CuiSwitchExtension } from "../extensions/switch/switch";
+import { getCuiKeyActionPerformer } from "../extensions/keys/performer";
+import { CuiComponentBaseHook } from "../base";
+import { sliderPerformer } from "../extensions/performers";
+import { getCuiMutationPerformer } from "../extensions/mutations/performer";
+import { CuiComponentMutationExtension } from "../extensions/mutations/mutations";
 /**
  *
  *   targets: string - slider elements
@@ -43,7 +40,8 @@ export class CuiSliderArgs extends CuiAutoParseArgs {
     constructor(prefix, timeout) {
         super({
             props: {
-                "targets": { corrector: joinWithScopeSelector }
+                "targets": { corrector: joinWithScopeSelector },
+                'swipeRatio': { corrector: (value) => getRangeValueOrDefault(value, 0.1, 0.9, 0.4) }
             }
         });
         this.targets = joinWithScopeSelector(SWITCH_DEFAULT_TARGETS);
@@ -53,160 +51,152 @@ export class CuiSliderArgs extends CuiAutoParseArgs {
         this.animation = "slide";
         this.loop = false;
         this.timeout = timeout !== null && timeout !== void 0 ? timeout : 300;
+        this.swipeRatio = 0.3;
+        this.keyChange = false;
     }
 }
-export class CuiSliderComponent {
-    constructor(prefix) {
-        this.attribute = `${prefix !== null && prefix !== void 0 ? prefix : 'cui'}-slider`;
-    }
-    getStyle() {
-        return null;
-    }
-    get(element, utils) {
-        return new CuiSliderHandler(element, utils, this.attribute);
-    }
+export function CuiSliderComponent(prefix) {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "slider",
+        create: (element, utils, prefix, attribute) => {
+            return new CuiSliderHandler(element, utils, attribute);
+        }
+    });
 }
-export class CuiSliderHandler extends CuiMutableHandler {
+export class CuiSliderHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiSliderHandler", element, attribute, new CuiSliderArgs(utils.setup.prefix, utils.setup.animationTime), utils);
-        _targets.set(this, void 0);
-        _currentIdx.set(this, void 0);
-        _links.set(this, void 0);
-        _task.set(this, void 0);
-        _switchEventId.set(this, void 0);
-        //  #moveListener: CuiMoveEventListener;
-        _isTracking.set(this, void 0);
-        _startX.set(this, void 0);
-        _swipeRatio.set(this, void 0);
-        _nextIdx.set(this, void 0);
-        _nextElement.set(this, void 0);
-        _ratioThreshold.set(this, void 0);
-        _currSlider.set(this, void 0);
-        _nextSlider.set(this, void 0);
-        _animationDef.set(this, void 0);
-        _targetsCount.set(this, void 0);
-        _moveEventId.set(this, void 0);
-        __classPrivateFieldSet(this, _targets, []);
-        __classPrivateFieldSet(this, _currentIdx, -1);
-        __classPrivateFieldSet(this, _nextIdx, -1);
-        __classPrivateFieldSet(this, _links, []);
-        __classPrivateFieldSet(this, _switchEventId, null);
-        __classPrivateFieldSet(this, _moveEventId, null);
-        __classPrivateFieldSet(this, _isTracking, false);
-        __classPrivateFieldSet(this, _startX, -1);
-        __classPrivateFieldSet(this, _swipeRatio, 0);
-        __classPrivateFieldSet(this, _nextElement, null);
-        __classPrivateFieldSet(this, _ratioThreshold, 0.4);
-        __classPrivateFieldSet(this, _currSlider, new CuiSwipeAnimationEngine());
-        __classPrivateFieldSet(this, _nextSlider, new CuiSwipeAnimationEngine());
-        __classPrivateFieldGet(this, _currSlider).setOnFinish(this.onAnimationFinish.bind(this));
-        __classPrivateFieldSet(this, _targetsCount, 0);
-        __classPrivateFieldSet(this, _task, new CuiTaskRunner(this.args.autoTimeout, true, this.switch.bind(this, 'next')));
-        __classPrivateFieldSet(this, _animationDef, SWIPE_ANIMATIONS_DEFINITIONS[this.args.animation]);
-    }
-    onInit() {
-        __classPrivateFieldSet(this, _switchEventId, this.onEvent(EVENTS.SWITCH, this.onPushSwitch.bind(this)));
-        __classPrivateFieldSet(this, _moveEventId, this.onEvent(EVENTS.GLOBAL_MOVE, this.onMove.bind(this)));
-        this.getTargets();
-        this.getLinks();
-        this.getActiveIndex();
-        this.setLinkActive(-1, __classPrivateFieldGet(this, _currentIdx));
-        this.mutate(() => {
-            this.helper.setStyle(this.element, 'height', this.getElementHeight(__classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _currentIdx)]));
+        this._targets = [];
+        this._currentIdx = -1;
+        this._nextIdx = -1;
+        this._links = [];
+        this._current = undefined;
+        this._nextElement = null;
+        this._currSlider = new CuiSwipeAnimationEngine(new CuiTimeAnimationEngine(getEaseTimingFunction()));
+        this._nextSlider = new CuiSwipeAnimationEngine(new CuiTimeAnimationEngine(getEaseTimingFunction()));
+        this._targetsCount = 0;
+        this._task = new CuiTaskRunner(this.args.autoTimeout, true, this.switch.bind(this, 'next'));
+        this._animationDef = SWIPE_ANIMATIONS_DEFINITIONS[this.args.animation];
+        this._keysPerformer = getCuiKeyActionPerformer(this.switch.bind(this));
+        this._busFacade = getEventBusFacade(this.cuid, utils.bus, this.element);
+        this._interactions = getCuiHandlerInteractions(utils.interactions);
+        this._task = new CuiTaskRunner(this.args.autoTimeout, true, this.switch.bind(this, 'next'));
+        this._styles = new CuiStyleHelper();
+        this._mutationPerformer = getCuiMutationPerformer(this.onMutation.bind(this));
+        this._movePerformer = sliderPerformer(this.asyncClasses, {
+            element: element,
+            prevent: true,
+            start: this.onDown.bind(this),
+            progress: this.onMove.bind(this),
+            end: this.onUp.bind(this),
+            adjustRatio: this.adjustMoveRatio.bind(this)
         });
-        __classPrivateFieldSet(this, _task, new CuiTaskRunner(this.args.autoTimeout, true, this.switch.bind(this, 'next')));
-        __classPrivateFieldSet(this, _animationDef, SWIPE_ANIMATIONS_DEFINITIONS[this.args.animation]);
-        this.startTask();
+        this.extend(new CuiSwitchExtension(this._busFacade, this.switch.bind(this)));
+        this.extend(new CuiKeysHandlerExtension(this.element, this._busFacade, this._keysPerformer));
+        this.extend(eventExtension(this._busFacade, {
+            type: "global-move",
+            eventName: EVENTS.GLOBAL_MOVE,
+            performer: this._movePerformer
+        }));
+        this.extend(new CuiComponentMutationExtension(element, this._mutationPerformer));
     }
-    onUpdate() {
-        this.mutate(() => {
-            this.helper.setStyle(this.element, 'height', this.getElementHeight(__classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _currentIdx)]));
+    onHandle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.getTargets();
+            this.getLinks();
+            this.getActiveIndex();
+            this.setLinkActive(-1, this._currentIdx);
+            this.setElementHeight();
+            this.handleUpdate();
+            return true;
         });
-        __classPrivateFieldSet(this, _animationDef, SWIPE_ANIMATIONS_DEFINITIONS[this.args.animation]);
-        this.startTask();
     }
-    onDestroy() {
-        __classPrivateFieldGet(this, _task).stop();
-        this.detachEvent(EVENTS.SWITCH, __classPrivateFieldGet(this, _switchEventId));
-        this.detachEvent(EVENTS.GLOBAL_MOVE, __classPrivateFieldGet(this, _moveEventId));
+    onRefresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.setElementHeight();
+            this.handleUpdate();
+            return true;
+        });
+    }
+    onRemove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this._task.stop();
+            this._busFacade.detachEmittedEvents();
+            return true;
+        });
     }
     onMutation(record) {
+        this.getTargets();
+        this.getLinks();
     }
-    /**
-     * Move listener callback
-     * @param data move listener data
-     */
+    handleUpdate() {
+        this._animationDef = SWIPE_ANIMATIONS_DEFINITIONS[this.args.animation];
+        this._mutationPerformer.setSelector(this.args.targets);
+        this.setKeyCombo(this.args.keyChange);
+        this.startTask();
+    }
+    setElementHeight() {
+        this._interactions.mutate(() => {
+            this._styles.setStyle('height', this.getElementHeight(this._targets[this._currentIdx]), this.element);
+        });
+    }
+    onDown() {
+        if (!this.lock()) {
+            return false;
+        }
+        this._current = this._targets[this._currentIdx];
+        this._currSlider.setElement(this._current);
+        return true;
+    }
     onMove(data) {
-        if (this.isLocked || !__classPrivateFieldGet(this, _animationDef)) {
+        if (!this._current) {
             return;
         }
-        let current = __classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _currentIdx)];
-        switch (data.type) {
-            case "down":
-                if (__classPrivateFieldGet(this, _isTracking) || !current.contains(data.target)) {
-                    return;
-                }
-                __classPrivateFieldSet(this, _isTracking, true);
-                __classPrivateFieldSet(this, _startX, data.x);
-                __classPrivateFieldGet(this, _currSlider).setElement(current);
-                this.helper.setClassesAs(document.body, CLASSES.swipingOn);
-                if (data.event.cancelable)
-                    data.event.preventDefault();
-                break;
-            case "up":
-                if (!__classPrivateFieldGet(this, _isTracking)) {
-                    break;
-                }
-                // Lock component until animation is finished
-                this.isLocked = true;
-                let absRatio = Math.abs(__classPrivateFieldGet(this, _swipeRatio));
-                let timeout = absRatio * this.args.timeout;
-                let back = absRatio <= __classPrivateFieldGet(this, _ratioThreshold);
-                __classPrivateFieldGet(this, _currSlider).finish(absRatio, timeout, back);
-                __classPrivateFieldGet(this, _nextSlider).finish(absRatio, timeout, back);
-                this.helper.removeClassesAs(document.body, CLASSES.swipingOn);
-                __classPrivateFieldSet(this, _isTracking, false);
-                break;
-            case "move":
-                if (!__classPrivateFieldGet(this, _isTracking)) {
-                    break;
-                }
-                let newRatio = (data.x - __classPrivateFieldGet(this, _startX)) / current.offsetWidth;
-                if (Math.abs(newRatio - __classPrivateFieldGet(this, _swipeRatio)) < 0.02) {
-                    break;
-                }
-                let nextIdx = calculateNextIndex(__classPrivateFieldGet(this, _swipeRatio) > 0 ? "next" : "prev", __classPrivateFieldGet(this, _currentIdx), __classPrivateFieldGet(this, _targetsCount));
-                __classPrivateFieldSet(this, _swipeRatio, this.adjustMoveRatio(newRatio));
-                if (nextIdx !== __classPrivateFieldGet(this, _nextIdx)) {
-                    __classPrivateFieldGet(this, _nextElement) && this.helper.removeClass(CLASSES.animProgress, __classPrivateFieldGet(this, _nextElement));
-                    __classPrivateFieldSet(this, _nextElement, __classPrivateFieldGet(this, _targets)[nextIdx]);
-                    __classPrivateFieldSet(this, _nextIdx, nextIdx);
-                    __classPrivateFieldGet(this, _nextSlider).setElement(__classPrivateFieldGet(this, _nextElement));
-                    __classPrivateFieldGet(this, _nextSlider).setProps(__classPrivateFieldGet(this, _swipeRatio) > 0 ? __classPrivateFieldGet(this, _animationDef).previous.right : __classPrivateFieldGet(this, _animationDef).previous.left);
-                    __classPrivateFieldGet(this, _currSlider).setProps(__classPrivateFieldGet(this, _swipeRatio) > 0 ? __classPrivateFieldGet(this, _animationDef).current.right : __classPrivateFieldGet(this, _animationDef).current.left);
-                    this.mutate(() => {
-                        __classPrivateFieldGet(this, _nextElement) && this.helper.setClass(CLASSES.animProgress, __classPrivateFieldGet(this, _nextElement));
-                    });
-                }
-                this.mutate(() => {
-                    __classPrivateFieldGet(this, _currSlider).update(Math.abs(__classPrivateFieldGet(this, _swipeRatio)));
-                    __classPrivateFieldGet(this, _nextSlider).update(Math.abs(__classPrivateFieldGet(this, _swipeRatio)));
-                });
-                if (data.event.cancelable)
-                    data.event.preventDefault();
-                break;
-            default:
-                break;
+        const direction = data.ratio > 0 ? "right" : "left";
+        const absRatio = Math.abs(data.ratio);
+        let nextIdx = calculateNextIndex(direction === 'left' ? "next" : "prev", this._currentIdx, this._targetsCount);
+        if (nextIdx !== this._nextIdx) {
+            this._nextElement && this.classes.removeClass(CLASSES.animProgress, this._nextElement);
+            this._nextElement = this._targets[nextIdx];
+            this._nextIdx = nextIdx;
+            this._nextSlider.setElement(this._nextElement);
+            this._nextSlider.setProps(this._animationDef.previous[direction]);
+            this._currSlider.setProps(this._animationDef.current[direction]);
+            this._interactions.mutate(() => {
+                this._nextElement && this.classes.setClass(CLASSES.animProgress, this._nextElement);
+            });
         }
+        this._interactions.mutate(() => {
+            this._currSlider.move(Math.abs(absRatio));
+            this._nextSlider.move(Math.abs(absRatio));
+        });
+    }
+    onUp(data) {
+        let absRatio = Math.abs(data.ratio);
+        const minVelo = 1 / this.args.timeout;
+        const v = data.velocity > minVelo ? data.velocity : minVelo;
+        let back = absRatio <= this.args.swipeRatio;
+        //  const timeout = absRatio * this.args.timeout;
+        Promise.all([
+            this._currSlider.finish({ progress: absRatio, acceleration: data.acceleration, velocity: v, timeout: this.args.timeout, revert: back }),
+            this._nextSlider.finish({ progress: absRatio, acceleration: data.acceleration, velocity: v, timeout: this.args.timeout, revert: back })
+        ]).then((status) => {
+            if (status)
+                this.onAnimationFinish(this._current, back, false);
+        }).catch((e) => {
+            this.logError("An error", "onUp", e);
+            this.onAnimationFinish(this._current, back, true);
+        });
     }
     adjustMoveRatio(ratio) {
         if (this.args.loop) {
             return ratio;
         }
-        if (__classPrivateFieldGet(this, _currentIdx) === __classPrivateFieldGet(this, _targetsCount) - 1 && ratio > 0) {
+        if (this._currentIdx === 0 && ratio > 0) {
             return 0;
         }
-        if (__classPrivateFieldGet(this, _currentIdx) === 0 && ratio < 0) {
+        if (this._currentIdx === this._targetsCount - 1 && ratio < 0) {
             return 0;
         }
         return ratio;
@@ -217,8 +207,7 @@ export class CuiSliderHandler extends CuiMutableHandler {
      */
     switch(index) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.isLocked) {
-                console.log("Locked");
+            if (!this.lock()) {
                 return false;
             }
             this.onPushSwitch(index);
@@ -232,75 +221,69 @@ export class CuiSliderHandler extends CuiMutableHandler {
      * @param errorOccured - tells whether animation was finished with error
      */
     onAnimationFinish(element, reverted, errorOccured) {
-        this.isLocked = false;
         // If not go back or from push then switch, else was go back
-        let next = __classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _nextIdx)];
-        let current = __classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _currentIdx)];
-        if (!reverted) {
-            if (__classPrivateFieldGet(this, _nextIdx) > -1) {
-                this.mutate(() => {
-                    this.helper.removeClass(CLASSES.animProgress, next);
-                    this.helper.setClass(this.activeClassName, next);
-                    this.helper.removeClass(this.activeClassName, current);
-                    this.helper.removeAttribute("style", current);
-                    this.helper.removeAttribute("style", next);
-                    this.setLinkActive(__classPrivateFieldGet(this, _currentIdx), __classPrivateFieldGet(this, _nextIdx));
-                    this.emitEvent(EVENTS.SWITCHED, {
-                        timestamp: Date.now(),
-                        index: __classPrivateFieldGet(this, _nextIdx)
-                    });
-                    __classPrivateFieldSet(this, _currentIdx, __classPrivateFieldGet(this, _nextIdx));
-                    __classPrivateFieldSet(this, _nextIdx, -1);
-                    __classPrivateFieldSet(this, _nextElement, null);
-                    __classPrivateFieldSet(this, _startX, -1);
-                    __classPrivateFieldSet(this, _swipeRatio, 0);
+        let next = this._targets[this._nextIdx];
+        let current = this._targets[this._currentIdx];
+        this._interactions.mutate(() => {
+            this.classes.removeClass(CLASSES.animProgress, next);
+            this._styles.clean(current);
+            this._styles.clean(next);
+            if (!reverted) {
+                this.classes.setClass(this.activeClassName, next);
+                this.classes.removeClass(this.activeClassName, current);
+                this.setLinkActive(this._currentIdx, this._nextIdx);
+                this._busFacade.emit(EVENTS.SWITCHED, {
+                    timestamp: Date.now(),
+                    index: this._nextIdx
                 });
+                this._currentIdx = this._nextIdx;
             }
-        }
-        else {
-            if (is(__classPrivateFieldGet(this, _nextElement))) {
-                //@ts-ignore
-                this.helper.removeClass(CLASSES.animProgress, __classPrivateFieldGet(this, _nextElement));
-                //@ts-ignore
-                this.helper.removeAttribute("style", __classPrivateFieldGet(this, _nextElement));
-            }
-            this.helper.removeAttribute("style", current);
-            __classPrivateFieldSet(this, _nextIdx, -1);
-            __classPrivateFieldSet(this, _nextElement, null);
-            __classPrivateFieldSet(this, _startX, -1);
-            __classPrivateFieldSet(this, _swipeRatio, 0);
-        }
+            this.clearSlideData();
+            this.unlock();
+        });
         this.startTask();
     }
     onPushSwitch(index) {
         if (!is(index) ||
-            this.isLocked ||
-            !__classPrivateFieldGet(this, _animationDef) ||
-            (!this.args.loop && __classPrivateFieldGet(this, _currentIdx) === 0 && index === 'prev') ||
-            (!this.args.loop && __classPrivateFieldGet(this, _currentIdx) === __classPrivateFieldGet(this, _targetsCount) - 1 && index === 'next')) {
+            !this._animationDef ||
+            (!this.args.loop && this._currentIdx === 0 && index === 'prev') ||
+            (!this.args.loop && this._currentIdx === this._targetsCount - 1 && index === 'next')) {
+            this.unlock();
             return;
         }
-        this.isLocked = true;
-        let nextIdx = calculateNextIndex(index, __classPrivateFieldGet(this, _currentIdx), __classPrivateFieldGet(this, _targetsCount));
-        if (nextIdx == __classPrivateFieldGet(this, _currentIdx) || nextIdx < 0 || nextIdx >= __classPrivateFieldGet(this, _targets).length) {
-            this._log.warning(`Index ${index} is not within the suitable range`);
+        let nextIdx = calculateNextIndex(index, this._currentIdx, this._targetsCount);
+        if (nextIdx == this._currentIdx || nextIdx < 0 || nextIdx >= this._targets.length) {
+            this.log.warning(`Index ${index} is not within the suitable range`);
             return false;
         }
-        __classPrivateFieldSet(this, _nextIdx, nextIdx);
-        let current = __classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _currentIdx)];
-        let next = __classPrivateFieldGet(this, _targets)[__classPrivateFieldGet(this, _nextIdx)];
-        __classPrivateFieldGet(this, _currSlider).setElement(current);
-        __classPrivateFieldGet(this, _nextSlider).setElement(next);
-        __classPrivateFieldGet(this, _currSlider).setProps(index === 'prev' ? __classPrivateFieldGet(this, _animationDef).current.left : __classPrivateFieldGet(this, _animationDef).current.right);
-        __classPrivateFieldGet(this, _nextSlider).setProps(index === 'prev' ? __classPrivateFieldGet(this, _animationDef).previous.left : __classPrivateFieldGet(this, _animationDef).previous.right);
-        this.mutate(() => {
-            __classPrivateFieldGet(this, _currSlider).finish(0, this.args.timeout, false);
-            __classPrivateFieldGet(this, _nextSlider).finish(0, this.args.timeout, false);
-            this.helper.setClass(CLASSES.animProgress, next);
+        this._nextIdx = nextIdx;
+        let current = this._targets[this._currentIdx];
+        let next = this._targets[this._nextIdx];
+        this._currSlider.setElement(current);
+        this._nextSlider.setElement(next);
+        this._currSlider.setProps(index === 'prev' ? this._animationDef.current.left : this._animationDef.current.right);
+        this._nextSlider.setProps(index === 'prev' ? this._animationDef.previous.left : this._animationDef.previous.right);
+        this._interactions.mutate(() => {
+            this.classes.setClass(CLASSES.animProgress, next);
+        });
+        Promise.all([
+            this._currSlider.finish({ progress: 0, acceleration: 1, velocity: 0, timeout: this.args.timeout, revert: false }),
+            this._nextSlider.finish({ progress: 0, acceleration: 1, velocity: 0, timeout: this.args.timeout, revert: false })
+        ]).then((statuses) => {
+            let status = all(statuses, (status) => status === true);
+            if (status)
+                this.onAnimationFinish(current, false, false);
+        }).catch((e) => {
+            this.logError("An error", "onUp", e);
+            this.onAnimationFinish(current, false, true);
         });
     }
     getActiveIndex() {
-        __classPrivateFieldSet(this, _currentIdx, is(__classPrivateFieldGet(this, _targets)) ? __classPrivateFieldGet(this, _targets).findIndex(target => this.helper.hasClass(this.activeClassName, target)) : -1);
+        this._currentIdx = is(this._targets) ? this._targets.findIndex(target => this.classes.hasClass(this.activeClassName, target)) : -1;
+    }
+    clearSlideData() {
+        this._nextIdx = -1;
+        this._nextElement = null;
     }
     getElementHeight(current) {
         if (!is(this.args.height) || this.args.height === 'auto') {
@@ -310,19 +293,31 @@ export class CuiSliderHandler extends CuiMutableHandler {
             return this.args.height;
         }
     }
+    setKeyCombo(flag) {
+        if (!flag) {
+            this._keysPerformer.setKeyCombos([]);
+            return;
+        }
+        this._keysPerformer.setKeyCombos([{
+                key: 'next',
+                value: getDefaultSwitchKeyCombo("ArrowRight")
+            }, {
+                key: "prev",
+                value: getDefaultSwitchKeyCombo("ArrowLeft")
+            }]);
+    }
     /**
      * Queries targets
      */
     getTargets() {
-        let t = this.element.querySelectorAll(this.args.targets);
-        __classPrivateFieldSet(this, _targets, t.length > 0 ? [...t] : []);
-        __classPrivateFieldSet(this, _targetsCount, __classPrivateFieldGet(this, _targets).length);
+        this._targets = [...this.element.querySelectorAll(this.args.targets)];
+        this._targetsCount = this._targets.length;
     }
     /**
      * Get linked switcher elements
      */
     getLinks() {
-        __classPrivateFieldSet(this, _links, is(this.args.links) ? [...document.querySelectorAll(this.args.links)] : []);
+        this._links = is(this.args.links) ? [...document.querySelectorAll(this.args.links)] : [];
     }
     /**
      * Set active class on linked switcher if set
@@ -330,15 +325,15 @@ export class CuiSliderHandler extends CuiMutableHandler {
      * @param next - next index (to set action on)
      */
     setLinkActive(current, next) {
-        if (!is(__classPrivateFieldGet(this, _links))) {
+        if (!is(this._links)) {
             return;
         }
-        this.mutate(() => {
-            if (isInRange(current, 0, __classPrivateFieldGet(this, _links).length - 1)) {
-                this.helper.removeClass(this.activeClassName, __classPrivateFieldGet(this, _links)[current]);
+        this._interactions.mutate(() => {
+            if (isInRange(current, 0, this._links.length - 1)) {
+                this.classes.removeClass(this.activeClassName, this._links[current]);
             }
-            if (isInRange(next, 0, __classPrivateFieldGet(this, _links).length - 1)) {
-                this.helper.setClass(this.activeClassName, __classPrivateFieldGet(this, _links)[next]);
+            if (isInRange(next, 0, this._links.length - 1)) {
+                this.classes.setClass(this.activeClassName, this._links[next]);
             }
         });
     }
@@ -346,10 +341,9 @@ export class CuiSliderHandler extends CuiMutableHandler {
      * Runs task if arguments setup allows for it - auto flag must be set to true
      */
     startTask() {
-        __classPrivateFieldGet(this, _task).stop();
+        this._task.stop();
         if (this.args.autoTimeout) {
-            __classPrivateFieldGet(this, _task).start();
+            this._task.start();
         }
     }
 }
-_targets = new WeakMap(), _currentIdx = new WeakMap(), _links = new WeakMap(), _task = new WeakMap(), _switchEventId = new WeakMap(), _isTracking = new WeakMap(), _startX = new WeakMap(), _swipeRatio = new WeakMap(), _nextIdx = new WeakMap(), _nextElement = new WeakMap(), _ratioThreshold = new WeakMap(), _currSlider = new WeakMap(), _nextSlider = new WeakMap(), _animationDef = new WeakMap(), _targetsCount = new WeakMap(), _moveEventId = new WeakMap();

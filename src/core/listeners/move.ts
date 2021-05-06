@@ -24,19 +24,19 @@ export interface ICuiMoveData {
 }
 
 export class CuiMoveEventListener implements ICuiEventListener<ICuiMoveData> {
-    #element: HTMLElement | Document;
-    #onEvent: ((t: ICuiMoveData) => void) | undefined;
-    #isLocked: boolean;
-    #isAttached: boolean;
-    #preventDefault: boolean;
-    #target: Element | undefined;
+    private _element: HTMLElement | Document;
+    private _onEvent: ((t: ICuiMoveData) => void) | undefined;
+    private _isLocked: boolean;
+    private _isAttached: boolean;
+    private _preventDefault: boolean;
+    private _target: Element | undefined;
     constructor(element?: HTMLElement) {
-        this.#isLocked = false;
-        this.#element = element ?? document.body;
-        this.#isAttached = false;
-        this.#preventDefault = false;
-        this.#onEvent = undefined;
-        this.#target = undefined;
+        this._isLocked = false;
+        this._element = element ?? document.body;
+        this._isAttached = false;
+        this._preventDefault = false;
+        this._onEvent = undefined;
+        this._target = undefined;
 
         this.onMouseDown = this.onMouseDown.bind(this);
         this.onMouseUp = this.onMouseUp.bind(this)
@@ -47,120 +47,120 @@ export class CuiMoveEventListener implements ICuiEventListener<ICuiMoveData> {
     }
 
     setCallback(callback: (t: ICuiMoveData) => void): void {
-        this.#onEvent = callback;
+        this._onEvent = callback;
     }
 
-    setTarget(element: Element) {
-        this.#target = element;
+    setTarget(element?: Element) {
+        this._target = element;
     }
     isInProgress(): boolean {
-        return this.#isLocked;
+        return this._isLocked;
     }
     preventDefault(flag: boolean) {
-        this.#preventDefault = flag;
+        this._preventDefault = flag;
     }
     attach(): void {
-        if (this.#isAttached) {
+        if (this._isAttached) {
             return;
         }
 
         //@ts-ignore
-        this.#element.addEventListener('mousedown', this.onMouseDown, { passive: false } as any);
+        this._element.addEventListener('mousedown', this.onMouseDown, { passive: false } as any);
         //@ts-ignore
-        this.#element.addEventListener('mouseup', this.onMouseUp, { passive: false } as any);
+        this._element.addEventListener('mouseup', this.onMouseUp, { passive: false } as any);
         //@ts-ignore
-        this.#element.addEventListener('mousemove', this.onMouseMove, { passive: false } as any);
+        this._element.addEventListener('mousemove', this.onMouseMove, { passive: false } as any);
         //@ts-ignore
-        this.#element.addEventListener('touchstart', this.onTouchStart, { passive: false } as any);
+        this._element.addEventListener('touchstart', this.onTouchStart, { passive: false } as any);
         //@ts-ignore
-        this.#element.addEventListener('touchend', this.onTouchEnd, { passive: false } as any);
+        this._element.addEventListener('touchend', this.onTouchEnd, { passive: false } as any);
         //@ts-ignore
-        this.#element.addEventListener('touchmove', this.onTouchMove, { passive: false } as any);
-        this.#isAttached = true;
+        this._element.addEventListener('touchmove', this.onTouchMove, { passive: false } as any);
+        this._isAttached = true;
     }
     detach(): void {
-        if (!this.#isAttached) {
+        if (!this._isAttached) {
             return;
         }
         //@ts-ignore
-        this.#element.removeEventListener('mousedown', this.onMouseDown, { passive: false } as any);
+        this._element.removeEventListener('mousedown', this.onMouseDown, { passive: false } as any);
         //@ts-ignore
-        this.#element.removeEventListener('mouseup', this.onMouseUp, { passive: false } as any);
+        this._element.removeEventListener('mouseup', this.onMouseUp, { passive: false } as any);
         //@ts-ignore
-        this.#element.removeEventListener('mousemove', this.onMouseMove, { passive: false } as any);
+        this._element.removeEventListener('mousemove', this.onMouseMove, { passive: false } as any);
         //@ts-ignore
-        this.#element.removeEventListener('touchstart', this.onTouchStart, { passive: false } as any);
+        this._element.removeEventListener('touchstart', this.onTouchStart, { passive: false } as any);
         //@ts-ignore
-        this.#element.removeEventListener('touchend', this.onTouchEnd, { passive: false } as any);
+        this._element.removeEventListener('touchend', this.onTouchEnd, { passive: false } as any);
         //@ts-ignore
-        this.#element.removeEventListener('touchmove', this.onTouchMove, { passive: false } as any);
-        this.#isAttached = false;
+        this._element.removeEventListener('touchmove', this.onTouchMove, { passive: false } as any);
+        this._isAttached = false;
     }
 
     isAttached(): boolean {
-        return this.#isAttached
+        return this._isAttached
     }
 
     onMouseDown(ev: MouseEvent) {
-        if (this.#isLocked) {
+        if (this._isLocked) {
             return;
         }
-        if (this.#target && !this.#target.contains(ev.target as Node)) {
+        if (this._target && !this._target.contains(ev.target as Node)) {
             return;
         }
 
-        this.#isLocked = true;
+        this._isLocked = true;
         this.publishMouseEvent("down", ev)
 
     }
 
     onMouseUp(ev: MouseEvent) {
-        if (!this.#isLocked) {
+        if (!this._isLocked) {
             return;
         }
-        this.#isLocked = false;
+        this._isLocked = false;
         this.publishMouseEvent("up", ev)
 
     }
 
     onMouseMove(ev: MouseEvent) {
-        if (this.#isLocked) {
+        if (this._isLocked) {
             this.publishMouseEvent("move", ev)
         }
     }
 
     onTouchStart(ev: TouchEvent) {
-        if (this.#isLocked) {
+        if (this._isLocked) {
             return;
         }
-        if (this.#target && !this.#target.contains(ev.target as Node)) {
+        if (this._target && !this._target.contains(ev.target as Node)) {
             return;
         }
-        this.#isLocked = true;
+        this._isLocked = true;
         this.publishTouchEvent('down', ev);
     }
 
     onTouchEnd(ev: TouchEvent) {
-        if (!this.#isLocked) {
+        if (!this._isLocked) {
             return;
         }
-        this.#isLocked = false;
+        this._isLocked = false;
         this.publishTouchEvent('up', ev);
     }
 
     onTouchMove(ev: TouchEvent) {
-        if (this.#isLocked) {
+        if (this._isLocked) {
             this.publishTouchEvent('move', ev);
         }
     }
 
     private publishMouseEvent(type: CuiMoveEventState, ev: MouseEvent) {
-        if (this.#preventDefault && ev.cancelable) {
+        if (this._preventDefault && ev.cancelable) {
             ev.preventDefault();
         }
-        if (!is(this.#onEvent)) { return }
+        if (!is(this._onEvent)) { return }
         // @ts-ignore
-        this.#onEvent({
+        this._onEvent({
             type: type,
             x: ev.clientX,
             y: ev.clientY,
@@ -173,9 +173,9 @@ export class CuiMoveEventListener implements ICuiEventListener<ICuiMoveData> {
     }
 
     private publishTouchEvent(type: CuiMoveEventState, ev: TouchEvent) {
-        if (this.#preventDefault && ev.cancelable)
+        if (this._preventDefault && ev.cancelable)
             ev.preventDefault();
-        if (!is(this.#onEvent)) {
+        if (!is(this._onEvent)) {
             return;
         }
         let touch = null;
@@ -185,7 +185,7 @@ export class CuiMoveEventListener implements ICuiEventListener<ICuiMoveData> {
             touch = ev.changedTouches[0]
         }
         // @ts-ignore - already checked
-        this.#onEvent({
+        this._onEvent({
             event: ev,
             type: type,
             target: ev.target,

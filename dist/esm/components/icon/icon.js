@@ -12,6 +12,8 @@ import { ICONS } from "../../core/utils/statics";
 import { is } from "../../core/utils/functions";
 import { IconBuilder } from "../../core/builders/icon";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiComponentBaseHook } from "../base";
+import { getCuiHandlerInteractions } from "../../core/handlers/extensions/facades";
 export class CuiIconArgs extends CuiAutoParseArgs {
     constructor() {
         super({
@@ -21,20 +23,19 @@ export class CuiIconArgs extends CuiAutoParseArgs {
         this.scale = 1;
     }
 }
-export class CuiIconComponent {
-    constructor(prefix) {
-        this.attribute = `${prefix !== null && prefix !== void 0 ? prefix : 'cui'}-icon`;
-    }
-    getStyle() {
-        return null;
-    }
-    get(element, utils) {
-        return new CuiIconHandler(element, utils, this.attribute);
-    }
+export function CuiIconComponent(prefix) {
+    return CuiComponentBaseHook({
+        name: 'icon',
+        prefix: prefix,
+        create: (element, utils, prefix, attribute) => {
+            return new CuiIconHandler(element, utils, attribute);
+        }
+    });
 }
 export class CuiIconHandler extends CuiHandlerBase {
     constructor(element, utils, attribute) {
         super("CuiIconHandler", element, attribute, new CuiIconArgs(), utils);
+        this._interactions = getCuiHandlerInteractions(utils.interactions, this);
     }
     onHandle() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -73,10 +74,10 @@ export class CuiIconHandler extends CuiHandlerBase {
             svg.remove();
         }
         if (this.element.childNodes.length > 0) {
-            this.mutate(this.insertBefore, iconSvg);
+            this._interactions.mutate(this.insertBefore, iconSvg);
             return;
         }
-        this.mutate(this.appendChild, iconSvg);
+        this._interactions.mutate(this.appendChild, iconSvg);
     }
     insertBefore(iconElement) {
         this.element.insertBefore(iconElement, this.element.firstChild);

@@ -1,7 +1,9 @@
 import { CuiLogLevel } from "../utils/types";
 import { CuiDevelopmentStateType, ICuiDevelopmentTool } from "./interfaces";
 export declare class CuiConsoleDevelopementTool implements ICuiDevelopmentTool {
-    #private;
+    private _cuid;
+    private _name;
+    private _level;
     constructor(name: string, logLevel?: CuiLogLevel);
     registerElement(element: HTMLElement, cuid: string, component: string): void;
     unregisterElement(cuid: string, component: string): void;

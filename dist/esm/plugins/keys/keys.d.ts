@@ -1,14 +1,5 @@
 import { ICuiPlugin } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
 export interface CuiKeysObserverPluginSetup {
     dummy?: boolean;
 }
-export declare class CuiKeysObserverPlugin implements ICuiPlugin {
-    #private;
-    description: string;
-    name: string;
-    setup: CuiKeysObserverPluginSetup;
-    constructor(keySetup: CuiKeysObserverPluginSetup);
-    init(utils: CuiUtils): void;
-    destroy(): void;
-}
+export declare function CuiKeysObserverPluginFn(setup: CuiKeysObserverPluginSetup): ICuiPlugin;

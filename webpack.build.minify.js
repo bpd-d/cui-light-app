@@ -13,10 +13,10 @@ module.exports = merge(common, {
             extractComments: false
         })]
     }, output: {
-        filename: '[name].min.js',
+        filename: 'cui-light.min.js',
         path: path.resolve(__dirname, 'dist'),
         libraryTarget: 'umd',
-        library: "cui-light-app",
+        library: "cuiLight",
         umdNamedDefine: true
     },
 });

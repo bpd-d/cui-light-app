@@ -52,3 +52,35 @@ export interface DefinitionItem {
 export interface CuiAnimationsDefinition {
     [id: string]: AnimationDefinition;
 }
+
+export interface ICuiAnimationSetup {
+    progress: number;
+    velocity?: number;
+    acceleration?: number;
+    timeout: number;
+    revert: boolean;
+}
+
+export interface ICuiAnimationPerform extends ICuiAnimationSetup {
+    animationProgress: number;
+}
+
+export interface ICuiTimingFunction {
+    calculateProgress(currentTimeProgress: number): number;
+}
+
+export interface ICuiLockable {
+    isLocked(): boolean;
+}
+
+export interface ICuiAnimationEngine {
+    animate(element: Element, animators: ICuiPropertyAnimator<PropsTypes>[], setup: ICuiAnimationSetup): Promise<boolean>;
+    update(progress: number, element: HTMLElement, animators: ICuiPropertyAnimator<PropsTypes>[]): void;
+}
+
+export interface ICuiSlideEngine {
+    setElement(element: Element): void;
+    setProps(props: AnimationProperty<PropsTypes>): void;
+    move(progress: number): void;
+    finish(setup: ICuiAnimationSetup): Promise<boolean>;
+}

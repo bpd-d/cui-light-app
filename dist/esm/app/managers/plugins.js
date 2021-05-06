@@ -7,47 +7,30 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to set private field on non-instance");
-    }
-    privateMap.set(receiver, value);
-    return value;
-};
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
-    if (!privateMap.has(receiver)) {
-        throw new TypeError("attempted to get private field on non-instance");
-    }
-    return privateMap.get(receiver);
-};
-var _plugins, _mutated, _log;
 import { CuiDevtoolFactory } from "../../core/development/factory";
 import { is } from "../../core/utils/functions";
 export class CuiPluginManager {
     constructor(plugins) {
-        _plugins.set(this, void 0);
-        _mutated.set(this, void 0);
-        _log.set(this, void 0);
-        __classPrivateFieldSet(this, _plugins, plugins !== null && plugins !== void 0 ? plugins : []);
-        __classPrivateFieldSet(this, _log, CuiDevtoolFactory.get("CuiPluginManager"));
-        __classPrivateFieldSet(this, _mutated, []);
+        this._plugins = plugins !== null && plugins !== void 0 ? plugins : [];
+        this._log = CuiDevtoolFactory.get("CuiPluginManager");
+        this._mutated = [];
     }
-    init(utils) {
-        __classPrivateFieldGet(this, _log).debug("Plugins initialization started: " + __classPrivateFieldGet(this, _plugins).length);
-        __classPrivateFieldSet(this, _mutated, __classPrivateFieldGet(this, _plugins).filter((plugin) => {
+    init(core) {
+        this._log.debug("Plugins initialization started: " + this._plugins.length);
+        this._mutated = this._plugins.filter((plugin) => {
             return is(plugin.mutation);
-        }));
-        __classPrivateFieldGet(this, _plugins).forEach(plugin => {
-            plugin.init(utils);
-            utils.setup.plugins[plugin.description] = plugin.setup;
         });
-        __classPrivateFieldGet(this, _log).debug("Plugins have been initialized");
+        this._plugins.forEach(plugin => {
+            plugin.init(core);
+            core.setup.plugins[plugin.description] = plugin.setup;
+        });
+        this._log.debug("Plugins have been initialized");
     }
     get(name) {
         if (!is(name)) {
             return undefined;
         }
-        return __classPrivateFieldGet(this, _plugins).find(p => p.name === name);
+        return this._plugins.find(p => p.name === name);
     }
     has(name) {
         return is(this.get(name));
@@ -55,7 +38,7 @@ export class CuiPluginManager {
     onMutation(mutation) {
         return __awaiter(this, void 0, void 0, function* () {
             let tasks = [];
-            __classPrivateFieldGet(this, _mutated).forEach((plugin) => {
+            this._mutated.forEach((plugin) => {
                 tasks.push(plugin.mutation(mutation));
             });
             let result = yield Promise.all(tasks);
@@ -65,4 +48,3 @@ export class CuiPluginManager {
         });
     }
 }
-_plugins = new WeakMap(), _mutated = new WeakMap(), _log = new WeakMap();

@@ -6,7 +6,10 @@ export interface ICuiTask {
     setTimeout(timeout: number): void;
 }
 export declare class CuiTaskRunner implements ICuiTask {
-    #private;
+    private _taskId;
+    private _autoRenew;
+    private _timeout;
+    private _callback;
     constructor(timeout: number, autoRenew: boolean, callback?: () => void);
     start(): void;
     stop(): void;

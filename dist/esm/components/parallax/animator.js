@@ -13,7 +13,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _animators;
 import { enumerateObject } from "../../core/utils/functions";
-import { AnimatorFactory } from "../../core/animation/engine";
+import { AnimatorFactory } from "../../core/animation/factory";
 export class ParallaxAnimatorsHandler {
     constructor(name, setup) {
         _animators.set(this, void 0);

@@ -1,160 +1,142 @@
 import { AnimationDefinition, SWIPE_ANIMATIONS_DEFINITIONS } from "../../core/animation/definitions";
-import { CuiInteractableArgs, CuiInteractableHandler } from "../../core/handlers/base";
-import { CuiSwipeAnimationEngine } from "../../core/animation/engine";
-import { ICuiMoveData } from "../../core/listeners/move";
+import { CuiHandlerBase } from "../../core/handlers/base";
+import { CuiTimeAnimationEngine, CuiSwipeAnimationEngine } from "../../core/animation/engine";
 import { AriaAttributes } from "../../core/utils/aria";
 import { replacePrefix } from "../../core/utils/functions";
-import { ICuiComponent, ICuiComponentHandler } from "../../core/models/interfaces";
-import { CuiUtils } from "../../core/models/utils";
-import { EVENTS, CLASSES } from "../../core/utils/statics";
+import { ICuiComponent } from "../../core/models/interfaces";
+import { CuiCore } from "../../core/models/core";
+import { EVENTS } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
+import { CuiComponentBaseHook } from "../base";
+import { ICuiMoveExtensionPerformer } from "../extensions/move/performer";
+import { getEventBusFacade, getCuiHandlerInteractions, ICuiEventBusFacade, ICuiInteractionsFacade } from "../../core/handlers/extensions/facades";
+import { eventExtension } from "../extensions/event/event";
+import { closeActionsPerformer, ICuiActionExtensionPerformer, ICuiSliderProgress, sliderPerformer } from "../extensions/performers";
+import { getActionsHelper } from "../../core/helpers/helpers";
+import { CuiActionsListFactory } from "../../core/utils/actions";
+import { getLinearTimingFunction } from "../../core/animation/calculators";
+import { ICuiSlideEngine } from "src/core/animation/interfaces";
 
-const BANNER_OPEN_ANIMATION: string = ".{prefix}-animation-fade-in";
+//const BANNER_OPEN_ANIMATION: string = ".{prefix}-animation-fade-in";
 const BANNER_CLOSE_ANIMATION: string = ".{prefix}-animation-fade-out";
 
-export class CuiBannerArgs extends CuiAutoParseArgs implements CuiInteractableArgs {
+export class CuiBannerArgs extends CuiAutoParseArgs {
     timeout: number;
-    openAct: string;
     closeAct: string;
-    // Not in use
-    escClose: boolean;
-    keyClose: string;
-
     swipe: boolean;
 
     constructor(prefix: string, timeout?: number) {
         super();
-        this.escClose = false;
-        this.keyClose = "";
+
         this.timeout = timeout ?? 300;
         this.swipe = false;
-        this.openAct = replacePrefix(BANNER_OPEN_ANIMATION, prefix);
         this.closeAct = replacePrefix(BANNER_CLOSE_ANIMATION, prefix);
     }
 }
 
-
-export class CuiBanerComponent implements ICuiComponent {
-    attribute: string;
-    #prefix: string;
-
-    constructor(prefix?: string) {
-        this.#prefix = prefix ?? 'cui';
-        this.attribute = `${this.#prefix}-banner`;
-
-    }
-
-    getStyle(): string | null {
-        return null;
-    }
-
-    get(element: HTMLElement, utils: CuiUtils): ICuiComponentHandler {
-        return new CuiBannerHandler(element, utils, this.attribute, this.#prefix);
-    }
+export function CuiBannerComponent(prefix?: string): ICuiComponent {
+    return CuiComponentBaseHook({
+        prefix: prefix,
+        name: "banner",
+        create: (element: HTMLElement, utils: CuiCore, prefix: string, attribute: string) => {
+            return new CuiBannerHandler(element, utils, attribute, prefix);
+        }
+    })
 }
 
-export class CuiBannerHandler extends CuiInteractableHandler<CuiBannerArgs> {
-    #swipeEngine: CuiSwipeAnimationEngine;
-    #isTracking: boolean;
-    #startX: number;
-    #ratio: number;
-    #swipeAnimation: AnimationDefinition;
-    #moveEventId: string | null;
-    constructor(element: HTMLElement, utils: CuiUtils, attribute: string, prefix: string) {
+export class CuiBannerHandler extends CuiHandlerBase<CuiBannerArgs> {
+
+    private _swipeEngine: ICuiSlideEngine;
+    private _swipeAnimation: AnimationDefinition;
+    private _movePerformer: ICuiMoveExtensionPerformer;
+    private _busFacade: ICuiEventBusFacade;
+    private _closeActionPerformer: ICuiActionExtensionPerformer<any>;
+    private _interactions: ICuiInteractionsFacade;
+    constructor(element: HTMLElement, utils: CuiCore, attribute: string, prefix: string) {
         super("CuiBannerHandler", element, attribute, new CuiBannerArgs(prefix, utils.setup.animationTime), utils);
-        this.#swipeEngine = new CuiSwipeAnimationEngine(true);
-        this.#swipeEngine.setOnFinish(this.onSwipeFinish.bind(this));
-        this.#swipeEngine.setElement(this.element)
-        this.#startX = -1;
-        this.#ratio = 0;
-        this.#swipeAnimation = SWIPE_ANIMATIONS_DEFINITIONS["fade"];
-        this.#moveEventId = null;
-        this.#isTracking = false;
+        this._swipeEngine = new CuiSwipeAnimationEngine(new CuiTimeAnimationEngine(getLinearTimingFunction()));
+        this._swipeEngine.setElement(this.element)
+        this._swipeAnimation = SWIPE_ANIMATIONS_DEFINITIONS["fade"];
+        this._interactions = getCuiHandlerInteractions(utils.interactions);
+        this._busFacade = getEventBusFacade(this.getId(), utils.bus, element);
+        this._movePerformer = sliderPerformer(this.asyncClasses, {
+            start: () => { return true },
+            progress: this.onMove.bind(this),
+            end: this.onUp.bind(this),
+            element: element
+        })
+
+        this._closeActionPerformer = closeActionsPerformer(getActionsHelper(utils.interactions), this._busFacade, {
+            isActive: this.isActive.bind(this),
+            onFinish: () => {
+                this._movePerformer.setEnabled(false);
+            }
+        }, {
+            element: element,
+            active: this.activeAction
+        })
+
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.CLOSE,
+            performer: this._closeActionPerformer,
+        }))
+
+        this.extend(eventExtension(this._busFacade, {
+            eventName: EVENTS.GLOBAL_MOVE,
+            performer: this._movePerformer
+        }))
+
     }
 
-    onInit(): void {
+    async onHandle(): Promise<boolean> {
+        this._interactions.mutate(() => {
+            if (!this.classes.hasClass(this.activeClassName, this.element))
+                this.classes.setClass(this.activeClassName, this.element)
+            AriaAttributes.setAria(this.element, 'aria-expanded', 'true');
+            AriaAttributes.setAria(this.element, 'aria-hidden', 'false');
+        })
+        this.updateSetup();
+        return true;
     }
-
-    onUpdate(): void {
-
+    async onRefresh(): Promise<boolean> {
+        this.updateSetup();
+        return true;
     }
-
-    onDestroy(): void {
-        this.detachEvent(EVENTS.GLOBAL_MOVE, this.#moveEventId);
-    }
-
-    onBeforeOpen(): boolean {
+    async onRemove(): Promise<boolean> {
+        this._busFacade.detachEmittedEvents();
         return true;
     }
 
-    onAfterOpen(): void {
-        if (this.args.swipe) {
-            this.#moveEventId = this.onEvent(EVENTS.GLOBAL_MOVE, this.onMove.bind(this));
-        }
-    }
-    onAfterClose(): void {
-        this.detachEvent(EVENTS.GLOBAL_MOVE, this.#moveEventId);
-    }
-
-    onBeforeClose(): boolean {
-        return true;
+    private updateSetup() {
+        this._movePerformer.setEnabled(this.args.swipe);
+        this._closeActionPerformer.updateSetup({
+            timeout: this.args.timeout,
+            actions: CuiActionsListFactory.get(this.args.closeAct)
+        })
     }
 
-    onMove(data: ICuiMoveData) {
-        if (this.isLocked) {
-            return;
-        }
-        let current = this.element as HTMLElement;
-        switch (data.type) {
-            case "down":
-                if (this.#isTracking || !current.contains((data.target as Node))) {
-                    return;
-                }
-                this.#isTracking = true;
-                this.#startX = data.x;
-                this.helper.setClassesAs(document.body, CLASSES.swipingOn);
-                data.event.preventDefault();
-                break;
-            case "up":
-                if (!this.#isTracking && this.#ratio == 0) {
-                    break;
-                }
-
-                let absRatio = Math.abs(this.#ratio);
-                let timeout = absRatio * this.args.timeout;
-                let back = absRatio <= 0.4;
-                // Lock component until animation is finished
-                this.isLocked = true;
-                this.#swipeEngine.finish(absRatio, timeout, back);
-                this.helper.removeClassesAs(document.body, CLASSES.swipingOn);
-                this.#isTracking = false;
-                break;
-            case "move":
-                if (this.#isTracking) {
-                    let newRatio = (data.x - this.#startX) / current.offsetWidth;
-                    if (this.#ratio >= 0 && newRatio <= 0 || this.#ratio <= 0 && newRatio > 0) {
-                        this.#swipeEngine.setProps(newRatio > 0 ? this.#swipeAnimation.current.right : this.#swipeAnimation.current.left);
-                    }
-                    this.#ratio = newRatio;
-                    this.mutate(() => {
-                        this.#swipeEngine.update(Math.abs(this.#ratio));
-                    })
-                    data.event.preventDefault();
-                }
-                break;
-            default:
-                break;
-        }
+    private onMove(data: ICuiSliderProgress) {
+        this._swipeEngine.setProps(data.ratio > 0 ? this._swipeAnimation.current.right : this._swipeAnimation.current.left);
+        this._interactions.mutate(() => {
+            this._swipeEngine.move(Math.abs(data.ratio));
+        })
     }
 
-    onSwipeFinish(element: Element | undefined, reverted: boolean, error: boolean) {
-        this.isLocked = false;
-        if (!reverted) {
-            this.helper.removeClass(this.activeClassName, this.element)
+    private onUp(data: ICuiSliderProgress) {
+        let absRatio = Math.abs(data.ratio);
+        let back = absRatio <= 0.4;
+        // Lock component until animation is finished
+        const minVelo = 1 / this.args.timeout;
+        const v = data.velocity > minVelo ? data.velocity : minVelo;
+
+        this._swipeEngine.finish({ progress: absRatio, acceleration: data.acceleration, velocity: v, timeout: this.args.timeout, revert: back }).then(status => {
+            if (!status || back) {
+                return
+            }
+            this.asyncClasses.removeClasses(this.element, this.activeClassName)
             AriaAttributes.setAria(this.element, 'aria-expanded', 'false');
-        }
-        this.#ratio = 0;
-        this.#startX = 0;
-
+            AriaAttributes.setAria(this.element, 'aria-hidden', 'true');
+            this._movePerformer.setEnabled(false);
+        });
     }
 }
