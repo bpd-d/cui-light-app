@@ -7,16 +7,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { is, are, joinAttributesForQuery, parseAttribute } from "../utils/functions";
+import { is, are, joinAttributesForQuery, parseAttribute, } from "../utils/functions";
 import { CuiDevtoolFactory } from "../development/factory";
-import { createCuiElement, destroyCuiElement, getMatchingComponents, updateComponent } from "../api/functions";
+import { createCuiElement, destroyCuiElement, getMatchingComponents, updateComponent, } from "../api/functions";
 export class CuiMutationObserver {
     constructor(element, core) {
         this._observer = undefined;
         this._plugins = undefined;
         this._options = undefined;
         this._element = element;
-        this._log = CuiDevtoolFactory.get('CuiMutationObserver');
+        this._log = CuiDevtoolFactory.get("CuiMutationObserver");
         this._components = [];
         this._core = core;
         this._queryString = "";
@@ -34,7 +34,7 @@ export class CuiMutationObserver {
             attributes: true,
             subtree: true,
             childList: true,
-            attributeFilter: attributes
+            attributeFilter: attributes,
         };
         this._queryString = joinAttributesForQuery(attributes);
         return this;
@@ -64,7 +64,7 @@ export class CuiMutationObserver {
     mutationCallback(mutations, observer) {
         mutations.forEach((mutation) => {
             switch (mutation.type) {
-                case 'attributes':
+                case "attributes":
                     const item = mutation.target;
                     if (!are(mutation.attributeName, item)) {
                         this._log.error("Mutation attribute doesn't not exisist");
@@ -73,7 +73,7 @@ export class CuiMutationObserver {
                     // @ts-ignore attribute is defined
                     this.handeComponentUpdate(mutation.attributeName, item);
                     break;
-                case 'childList':
+                case "childList":
                     this.handleChildListMutation(mutation);
                     break;
             }
@@ -96,31 +96,37 @@ export class CuiMutationObserver {
         });
     }
     handleChildListMutation(mutation) {
-        const addedLen = mutation.addedNodes.length;
-        const removedLen = mutation.removedNodes.length;
-        if (addedLen > 0) {
-            this._log.debug("Registering added nodes: " + addedLen);
-            this.handleAddedNodes(mutation.addedNodes).then((result) => {
-                this._log.debug("Added nodes: " + addedLen + " with status: " + result);
-            }).catch((e) => {
-                this._log.exception(e);
-            });
-        }
-        else if (removedLen > 0) {
-            this._log.debug("Removing nodes: " + removedLen);
-            this.handleRemovedNodes(mutation.removedNodes).then((result) => {
-                this._log.debug("Removed nodes: " + removedLen + " with status: " + result);
-            }).catch((e) => {
-                this._log.exception(e);
-            });
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            const addedLen = mutation.addedNodes.length;
+            const removedLen = mutation.removedNodes.length;
+            if (addedLen > 0) {
+                this._log.debug("Registering added nodes: " + addedLen);
+                try {
+                    yield this.handleAddedNodes(mutation.addedNodes);
+                }
+                catch (e) {
+                    this._log.exception(e);
+                }
+            }
+            else if (removedLen > 0) {
+                this._log.debug("Removing nodes: " + removedLen);
+                try {
+                    yield this.handleRemovedNodes(mutation.removedNodes);
+                }
+                catch (e) {
+                    this._log.exception(e);
+                }
+            }
+        });
     }
     handleAddedNodes(nodes) {
         return __awaiter(this, void 0, void 0, function* () {
             for (let node of nodes) {
                 yield this.handleAddedNode(node);
                 let element = node;
-                let children = element.hasChildNodes() ? element.querySelectorAll(this._queryString) : null;
+                let children = element.hasChildNodes()
+                    ? element.querySelectorAll(this._queryString)
+                    : null;
                 if (is(children)) {
                     // @ts-ignore children is defined
                     this._log.debug("Additional nodes to add: " + children.length);
@@ -151,10 +157,13 @@ export class CuiMutationObserver {
             for (let node of nodes) {
                 yield destroyCuiElement(node);
                 let element = node;
-                let children = node.hasChildNodes() ? element.querySelectorAll(this._queryString) : null;
+                let children = node.hasChildNodes()
+                    ? element.querySelectorAll(this._queryString)
+                    : null;
                 if (is(children)) {
+                    this._log.debug(
                     // @ts-ignore children is defined
-                    this._log.debug("Additional nodes to remove: " + children.length);
+                    "Additional nodes to remove: " + children.length);
                     // @ts-ignore children is defined
                     yield this.handleDestroyChildren(children);
                 }
@@ -224,7 +233,7 @@ export class CuiComponentMutationHandler {
     }
     mutationCallback(record) {
         let records = record.reduce((result, record) => {
-            if (this._selector && record.type === 'childList') {
+            if (this._selector && record.type === "childList") {
                 if (this.matchesSelector(record)) {
                     result.push(record);
                 }
@@ -240,15 +249,20 @@ export class CuiComponentMutationHandler {
     }
     matchesSelector(record) {
         if (record.addedNodes.length > 0) {
-            return this.isAnyItemMatching([...record.addedNodes]);
+            return this.isAnyItemMatching([
+                ...record.addedNodes,
+            ]);
         }
         if (record.removedNodes.length > 0) {
-            return this.isAnyItemMatching([...record.removedNodes]);
+            return this.isAnyItemMatching([
+                ...record.removedNodes,
+            ]);
         }
         return false;
     }
     isAnyItemMatching(array) {
+        return (array.find((node) => 
         //@ts-ignore
-        return (array.find((node) => node.matches(this._selector)) !== null);
+        node.matches(this._selector)) !== null);
     }
 }

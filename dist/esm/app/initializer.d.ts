@@ -12,8 +12,4 @@ export interface CuiInitResult {
     result: boolean;
     message?: string;
 }
-export declare class CuiInitializer {
-    private _window;
-    constructor();
-    init(setup: CuiInitData): Promise<CuiInitResult>;
-}
+export default function CuiInitializer(setup: CuiInitData): Promise<CuiInitResult>;

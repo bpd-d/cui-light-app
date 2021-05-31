@@ -16,7 +16,7 @@ export function moveExtensionPerformer(setup) {
             return true;
         }),
         onMove: setup.onMove,
-        onEnd: setup.onUp
+        onEnd: setup.onUp,
     });
 }
 export function getDragMovePerformer(setup) {
@@ -37,14 +37,20 @@ export function getDragMovePerformer(setup) {
     return Object.assign(Object.assign({}, getBaseMovePerformer({
         onStart: (ev) => __awaiter(this, void 0, void 0, function* () {
             cancelTimeout();
+            console.log("sssss");
             return new Promise((resolve) => {
                 timeoutId = setTimeout(() => {
-                    resolve(setup.onStart(ev));
+                    timeoutId = null;
+                    console.log("start");
+                    setup.onStart(ev).then((status) => {
+                        resolve(status);
+                    });
+                    //resolve(setup.onStart(ev));
                 }, dragStartTimeout);
             });
         }),
-        onMove: ev => call(ev, setup.onMove),
-        onEnd: ev => call(ev, setup.onEnd)
+        onMove: (ev) => call(ev, setup.onMove),
+        onEnd: (ev) => call(ev, setup.onEnd),
     })), { setTimeout: (value) => {
             dragStartTimeout = value;
         } });
@@ -52,6 +58,7 @@ export function getDragMovePerformer(setup) {
 function getBaseMovePerformer(setup) {
     let _isTracking = false;
     let _isEnabled = true;
+    let _waiting = false;
     return {
         perform: (ev) => {
             if (!_isEnabled) {
@@ -59,11 +66,14 @@ function getBaseMovePerformer(setup) {
                 return;
             }
             switch (ev.type) {
-                case 'down':
+                case "down":
+                    console.log("down");
                     if (_isTracking) {
                         return;
                     }
+                    _waiting = true;
                     setup.onStart(ev).then((status) => {
+                        _waiting = false;
                         if (status)
                             _isTracking = true;
                     });
@@ -76,7 +86,7 @@ function getBaseMovePerformer(setup) {
                     }
                     break;
                 case "up":
-                    if (!_isTracking)
+                    if (!_isTracking && !_waiting)
                         return;
                     if (setup.onEnd) {
                         setup.onEnd(ev);
@@ -87,6 +97,6 @@ function getBaseMovePerformer(setup) {
         },
         setEnabled: (flag) => {
             _isEnabled = flag;
-        }
+        },
     };
 }

@@ -11,12 +11,12 @@ import { CuiHandlerBase } from "../../core/handlers/base";
 import { EVENTS } from "../../core/utils/statics";
 import { calcWindowSize, isInViewport } from "../../core/utils/functions";
 import { CuiIntersectionObserver } from "../../core/observers/intersection";
-import { CuiActionsFactory } from "../../core/utils/actions";
+import { CuiActionsFactory, } from "../../core/utils/actions";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 import { CuiTaskRunner } from "../../core/utils/task";
 import { cuiObserverExtension } from "../extensions/observer/observer";
 import { eventExtension } from "../extensions/event/event";
-import { getEventBusFacade, getCuiHandlerInteractions } from "../../core/handlers/extensions/facades";
+import { getEventBusFacade, getCuiHandlerInteractions, } from "../../core/handlers/extensions/facades";
 import { getResizeCalculator } from "./calculator";
 import { callbackPerformer } from "../extensions/performers";
 import { CuiComponentBaseHook } from "../base";
@@ -25,17 +25,17 @@ export class CuiResizeArgs extends CuiAutoParseArgs {
         super();
         this.mode = "simple";
         this.default = "";
-        this.small = this.medium = this.large = this.xlarge = '';
+        this.small = this.medium = this.large = this.xlarge = "";
         this.delay = 1;
     }
 }
 export function CuiResizeComponent(prefix) {
     return CuiComponentBaseHook({
         prefix: prefix,
-        name: 'resize',
+        name: "resize",
         create: (element, utils, prefix, attribute) => {
             return new CuiResizeHandler(element, utils, attribute);
-        }
+        },
     });
 }
 export class CuiResizeHandler extends CuiHandlerBase {
@@ -52,13 +52,13 @@ export class CuiResizeHandler extends CuiHandlerBase {
         const intersectionObserver = new CuiIntersectionObserver(document.documentElement, [0, 0.1]);
         intersectionObserver.setCallback(this.onIntersection.bind(this));
         this.extend(cuiObserverExtension({
-            type: 'intersection',
+            type: "intersection",
             element: element,
-            observer: intersectionObserver
+            observer: intersectionObserver,
         }));
         this.extend(eventExtension(this._busFacade, {
             eventName: EVENTS.RESIZE,
-            performer: callbackPerformer(this.resize.bind(this))
+            performer: callbackPerformer(this.resize.bind(this)),
         }));
     }
     onHandle() {
@@ -104,11 +104,11 @@ export class CuiResizeHandler extends CuiHandlerBase {
     }
     updateElement() {
         if (this.cannotUpdate()) {
-            this.logInfo("Not intersecting");
+            //this.logInfo("Not intersecting")
             return;
         }
         if (!this._currentValue || this._lastValue === this._currentValue) {
-            this.logWarning("Not eligible to set value: " + this._currentValue);
+            //this.logWarning("Not eligible to set value: " + this._currentValue)
             return;
         }
         this._lastValue = this._currentValue;
@@ -119,7 +119,7 @@ export class CuiResizeHandler extends CuiHandlerBase {
      * @returns
      */
     cannotUpdate() {
-        return !this._isIntersecting && this.args.mode === 'smart';
+        return !this._isIntersecting && this.args.mode === "smart";
     }
     /**
      * Used for task to update action on the element after receiving resize

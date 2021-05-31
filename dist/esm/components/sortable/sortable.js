@@ -10,16 +10,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { ElementBuilder } from "../../core/builders/element";
 import { CuiHandlerBase } from "../../core/handlers/base";
 import { CuiSimpleDragOverDetector } from "../../core/handlers/drag/detectors";
-import { CuiSwipeAnimationEngine } from "../../core/animation/engine";
-import { replacePrefix, is, are, joinWithScopeSelector } from "../../core/utils/functions";
+import { CuiSwipeAnimationEngine, } from "../../core/animation/engine";
+import { replacePrefix, is, are, joinWithScopeSelector, } from "../../core/utils/functions";
 import { EVENTS, CLASSES } from "../../core/utils/statics";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 import { CuiComponentBaseHook } from "../base";
-import { getCuiHandlerInteractions, getEventBusFacade } from "../../core/handlers/extensions/facades";
+import { getCuiHandlerInteractions, getEventBusFacade, } from "../../core/handlers/extensions/facades";
 import { moveExtension } from "../extensions/move/move";
 import { getEaseTimingFunction } from "../../core/animation/calculators";
 import { CuiTimeAnimationEngines } from "../../core/animation/factory";
-import { getDragMovePerformer } from "../extensions/move/performer";
+import { getDragMovePerformer, } from "../extensions/move/performer";
 const SORTABLE_IS_MOVING = "{prefix}-moving";
 const DEFAULT_SELECTOR = " > *";
 const SORTABLE_PREVIEW_CLS = "{prefix}-sortable-preview";
@@ -28,9 +28,9 @@ export class CuiSortableArgs extends CuiAutoParseArgs {
     constructor() {
         super({
             props: {
-                "target": { corrector: joinWithScopeSelector },
-                "trigger": { corrector: joinWithScopeSelector }
-            }
+                target: { corrector: joinWithScopeSelector },
+                trigger: { corrector: joinWithScopeSelector },
+            },
         });
         this.target = joinWithScopeSelector(DEFAULT_SELECTOR);
         this.trigger = joinWithScopeSelector(DEFAULT_SELECTOR);
@@ -44,7 +44,7 @@ export function CuiSortableComponent(prefix) {
         name: "sortable",
         create: (element, utils, prefix, attribute) => {
             return new CuiSortableHandler(element, attribute, utils, prefix);
-        }
+        },
     });
 }
 export class CuiSortableHandler extends CuiHandlerBase {
@@ -64,13 +64,13 @@ export class CuiSortableHandler extends CuiHandlerBase {
         this._dragPerformer = getDragMovePerformer({
             onStart: this.onDragStart.bind(this),
             onMove: this.onDragOver.bind(this),
-            onEnd: this.onDragEnd.bind(this)
+            onEnd: this.onDragEnd.bind(this),
         });
         this._detector = new CuiSimpleDragOverDetector();
         this._animation = new CuiSwipeAnimationEngine(CuiTimeAnimationEngines.get(getEaseTimingFunction()));
         this.extend(moveExtension({
             target: element,
-            performer: this._dragPerformer
+            performer: this._dragPerformer,
         }));
     }
     onHandle() {
@@ -83,8 +83,9 @@ export class CuiSortableHandler extends CuiHandlerBase {
     }
     onRefresh() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.prevArgs && (this.args.target !== this.prevArgs.target ||
-                this.args.trigger !== this.prevArgs.trigger)) {
+            if (this.prevArgs &&
+                (this.args.target !== this.prevArgs.target ||
+                    this.args.trigger !== this.prevArgs.trigger)) {
                 this.getTargetsAndTrggers();
             }
             this._dragPerformer.setTimeout(this.args.timeout);
@@ -114,7 +115,10 @@ export class CuiSortableHandler extends CuiHandlerBase {
     onDragStart(data) {
         return __awaiter(this, void 0, void 0, function* () {
             this._currentIdx = this.getPressedElementIdx(data.target);
-            this._currentTarget = this._currentIdx > -1 ? this._targets[this._currentIdx] : null;
+            this._currentTarget =
+                this._currentIdx > -1
+                    ? this._targets[this._currentIdx]
+                    : null;
             if (!is(this._currentTarget)) {
                 return false;
             }
@@ -138,7 +142,9 @@ export class CuiSortableHandler extends CuiHandlerBase {
         //@ts-ignore preview
         this._animation.setElement(this._preview);
         this._animation.setProps(this.getFinishAnimation());
-        this._animation.finish({ progress: 0, timeout: 100, revert: false }).then((status) => {
+        this._animation
+            .finish({ progress: 0, timeout: 100, revert: false })
+            .then((status) => {
             if (status)
                 this.onSortAnimationFinish();
         });
@@ -184,7 +190,9 @@ export class CuiSortableHandler extends CuiHandlerBase {
             this.logError("Cannot create preview - current target does not exist", "createPreview");
             return;
         }
-        this._preview = new ElementBuilder("div").setClasses(this._previewCls).build();
+        this._preview = new ElementBuilder("div")
+            .setClasses(this._previewCls)
+            .build();
         //@ts-ignore currentTarget
         this._preview.style.width = `${this._currentTarget.offsetWidth}px`;
         //@ts-ignore currentTarget
@@ -212,7 +220,9 @@ export class CuiSortableHandler extends CuiHandlerBase {
             return;
         }
         let [idx, detected] = this._detector.detect(data.x, data.y);
-        if ((idx !== this._currentIdx) && detected && this._currentBefore !== detected) {
+        if (idx !== this._currentIdx &&
+            detected &&
+            this._currentBefore !== detected) {
             let el = detected;
             this.insertElement(this._currentTarget, el);
             this._currentBefore = el;
@@ -234,7 +244,7 @@ export class CuiSortableHandler extends CuiHandlerBase {
                 opacity: {
                     from: 1,
                     to: 0,
-                }
+                },
             };
         }
         //@ts-ignore currentTarget
@@ -249,15 +259,15 @@ export class CuiSortableHandler extends CuiHandlerBase {
                 from: this._preview.offsetTop,
                 //@ts-ignore preview
                 to: box.top > 0 ? box.top : this._preview.offsetTop,
-                unit: "px"
+                unit: "px",
             },
             left: {
                 //@ts-ignore preview
                 from: this._preview.offsetLeft,
                 //@ts-ignore preview
                 to: box.left > 0 ? box.left : this._preview.offsetLeft,
-                unit: "px"
-            }
+                unit: "px",
+            },
         };
     }
     onSortAnimationFinish() {

@@ -11,44 +11,73 @@ import { CuiSetupInit } from "../core/models/setup";
 import { is } from "../core/utils/functions";
 import { CuiInstance } from "./instance";
 import { ICONS } from "../core/utils/statics";
-import { SWIPE_ANIMATIONS_DEFINITIONS } from "../core/animation/definitions";
-export class CuiInitializer {
-    constructor() {
-        this._window = window;
-    }
-    init(setup) {
+import { SWIPE_ANIMATIONS_DEFINITIONS, } from "../core/animation/definitions";
+function initIcons(setup) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!is(setup.icons)) {
+            return;
+        }
+        for (let icon in setup.icons) {
+            ICONS[icon] = setup.icons[icon];
+        }
+        return;
+    });
+}
+function initSwipeAnimations(setup) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!is(setup.swipeAnimations)) {
+            return;
+        }
+        for (let animation in setup.swipeAnimations) {
+            SWIPE_ANIMATIONS_DEFINITIONS[animation] =
+                setup.swipeAnimations[animation];
+        }
+        return;
+    });
+}
+function initInstance(root, settings) {
+    return (setup) => __awaiter(this, void 0, void 0, function* () {
         var _a, _b;
-        return __awaiter(this, void 0, void 0, function* () {
-            let settings = Object.assign(Object.assign({}, new CuiSetupInit()), setup.setup);
-            const appPrefix = settings.app;
-            const result = {
-                result: false
-            };
-            if (is(this._window[appPrefix])) {
-                result.message = "Instance is already initialized";
+        try {
+            root[settings.app] = new CuiInstance(settings, (_a = setup.plugins) !== null && _a !== void 0 ? _a : [], (_b = setup.components) !== null && _b !== void 0 ? _b : []);
+            yield root[settings.app].init();
+        }
+        catch (e) {
+            console.error(e);
+            return e.message;
+        }
+        return;
+    });
+}
+function checkIfExists(root, prefix) {
+    return () => __awaiter(this, void 0, void 0, function* () {
+        if (is(root[prefix])) {
+            return "Instance is already initialized";
+        }
+    });
+}
+export default function CuiInitializer(setup) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const _window = window;
+        let settings = Object.assign(Object.assign({}, new CuiSetupInit()), setup.setup);
+        const appPrefix = settings.app;
+        const result = {
+            result: false,
+        };
+        const steps = [
+            checkIfExists(_window, appPrefix),
+            initIcons,
+            initSwipeAnimations,
+            initInstance(_window, settings),
+        ];
+        for (let step of steps) {
+            const errMsg = yield step(setup);
+            if (errMsg) {
+                result.message = errMsg;
                 return result;
             }
-            if (is(setup.icons)) {
-                for (let icon in setup.icons) {
-                    ICONS[icon] = setup.icons[icon];
-                }
-            }
-            if (is(setup.swipeAnimations)) {
-                for (let animation in setup.swipeAnimations) {
-                    SWIPE_ANIMATIONS_DEFINITIONS[animation] = setup.swipeAnimations[animation];
-                }
-            }
-            try {
-                this._window[appPrefix] = new CuiInstance(settings, (_a = setup.plugins) !== null && _a !== void 0 ? _a : [], (_b = setup.components) !== null && _b !== void 0 ? _b : []);
-                yield this._window[appPrefix].init();
-            }
-            catch (e) {
-                console.error(e);
-                result.message = "An error occured during initialization";
-                return result;
-            }
-            result.result = true;
-            return result;
-        });
-    }
+        }
+        result.result = true;
+        return result;
+    });
 }

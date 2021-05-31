@@ -13,11 +13,11 @@ import { is } from "../../core/utils/functions";
 import { IconBuilder } from "../../core/builders/icon";
 import { CuiAutoParseArgs } from "../../core/utils/arguments";
 import { CuiComponentBaseHook } from "../base";
-import { getCuiHandlerInteractions } from "../../core/handlers/extensions/facades";
+import { getCuiHandlerInteractions, } from "../../core/handlers/extensions/facades";
 export class CuiIconArgs extends CuiAutoParseArgs {
     constructor() {
         super({
-            main: 'icon'
+            main: "icon",
         });
         this.icon = "";
         this.scale = 1;
@@ -25,11 +25,11 @@ export class CuiIconArgs extends CuiAutoParseArgs {
 }
 export function CuiIconComponent(prefix) {
     return CuiComponentBaseHook({
-        name: 'icon',
+        name: "icon",
         prefix: prefix,
         create: (element, utils, prefix, attribute) => {
             return new CuiIconHandler(element, utils, attribute);
-        }
+        },
     });
 }
 export class CuiIconHandler extends CuiHandlerBase {
@@ -54,7 +54,7 @@ export class CuiIconHandler extends CuiHandlerBase {
     }
     onRemove() {
         return __awaiter(this, void 0, void 0, function* () {
-            const svg = this.element.querySelector('svg');
+            const svg = this.element.querySelectorAll("svg");
             if (is(svg)) {
                 //@ts-ignore checked
                 svg.remove();
@@ -67,17 +67,23 @@ export class CuiIconHandler extends CuiHandlerBase {
         if (!iconStr) {
             return;
         }
-        const iconSvg = new IconBuilder(iconStr).setScale(this.args.scale).build();
-        const svg = this.element.querySelector('svg');
-        if (is(svg)) {
-            //@ts-ignore checked
-            svg.remove();
-        }
-        if (this.element.childNodes.length > 0) {
-            this._interactions.mutate(this.insertBefore, iconSvg);
+        const iconSvg = new IconBuilder(iconStr)
+            .setScale(this.args.scale)
+            .build();
+        if (!iconSvg) {
             return;
         }
-        this._interactions.mutate(this.appendChild, iconSvg);
+        const svgs = this.element.querySelectorAll("svg");
+        this._interactions.mutate(() => {
+            for (let svg of svgs) {
+                svg.remove();
+            }
+            if (this.element.childNodes.length > 0) {
+                this.insertBefore(iconSvg);
+                return;
+            }
+            this.appendChild(iconSvg);
+        });
     }
     insertBefore(iconElement) {
         this.element.insertBefore(iconElement, this.element.firstChild);

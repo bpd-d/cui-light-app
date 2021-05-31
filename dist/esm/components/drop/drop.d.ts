@@ -23,7 +23,6 @@ export declare class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implemen
     private _bodyClass;
     private _triggerHoverListener;
     private _trigger;
-    private _windowClickEventId;
     private _positionCalculator;
     private _posClass;
     private _autoTask;
@@ -37,8 +36,8 @@ export declare class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implemen
     onRemove(): Promise<boolean>;
     private setDataFromArgs;
     /**
-    * Api Method open
-    */
+     * Api Method open
+     */
     open(): Promise<boolean>;
     /**
      * Api Method close
@@ -49,8 +48,8 @@ export declare class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implemen
      */
     onOpen(): void;
     /**
-        * Set of actions performed during drop close
-        */
+     * Set of actions performed during drop close
+     */
     onClose(): void;
     private isAnyActive;
     /**
@@ -63,9 +62,9 @@ export declare class CuiDropHandler extends CuiHandlerBase<CuiDropArgs> implemen
      */
     private onTriggerClick;
     /**
-    * Invoked when trigger button is hovered on
-    * @param ev
-    */
+     * Invoked when trigger button is hovered on
+     * @param ev
+     */
     private onHoverEvent;
     /**
      * Method triggered when opened element is hovered on

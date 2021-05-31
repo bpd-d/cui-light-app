@@ -8,7 +8,7 @@ import { CuiNotificationPluginFn } from "./notification/notification";
 import { CuiAutoPrintModePluginFn } from "./print/print";
 //import { CuiCSSVariablesPlugin } from "./properties/properties";
 import { CuiResizeObserverPluginFn } from "./resize/resize";
-import { CuiToastP } from "./toast/toast";
+import { CuiToastPlugin } from "./toast/toast";
 export function GetPlugins(init) {
     var _a;
     let light = init ? init.autoLight : true;
@@ -21,7 +21,7 @@ export function GetPlugins(init) {
         //  new CuiCSSVariablesPlugin({}),
         CuiMoveObserverPluginFn(),
         CuiResizeObserverPluginFn({}),
-        CuiToastP({}),
+        CuiToastPlugin({}),
         CuiAlertsPluginFn(),
         CuiNotificationPluginFn({ timeout: init.notifcationTimeout }),
         CuiLightFocusPluginFn((_a = init.focusSetup) !== null && _a !== void 0 ? _a : {})

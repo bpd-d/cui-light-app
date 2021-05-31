@@ -104,7 +104,7 @@ __webpack_require__.r(__webpack_exports__);
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, "CUI_LIGHT_VERSION", function() { return /* binding */ CUI_LIGHT_VERSION; });
-__webpack_require__.d(__webpack_exports__, "CuiInit", function() { return /* reexport */ init_CuiInit; });
+__webpack_require__.d(__webpack_exports__, "init", function() { return /* reexport */ init_init; });
 __webpack_require__.d(__webpack_exports__, "ElementManager", function() { return /* reexport */ element_ElementManager; });
 
 // CONCATENATED MODULE: ./src/core/models/errors.ts
@@ -1217,7 +1217,7 @@ class mutations_CuiMutationObserver {
         this._plugins = undefined;
         this._options = undefined;
         this._element = element;
-        this._log = factory_CuiDevtoolFactory.get('CuiMutationObserver');
+        this._log = factory_CuiDevtoolFactory.get("CuiMutationObserver");
         this._components = [];
         this._core = core;
         this._queryString = "";
@@ -1235,7 +1235,7 @@ class mutations_CuiMutationObserver {
             attributes: true,
             subtree: true,
             childList: true,
-            attributeFilter: attributes
+            attributeFilter: attributes,
         };
         this._queryString = joinAttributesForQuery(attributes);
         return this;
@@ -1265,7 +1265,7 @@ class mutations_CuiMutationObserver {
     mutationCallback(mutations, observer) {
         mutations.forEach((mutation) => {
             switch (mutation.type) {
-                case 'attributes':
+                case "attributes":
                     const item = mutation.target;
                     if (!are(mutation.attributeName, item)) {
                         this._log.error("Mutation attribute doesn't not exisist");
@@ -1274,7 +1274,7 @@ class mutations_CuiMutationObserver {
                     // @ts-ignore attribute is defined
                     this.handeComponentUpdate(mutation.attributeName, item);
                     break;
-                case 'childList':
+                case "childList":
                     this.handleChildListMutation(mutation);
                     break;
             }
@@ -1297,31 +1297,37 @@ class mutations_CuiMutationObserver {
         });
     }
     handleChildListMutation(mutation) {
-        const addedLen = mutation.addedNodes.length;
-        const removedLen = mutation.removedNodes.length;
-        if (addedLen > 0) {
-            this._log.debug("Registering added nodes: " + addedLen);
-            this.handleAddedNodes(mutation.addedNodes).then((result) => {
-                this._log.debug("Added nodes: " + addedLen + " with status: " + result);
-            }).catch((e) => {
-                this._log.exception(e);
-            });
-        }
-        else if (removedLen > 0) {
-            this._log.debug("Removing nodes: " + removedLen);
-            this.handleRemovedNodes(mutation.removedNodes).then((result) => {
-                this._log.debug("Removed nodes: " + removedLen + " with status: " + result);
-            }).catch((e) => {
-                this._log.exception(e);
-            });
-        }
+        return mutations_awaiter(this, void 0, void 0, function* () {
+            const addedLen = mutation.addedNodes.length;
+            const removedLen = mutation.removedNodes.length;
+            if (addedLen > 0) {
+                this._log.debug("Registering added nodes: " + addedLen);
+                try {
+                    yield this.handleAddedNodes(mutation.addedNodes);
+                }
+                catch (e) {
+                    this._log.exception(e);
+                }
+            }
+            else if (removedLen > 0) {
+                this._log.debug("Removing nodes: " + removedLen);
+                try {
+                    yield this.handleRemovedNodes(mutation.removedNodes);
+                }
+                catch (e) {
+                    this._log.exception(e);
+                }
+            }
+        });
     }
     handleAddedNodes(nodes) {
         return mutations_awaiter(this, void 0, void 0, function* () {
             for (let node of nodes) {
                 yield this.handleAddedNode(node);
                 let element = node;
-                let children = element.hasChildNodes() ? element.querySelectorAll(this._queryString) : null;
+                let children = element.hasChildNodes()
+                    ? element.querySelectorAll(this._queryString)
+                    : null;
                 if (is(children)) {
                     // @ts-ignore children is defined
                     this._log.debug("Additional nodes to add: " + children.length);
@@ -1352,10 +1358,13 @@ class mutations_CuiMutationObserver {
             for (let node of nodes) {
                 yield destroyCuiElement(node);
                 let element = node;
-                let children = node.hasChildNodes() ? element.querySelectorAll(this._queryString) : null;
+                let children = node.hasChildNodes()
+                    ? element.querySelectorAll(this._queryString)
+                    : null;
                 if (is(children)) {
+                    this._log.debug(
                     // @ts-ignore children is defined
-                    this._log.debug("Additional nodes to remove: " + children.length);
+                    "Additional nodes to remove: " + children.length);
                     // @ts-ignore children is defined
                     yield this.handleDestroyChildren(children);
                 }
@@ -1425,7 +1434,7 @@ class CuiComponentMutationHandler {
     }
     mutationCallback(record) {
         let records = record.reduce((result, record) => {
-            if (this._selector && record.type === 'childList') {
+            if (this._selector && record.type === "childList") {
                 if (this.matchesSelector(record)) {
                     result.push(record);
                 }
@@ -1441,16 +1450,21 @@ class CuiComponentMutationHandler {
     }
     matchesSelector(record) {
         if (record.addedNodes.length > 0) {
-            return this.isAnyItemMatching([...record.addedNodes]);
+            return this.isAnyItemMatching([
+                ...record.addedNodes,
+            ]);
         }
         if (record.removedNodes.length > 0) {
-            return this.isAnyItemMatching([...record.removedNodes]);
+            return this.isAnyItemMatching([
+                ...record.removedNodes,
+            ]);
         }
         return false;
     }
     isAnyItemMatching(array) {
+        return (array.find((node) => 
         //@ts-ignore
-        return (array.find((node) => node.matches(this._selector)) !== null);
+        node.matches(this._selector)) !== null);
     }
 }
 
@@ -3259,45 +3273,74 @@ var initializer_awaiter = (undefined && undefined.__awaiter) || function (thisAr
 
 
 
-class initializer_CuiInitializer {
-    constructor() {
-        this._window = window;
-    }
-    init(setup) {
+function initIcons(setup) {
+    return initializer_awaiter(this, void 0, void 0, function* () {
+        if (!is(setup.icons)) {
+            return;
+        }
+        for (let icon in setup.icons) {
+            ICONS[icon] = setup.icons[icon];
+        }
+        return;
+    });
+}
+function initSwipeAnimations(setup) {
+    return initializer_awaiter(this, void 0, void 0, function* () {
+        if (!is(setup.swipeAnimations)) {
+            return;
+        }
+        for (let animation in setup.swipeAnimations) {
+            SWIPE_ANIMATIONS_DEFINITIONS[animation] =
+                setup.swipeAnimations[animation];
+        }
+        return;
+    });
+}
+function initInstance(root, settings) {
+    return (setup) => initializer_awaiter(this, void 0, void 0, function* () {
         var _a, _b;
-        return initializer_awaiter(this, void 0, void 0, function* () {
-            let settings = Object.assign(Object.assign({}, new CuiSetupInit()), setup.setup);
-            const appPrefix = settings.app;
-            const result = {
-                result: false
-            };
-            if (is(this._window[appPrefix])) {
-                result.message = "Instance is already initialized";
+        try {
+            root[settings.app] = new instance_CuiInstance(settings, (_a = setup.plugins) !== null && _a !== void 0 ? _a : [], (_b = setup.components) !== null && _b !== void 0 ? _b : []);
+            yield root[settings.app].init();
+        }
+        catch (e) {
+            console.error(e);
+            return e.message;
+        }
+        return;
+    });
+}
+function checkIfExists(root, prefix) {
+    return () => initializer_awaiter(this, void 0, void 0, function* () {
+        if (is(root[prefix])) {
+            return "Instance is already initialized";
+        }
+    });
+}
+function CuiInitializer(setup) {
+    return initializer_awaiter(this, void 0, void 0, function* () {
+        const _window = window;
+        let settings = Object.assign(Object.assign({}, new CuiSetupInit()), setup.setup);
+        const appPrefix = settings.app;
+        const result = {
+            result: false,
+        };
+        const steps = [
+            checkIfExists(_window, appPrefix),
+            initIcons,
+            initSwipeAnimations,
+            initInstance(_window, settings),
+        ];
+        for (let step of steps) {
+            const errMsg = yield step(setup);
+            if (errMsg) {
+                result.message = errMsg;
                 return result;
             }
-            if (is(setup.icons)) {
-                for (let icon in setup.icons) {
-                    ICONS[icon] = setup.icons[icon];
-                }
-            }
-            if (is(setup.swipeAnimations)) {
-                for (let animation in setup.swipeAnimations) {
-                    SWIPE_ANIMATIONS_DEFINITIONS[animation] = setup.swipeAnimations[animation];
-                }
-            }
-            try {
-                this._window[appPrefix] = new instance_CuiInstance(settings, (_a = setup.plugins) !== null && _a !== void 0 ? _a : [], (_b = setup.components) !== null && _b !== void 0 ? _b : []);
-                yield this._window[appPrefix].init();
-            }
-            catch (e) {
-                console.error(e);
-                result.message = "An error occured during initialization";
-                return result;
-            }
-            result.result = true;
-            return result;
-        });
-    }
+        }
+        result.result = true;
+        return result;
+    });
 }
 
 // CONCATENATED MODULE: ./src/plugins/base.ts
@@ -5332,7 +5375,7 @@ _interactions = new WeakMap(), _selector = new WeakMap(), _className = new WeakM
 
 
 
-function CuiToastP(setup) {
+function CuiToastPlugin(setup) {
     const name = "toast-plugin";
     return new CuiPlugin({
         name: name,
@@ -5352,80 +5395,18 @@ function CuiToastP(setup) {
                 });
             }
             return [
-                [getPluginEventExtension({
+                [
+                    getPluginEventExtension({
                         name: EVENTS.TOAST,
                         id: name,
-                        callback: onToast
-                    })], undefined
+                        callback: onToast,
+                    }),
+                ],
+                undefined,
             ];
-        }
+        },
     });
 }
-// export class CuiToastPlugin extends CuiPluginBase<CuiToastPluginSetup> {
-//     private _toastHandler: CuiToastHandler | undefined;
-//     constructor(setup?: CuiToastPluginSetup) {
-//         super("toast-plugin", "CuiToastPlugin", setup)
-//         this.extend(getPluginEventExtension({
-//             name: EVENTS.TOAST,
-//             id: this.name,
-//             callback: this.onToastShow.bind(this)
-//         }))
-//     }
-//     onInit(): void {
-//         //@ts-ignore - utils is set
-//         this._toastHandler = new CuiToastHandler(this.utils.interactions, this.utils.setup.prefix, this.utils.setup.animationTime ?? 300);
-//     }
-//     onDestroy(): void {
-//     }
-//     private onToastShow(message: string) {
-//         if (!this._toastHandler || !this.utils) {
-//             return;
-//         }
-//         this.utils.bus.emit(EVENTS.TOAST_SHOW, null, []);
-//         this._toastHandler.show(message).then(() => {
-//             if (this.utils)
-//                 this.utils.bus.emit(EVENTS.TOAST_HIDDEN, null, []);
-//         })
-//     }
-// }
-// export class CuiToastPlugin implements ICuiPlugin {
-//     description: string;
-//     name: string = 'toast-plugin';
-//     setup: any;
-//     #toastHandler: CuiToastHandler | undefined;
-//     #eventId: string | null;
-//     #utils: CuiUtils | undefined;
-//     constructor(setup: CuiToastPluginSetup) {
-//         this.description = "CuiToastPlugin";
-//         this.setup = setup;
-//         this.#toastHandler = undefined;
-//         this.#eventId = null;
-//         this.#utils = undefined;
-//     }
-//     init(utils: CuiUtils): void {
-//         this.#utils = utils;
-//         if (!this.#toastHandler) {
-//             this.#toastHandler = new CuiToastHandler(utils.interactions, utils.setup.prefix, utils.setup.animationTime ?? 300);
-//         }
-//         this.#eventId = utils.bus.on(EVENTS.TOAST, this.onToastShow.bind(this), { $cuid: this.name });
-//     }
-//     destroy(): void {
-//         if (this.#utils && this.#eventId) {
-//             this.#utils.bus.detach(EVENTS.TOAST, this.#eventId);
-//             this.#eventId = null;
-//         }
-//     }
-//     private onToastShow(message: string) {
-//         if (!this.#toastHandler || !this.#utils) {
-//             return;
-//         }
-//         this.#utils.bus.emit(EVENTS.TOAST_SHOW, null, []);
-//         this.#toastHandler.show(message).then(() => {
-//             if (this.#utils)
-//                 this.#utils.bus.emit(EVENTS.TOAST_HIDDEN, null, []);
-//         })
-//     }
-// }
 
 // CONCATENATED MODULE: ./src/plugins/module.ts
 
@@ -5451,7 +5432,7 @@ function GetPlugins(init) {
         //  new CuiCSSVariablesPlugin({}),
         CuiMoveObserverPluginFn(),
         CuiResizeObserverPluginFn({}),
-        CuiToastP({}),
+        CuiToastPlugin({}),
         CuiAlertsPluginFn(),
         CuiNotificationPluginFn({ timeout: init.notifcationTimeout }),
         CuiLightFocusPluginFn((_a = init.focusSetup) !== null && _a !== void 0 ? _a : {})
@@ -6180,7 +6161,7 @@ function moveExtensionPerformer(setup) {
             return true;
         }),
         onMove: setup.onMove,
-        onEnd: setup.onUp
+        onEnd: setup.onUp,
     });
 }
 function getDragMovePerformer(setup) {
@@ -6201,14 +6182,20 @@ function getDragMovePerformer(setup) {
     return Object.assign(Object.assign({}, getBaseMovePerformer({
         onStart: (ev) => performer_awaiter(this, void 0, void 0, function* () {
             cancelTimeout();
+            console.log("sssss");
             return new Promise((resolve) => {
                 timeoutId = setTimeout(() => {
-                    resolve(setup.onStart(ev));
+                    timeoutId = null;
+                    console.log("start");
+                    setup.onStart(ev).then((status) => {
+                        resolve(status);
+                    });
+                    //resolve(setup.onStart(ev));
                 }, dragStartTimeout);
             });
         }),
-        onMove: ev => call(ev, setup.onMove),
-        onEnd: ev => call(ev, setup.onEnd)
+        onMove: (ev) => call(ev, setup.onMove),
+        onEnd: (ev) => call(ev, setup.onEnd),
     })), { setTimeout: (value) => {
             dragStartTimeout = value;
         } });
@@ -6216,6 +6203,7 @@ function getDragMovePerformer(setup) {
 function getBaseMovePerformer(setup) {
     let _isTracking = false;
     let _isEnabled = true;
+    let _waiting = false;
     return {
         perform: (ev) => {
             if (!_isEnabled) {
@@ -6223,11 +6211,14 @@ function getBaseMovePerformer(setup) {
                 return;
             }
             switch (ev.type) {
-                case 'down':
+                case "down":
+                    console.log("down");
                     if (_isTracking) {
                         return;
                     }
+                    _waiting = true;
                     setup.onStart(ev).then((status) => {
+                        _waiting = false;
                         if (status)
                             _isTracking = true;
                     });
@@ -6240,7 +6231,7 @@ function getBaseMovePerformer(setup) {
                     }
                     break;
                 case "up":
-                    if (!_isTracking)
+                    if (!_isTracking && !_waiting)
                         return;
                     if (setup.onEnd) {
                         setup.onEnd(ev);
@@ -6251,7 +6242,7 @@ function getBaseMovePerformer(setup) {
         },
         setEnabled: (flag) => {
             _isEnabled = flag;
-        }
+        },
     };
 }
 
@@ -8261,17 +8252,17 @@ var drop_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arg
 
 
 
-const drop_bodyClass = '{prefix}-drop-open';
+const drop_bodyClass = "{prefix}-drop-open";
 const DROP_POSITION = "{prefix}-drop-position-";
 const DROP_TRIGGER = "{prefix}-drop-trigger";
 const DROP_DEFAULT_TRIGGER = "> a, button";
-const DROP_DEFAULT_ANIMATION_CLS = '{prefix}-drop-animation-in';
+const DROP_DEFAULT_ANIMATION_CLS = "{prefix}-drop-animation-in";
 class drop_CuiDropArgs extends arguments_CuiAutoParseArgs {
     constructor(prefix) {
         super({
             props: {
-                'trigger': { corrector: joinWithScopeSelector }
-            }
+                trigger: { corrector: joinWithScopeSelector },
+            },
         });
         this.mode = "click";
         this.trigger = joinWithScopeSelector(DROP_DEFAULT_TRIGGER);
@@ -8290,7 +8281,7 @@ function CuiDropComponent(prefix) {
         name: "drop",
         create: (element, utils, prefix, attribute) => {
             return new drop_CuiDropHandler(element, utils, attribute, prefix);
-        }
+        },
     });
 }
 class drop_CuiDropHandler extends base_CuiHandlerBase {
@@ -8298,7 +8289,6 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
         super("CuiDropHandler", element, attribute, new drop_CuiDropArgs(prefix), utils);
         this._prefix = prefix;
         this._bodyClass = replacePrefix(drop_bodyClass, prefix);
-        this._windowClickEventId = null;
         this.onTriggerClick = this.onTriggerClick.bind(this);
         this._positionCalculator = new calculator_CuiBasePositionCalculator();
         this._positionCalculator.setMargin(8);
@@ -8317,15 +8307,15 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
         this.extend(new hover_CuiHoverModule(this.element, this.onElementHover.bind(this)));
         this.extend(eventExtension(this._busFacade, {
             eventName: EVENTS.WINDOW_CLICK,
-            performer: this._windowClickPerformer
+            performer: this._windowClickPerformer,
         }));
         this.extend(eventExtension(this._busFacade, {
             eventName: EVENTS.OPEN,
-            performer: callbackPerformer(this.open.bind(this))
+            performer: callbackPerformer(this.open.bind(this)),
         }));
         this.extend(eventExtension(this._busFacade, {
             eventName: EVENTS.CLOSE,
-            performer: callbackPerformer(this.close.bind(this))
+            performer: callbackPerformer(this.close.bind(this)),
         }));
     }
     onHandle() {
@@ -8335,11 +8325,11 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
             this._triggerHoverListener.setCallback(this.onHoverEvent.bind(this));
             this._triggerHoverListener.attach();
             //@ts-ignore
-            this._trigger.addEventListener('click', this.onTriggerClick);
+            this._trigger.addEventListener("click", this.onTriggerClick);
             // this.setTriggerEvent();
             this.setDataFromArgs();
             this._interactions.mutate(() => {
-                AriaAttributes.setAria(this.element, 'aria-dropdown', "");
+                AriaAttributes.setAria(this.element, "aria-dropdown", "");
             });
             return true;
         });
@@ -8347,19 +8337,20 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
     onRefresh() {
         return drop_awaiter(this, void 0, void 0, function* () {
             if (this.prevArgs && this.args.trigger !== this.prevArgs.trigger) {
-                if (this._triggerHoverListener && this._triggerHoverListener.isAttached()) {
+                if (this._triggerHoverListener &&
+                    this._triggerHoverListener.isAttached()) {
                     this._triggerHoverListener.detach();
                 }
-                else if (this.prevArgs && this.prevArgs.mode === 'click') {
-                    //@ts-ignore 
-                    this._trigger.removeEventListener('click', this.onTriggerClick);
+                else if (this.prevArgs && this.prevArgs.mode === "click") {
+                    //@ts-ignore
+                    this._trigger.removeEventListener("click", this.onTriggerClick);
                 }
                 this._trigger = this.acquireTrigger();
                 this._triggerHoverListener = new hover_CuiHoverListener(this._trigger);
                 this._triggerHoverListener.setCallback(this.onHoverEvent.bind(this));
                 this._triggerHoverListener.attach();
                 //@ts-ignore
-                this._trigger.addEventListener('click', this.onTriggerClick);
+                this._trigger.addEventListener("click", this.onTriggerClick);
             }
             this.setDataFromArgs();
             return true;
@@ -8379,8 +8370,8 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
         this._windowClickPerformer.setEnabled(this.args.outClose);
     }
     /**
-    * Api Method open
-    */
+     * Api Method open
+     */
     open() {
         return drop_awaiter(this, void 0, void 0, function* () {
             if (this.isActive()) {
@@ -8389,10 +8380,10 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
             if (this.isAnyActive()) {
                 yield this.findAndCloseOpenedDrop();
             }
-            if (!this.lock('open')) {
+            if (!this.lock("open")) {
                 return false;
             }
-            this.log.debug(`Drop ${this.cuid}`, 'open');
+            this.log.debug(`Drop ${this.cuid}`, "open");
             this.onOpen();
             return true;
         });
@@ -8405,13 +8396,13 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
             if (!this.isActive()) {
                 return false;
             }
-            if (!this.lock('close')) {
+            if (!this.lock("close")) {
                 return false;
             }
-            this.logInfo(`Drop ${this.cuid}`, 'close');
+            this.logInfo(`Drop ${this.cuid}`, "close");
             this.onClose();
             this._busFacade.emit(EVENTS.CLOSED, {
-                timestamp: Date.now()
+                timestamp: Date.now(),
             });
             return true;
         });
@@ -8431,7 +8422,7 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
                 this.toggleActions();
                 this.classes.setClass(this._posClass, this.element);
                 this.classes.setClass(this._bodyClass, document.body);
-                AriaAttributes.setAria(this.element, 'aria-expanded', 'true');
+                AriaAttributes.setAria(this.element, "aria-expanded", "true");
             }
             catch (e) {
                 this.log.exception(e);
@@ -8439,22 +8430,22 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
             finally {
                 this.unlock();
                 this._busFacade.emit(EVENTS.OPENED, {
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
                 });
                 this.runAutoCloseTask();
             }
         });
     }
     /**
-        * Set of actions performed during drop close
-        */
+     * Set of actions performed during drop close
+     */
     onClose() {
         this._interactions.mutate(() => {
             this.classes.removeClass(this.activeClassName, this.element);
             this.classes.removeClass(this._bodyClass, document.body);
             this.toggleActions();
             this.classes.removeClass(this._posClass, this.element);
-            AriaAttributes.setAria(this.element, 'aria-expanded', 'false');
+            AriaAttributes.setAria(this.element, "aria-expanded", "false");
             this.unlock();
         });
     }
@@ -8485,7 +8476,7 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
      * @param ev
      */
     onTriggerClick(ev) {
-        if (this.args.mode !== 'click') {
+        if (this.args.mode !== "click") {
             return;
         }
         if (this.isActive()) {
@@ -8496,11 +8487,11 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
         }
     }
     /**
-    * Invoked when trigger button is hovered on
-    * @param ev
-    */
+     * Invoked when trigger button is hovered on
+     * @param ev
+     */
     onHoverEvent(ev) {
-        if (this.args.mode !== 'hover') {
+        if (this.args.mode !== "hover") {
             return;
         }
         if (ev.isHovering && !this.isActive()) {
@@ -8529,7 +8520,7 @@ class drop_CuiDropHandler extends base_CuiHandlerBase {
         this._autoTask.start();
     }
     toggleActions() {
-        this._actions.forEach(action => {
+        this._actions.forEach((action) => {
             action.toggle(this.element);
         });
     }
@@ -8891,7 +8882,7 @@ var icon_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arg
 class icon_CuiIconArgs extends arguments_CuiAutoParseArgs {
     constructor() {
         super({
-            main: 'icon'
+            main: "icon",
         });
         this.icon = "";
         this.scale = 1;
@@ -8899,11 +8890,11 @@ class icon_CuiIconArgs extends arguments_CuiAutoParseArgs {
 }
 function CuiIconComponent(prefix) {
     return CuiComponentBaseHook({
-        name: 'icon',
+        name: "icon",
         prefix: prefix,
         create: (element, utils, prefix, attribute) => {
             return new icon_CuiIconHandler(element, utils, attribute);
-        }
+        },
     });
 }
 class icon_CuiIconHandler extends base_CuiHandlerBase {
@@ -8928,7 +8919,7 @@ class icon_CuiIconHandler extends base_CuiHandlerBase {
     }
     onRemove() {
         return icon_awaiter(this, void 0, void 0, function* () {
-            const svg = this.element.querySelector('svg');
+            const svg = this.element.querySelectorAll("svg");
             if (is(svg)) {
                 //@ts-ignore checked
                 svg.remove();
@@ -8941,17 +8932,23 @@ class icon_CuiIconHandler extends base_CuiHandlerBase {
         if (!iconStr) {
             return;
         }
-        const iconSvg = new icon_IconBuilder(iconStr).setScale(this.args.scale).build();
-        const svg = this.element.querySelector('svg');
-        if (is(svg)) {
-            //@ts-ignore checked
-            svg.remove();
-        }
-        if (this.element.childNodes.length > 0) {
-            this._interactions.mutate(this.insertBefore, iconSvg);
+        const iconSvg = new icon_IconBuilder(iconStr)
+            .setScale(this.args.scale)
+            .build();
+        if (!iconSvg) {
             return;
         }
-        this._interactions.mutate(this.appendChild, iconSvg);
+        const svgs = this.element.querySelectorAll("svg");
+        this._interactions.mutate(() => {
+            for (let svg of svgs) {
+                svg.remove();
+            }
+            if (this.element.childNodes.length > 0) {
+                this.insertBefore(iconSvg);
+                return;
+            }
+            this.appendChild(iconSvg);
+        });
     }
     insertBefore(iconElement) {
         this.element.insertBefore(iconElement, this.element.firstChild);
@@ -10314,17 +10311,17 @@ class resize_CuiResizeArgs extends arguments_CuiAutoParseArgs {
         super();
         this.mode = "simple";
         this.default = "";
-        this.small = this.medium = this.large = this.xlarge = '';
+        this.small = this.medium = this.large = this.xlarge = "";
         this.delay = 1;
     }
 }
 function CuiResizeComponent(prefix) {
     return CuiComponentBaseHook({
         prefix: prefix,
-        name: 'resize',
+        name: "resize",
         create: (element, utils, prefix, attribute) => {
             return new resize_CuiResizeHandler(element, utils, attribute);
-        }
+        },
     });
 }
 class resize_CuiResizeHandler extends base_CuiHandlerBase {
@@ -10341,13 +10338,13 @@ class resize_CuiResizeHandler extends base_CuiHandlerBase {
         const intersectionObserver = new CuiIntersectionObserver(document.documentElement, [0, 0.1]);
         intersectionObserver.setCallback(this.onIntersection.bind(this));
         this.extend(cuiObserverExtension({
-            type: 'intersection',
+            type: "intersection",
             element: element,
-            observer: intersectionObserver
+            observer: intersectionObserver,
         }));
         this.extend(eventExtension(this._busFacade, {
             eventName: EVENTS.RESIZE,
-            performer: callbackPerformer(this.resize.bind(this))
+            performer: callbackPerformer(this.resize.bind(this)),
         }));
     }
     onHandle() {
@@ -10393,11 +10390,11 @@ class resize_CuiResizeHandler extends base_CuiHandlerBase {
     }
     updateElement() {
         if (this.cannotUpdate()) {
-            this.logInfo("Not intersecting");
+            //this.logInfo("Not intersecting")
             return;
         }
         if (!this._currentValue || this._lastValue === this._currentValue) {
-            this.logWarning("Not eligible to set value: " + this._currentValue);
+            //this.logWarning("Not eligible to set value: " + this._currentValue)
             return;
         }
         this._lastValue = this._currentValue;
@@ -10408,7 +10405,7 @@ class resize_CuiResizeHandler extends base_CuiHandlerBase {
      * @returns
      */
     cannotUpdate() {
-        return !this._isIntersecting && this.args.mode === 'smart';
+        return !this._isIntersecting && this.args.mode === "smart";
     }
     /**
      * Used for task to update action on the element after receiving resize
@@ -11236,9 +11233,9 @@ class sortable_CuiSortableArgs extends arguments_CuiAutoParseArgs {
     constructor() {
         super({
             props: {
-                "target": { corrector: joinWithScopeSelector },
-                "trigger": { corrector: joinWithScopeSelector }
-            }
+                target: { corrector: joinWithScopeSelector },
+                trigger: { corrector: joinWithScopeSelector },
+            },
         });
         this.target = joinWithScopeSelector(sortable_DEFAULT_SELECTOR);
         this.trigger = joinWithScopeSelector(sortable_DEFAULT_SELECTOR);
@@ -11252,7 +11249,7 @@ function CuiSortableComponent(prefix) {
         name: "sortable",
         create: (element, utils, prefix, attribute) => {
             return new sortable_CuiSortableHandler(element, attribute, utils, prefix);
-        }
+        },
     });
 }
 class sortable_CuiSortableHandler extends base_CuiHandlerBase {
@@ -11272,13 +11269,13 @@ class sortable_CuiSortableHandler extends base_CuiHandlerBase {
         this._dragPerformer = getDragMovePerformer({
             onStart: this.onDragStart.bind(this),
             onMove: this.onDragOver.bind(this),
-            onEnd: this.onDragEnd.bind(this)
+            onEnd: this.onDragEnd.bind(this),
         });
         this._detector = new detectors_CuiSimpleDragOverDetector();
         this._animation = new engine_CuiSwipeAnimationEngine(factory_CuiTimeAnimationEngines.get(getEaseTimingFunction()));
         this.extend(moveExtension({
             target: element,
-            performer: this._dragPerformer
+            performer: this._dragPerformer,
         }));
     }
     onHandle() {
@@ -11291,8 +11288,9 @@ class sortable_CuiSortableHandler extends base_CuiHandlerBase {
     }
     onRefresh() {
         return sortable_awaiter(this, void 0, void 0, function* () {
-            if (this.prevArgs && (this.args.target !== this.prevArgs.target ||
-                this.args.trigger !== this.prevArgs.trigger)) {
+            if (this.prevArgs &&
+                (this.args.target !== this.prevArgs.target ||
+                    this.args.trigger !== this.prevArgs.trigger)) {
                 this.getTargetsAndTrggers();
             }
             this._dragPerformer.setTimeout(this.args.timeout);
@@ -11322,7 +11320,10 @@ class sortable_CuiSortableHandler extends base_CuiHandlerBase {
     onDragStart(data) {
         return sortable_awaiter(this, void 0, void 0, function* () {
             this._currentIdx = this.getPressedElementIdx(data.target);
-            this._currentTarget = this._currentIdx > -1 ? this._targets[this._currentIdx] : null;
+            this._currentTarget =
+                this._currentIdx > -1
+                    ? this._targets[this._currentIdx]
+                    : null;
             if (!is(this._currentTarget)) {
                 return false;
             }
@@ -11346,7 +11347,9 @@ class sortable_CuiSortableHandler extends base_CuiHandlerBase {
         //@ts-ignore preview
         this._animation.setElement(this._preview);
         this._animation.setProps(this.getFinishAnimation());
-        this._animation.finish({ progress: 0, timeout: 100, revert: false }).then((status) => {
+        this._animation
+            .finish({ progress: 0, timeout: 100, revert: false })
+            .then((status) => {
             if (status)
                 this.onSortAnimationFinish();
         });
@@ -11392,7 +11395,9 @@ class sortable_CuiSortableHandler extends base_CuiHandlerBase {
             this.logError("Cannot create preview - current target does not exist", "createPreview");
             return;
         }
-        this._preview = new element_ElementBuilder("div").setClasses(this._previewCls).build();
+        this._preview = new element_ElementBuilder("div")
+            .setClasses(this._previewCls)
+            .build();
         //@ts-ignore currentTarget
         this._preview.style.width = `${this._currentTarget.offsetWidth}px`;
         //@ts-ignore currentTarget
@@ -11420,7 +11425,9 @@ class sortable_CuiSortableHandler extends base_CuiHandlerBase {
             return;
         }
         let [idx, detected] = this._detector.detect(data.x, data.y);
-        if ((idx !== this._currentIdx) && detected && this._currentBefore !== detected) {
+        if (idx !== this._currentIdx &&
+            detected &&
+            this._currentBefore !== detected) {
             let el = detected;
             this.insertElement(this._currentTarget, el);
             this._currentBefore = el;
@@ -11442,7 +11449,7 @@ class sortable_CuiSortableHandler extends base_CuiHandlerBase {
                 opacity: {
                     from: 1,
                     to: 0,
-                }
+                },
             };
         }
         //@ts-ignore currentTarget
@@ -11457,15 +11464,15 @@ class sortable_CuiSortableHandler extends base_CuiHandlerBase {
                 from: this._preview.offsetTop,
                 //@ts-ignore preview
                 to: box.top > 0 ? box.top : this._preview.offsetTop,
-                unit: "px"
+                unit: "px",
             },
             left: {
                 //@ts-ignore preview
                 from: this._preview.offsetLeft,
                 //@ts-ignore preview
                 to: box.left > 0 ? box.left : this._preview.offsetLeft,
-                unit: "px"
-            }
+                unit: "px",
+            },
         };
     }
     onSortAnimationFinish() {
@@ -12584,59 +12591,44 @@ var init_awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arg
 
 
 
-class init_CuiInit {
-    constructor() {
-        this._isInitialized = false;
-    }
-    init(data) {
-        var _a, _b;
-        return init_awaiter(this, void 0, void 0, function* () {
-            if (this._isInitialized) {
-                console.log("Module is already initialized");
-                return false;
-            }
-            const initializer = new initializer_CuiInitializer();
-            let pluginList = [];
-            try {
-                pluginList = GetPlugins({
-                    autoLight: true,
-                    autoPrint: true
-                });
-            }
-            catch (e) {
-                console.error("An error occured during download plugin module");
-                console.error(e);
-                return false;
-            }
-            let componentList = [];
-            try {
-                componentList = GetComponents({
-                    prefix: (_a = data.setup) === null || _a === void 0 ? void 0 : _a.prefix
-                });
-            }
-            catch (e) {
-                console.error("An error occured during download components module");
-                console.error(e);
-                return false;
-            }
-            let appPlugins = pluginList;
-            if (data.plugins) {
-                appPlugins = Object.assign(Object.assign({}, pluginList), data.plugins);
-            }
-            let result = yield initializer.init(Object.assign(Object.assign({}, data), { plugins: appPlugins, 
-                // @ts-ignore already checked
-                components: is(data.components) ? [...componentList, ...data.components] : componentList }));
-            if (result.result) {
-                this._isInitialized = true;
-                return true;
-            }
-            else {
-                console.error(`A cUI instance failed to initialize: [${(_b = result.message) !== null && _b !== void 0 ? _b : "#"}]`);
-            }
-            console.log("Cui Light failed to init");
+function init_init(data) {
+    var _a, _b;
+    return init_awaiter(this, void 0, void 0, function* () {
+        let pluginList = [];
+        try {
+            pluginList = GetPlugins({
+                autoLight: true,
+                autoPrint: true,
+            });
+        }
+        catch (e) {
+            console.error("An error occured during download plugin module", e);
             return false;
-        });
-    }
+        }
+        let componentList = [];
+        try {
+            componentList = GetComponents({
+                prefix: (_a = data.setup) === null || _a === void 0 ? void 0 : _a.prefix,
+            });
+        }
+        catch (e) {
+            console.error("An error occured during download components module", e);
+            return false;
+        }
+        let appPlugins = pluginList;
+        if (data.plugins) {
+            appPlugins = Object.assign(Object.assign({}, pluginList), data.plugins);
+        }
+        let result = yield CuiInitializer(Object.assign(Object.assign({}, data), { plugins: appPlugins, components: is(data.components)
+                ? // @ts-ignore already checked
+                    [...componentList, ...data.components]
+                : componentList }));
+        if (result.result) {
+            return true;
+        }
+        console.error(`A cUI instance failed to initialize: [${(_b = result.message) !== null && _b !== void 0 ? _b : "#"}]`);
+        return false;
+    });
 }
 
 // CONCATENATED MODULE: ./src/index.ts

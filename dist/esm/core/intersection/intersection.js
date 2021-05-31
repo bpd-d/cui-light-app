@@ -1,5 +1,5 @@
 import { CuiScrollListener } from "../listeners/scroll";
-import { CuiElementBoxFactory } from "../models/elements";
+import { CuiElementBoxFactory, } from "../models/elements";
 import { are, getRangeValue } from "../utils/functions";
 const DEFAULT_OPTION_THRESHOLD = 0;
 export class CuiIntersectionListener {
@@ -94,9 +94,9 @@ export class CuiIntersectionListener {
                 return {
                     verticalRatio: verticalRatio,
                     horizontalRatio: horizontalRatio,
-                    element: child
+                    element: child,
                 };
-            })
+            }),
         };
         return result;
     }

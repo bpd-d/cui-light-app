@@ -9,7 +9,7 @@ import { CuiNotificationPluginFn } from "./notification/notification";
 import { CuiAutoPrintModePluginFn } from "./print/print";
 //import { CuiCSSVariablesPlugin } from "./properties/properties";
 import { CuiResizeObserverPluginFn } from "./resize/resize";
-import { CuiToastP } from "./toast/toast";
+import { CuiToastPlugin } from "./toast/toast";
 
 export interface CuiPluginsInit {
     autoLight: boolean;
@@ -29,7 +29,7 @@ export function GetPlugins(init: CuiPluginsInit): ICuiPlugin[] {
         //  new CuiCSSVariablesPlugin({}),
         CuiMoveObserverPluginFn(),
         CuiResizeObserverPluginFn({}),
-        CuiToastP({}),
+        CuiToastPlugin({}),
         CuiAlertsPluginFn(),
         CuiNotificationPluginFn({ timeout: init.notifcationTimeout }),
         CuiLightFocusPluginFn(init.focusSetup ?? {})
